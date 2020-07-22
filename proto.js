@@ -14,7 +14,7 @@
 // this is a proof of concept, not a fully worked out inheritance hierarchy
 
 let derive = (obj_name, proto) => globalThis.Object.create(proto, {[name]: {value: obj_name}});
-let create = (the_type, obj) => ({...obj, constructor: {[type]: the_type}});
+let create = (the_type, obj) => globalThis.Object.assign(globalThis.Object.create({constructor: {[type]: the_type}}), obj);
 let name = globalThis.Symbol.for('ludus/name');
 let type = globalThis.Symbol.for('ludus/type');
 
@@ -61,7 +61,9 @@ let type_of = x => x == null ? Null : x.constructor[type];
 
 let rename = (name, obj) => globalThis.Object.defineProperty(obj, 'name', {value: name});
 
-let method_missing = (method) => (value) => { throw Error(`${method} missing for ${value} : ${type_of(value)[name]}`) };
+let method_missing = method => value => { 
+  throw Error(`${method} missing for ${value} : ${type_of(value)[name]}`) 
+};
 
 let multi = (name) => {
   let method = globalThis.Symbol(name);
@@ -98,4 +100,4 @@ method(bar, Seq, () => 'bar');
 method(bar, Any, () => 'any bar');
 
 bar('') //=
-bar() //=
+bar(); //=
