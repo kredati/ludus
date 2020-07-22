@@ -66,18 +66,11 @@ let method_missing = (method) => (value) => { throw Error(`${method} missing for
 let multi = (name) => {
   let method = globalThis.Symbol(name);
 
-  let dispatch = (value, ...args) => {
-    let fn = type_of(value)[method];
-    if (type_of(fn) === Function) return fn(value, ...args);
-    throw Error(`${name} is not defined for ${type_of(value)[globalThis.Symbol.for('ludus/name')]} (${value})`)
-  };
-
-  let dispatch_ = (value, ...args) => (type_of(value)[method] || method_missing(name))(value, ...args);
+  let dispatch = (value, ...args) => (type_of(value)[method] || method_missing(name))(value, ...args);
 
   dispatch.method = method;
-  dispatch_.method = method;
 
-  return rename(name, dispatch_);
+  return rename(name, dispatch);
 }
 
 let method = (method, type, fn) => {
@@ -87,7 +80,7 @@ let method = (method, type, fn) => {
 
 let foo = multi('foo'); 
 
-let strfoo = method(foo, String, (x) => `foo and ${x}`); //=
+let strfoo = method(foo, String, (x, ...args) => `foo and ${x} and ${args.join('&')}`); //=
 method(foo, Number, () => 'number foo');
 method(foo, Any, () => 'foo')
 
@@ -104,5 +97,5 @@ let bar = multi('bar');
 method(bar, Seq, () => 'bar');
 method(bar, Any, () => 'any bar');
 
-bar(myseq) //=
+bar('') //=
 bar() //=
