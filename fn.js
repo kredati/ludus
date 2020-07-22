@@ -12,7 +12,7 @@ let raise = (error, message) => { throw new error(message) };
 
 class ArityError extends Error {}
 
-let multi = (...fns) => {
+let n_ary = (...fns) => {
   let arity_map = fns.reduce((map, fn) => Object.assign(map, {[fn.length]: fn}), {});
 
   let match_arity = (...args) => {
