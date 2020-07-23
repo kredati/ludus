@@ -1,6 +1,7 @@
 let get = (key, map) => map == null ? null : map[key] || null;
 
-let default_ = Symbol('default method');
+let otherwise = Symbol.for('ludus/otherwise');
+let _ = otherwise;
 
 let rename = (name, obj) => Object.defineProperty(obj, 'name', {value: name});
 
@@ -8,7 +9,7 @@ let multi = (name, lookup_fn) => {
 
   let methods = new Map();
 
-  let get = (value) => methods.get(lookup_fn(value)) || methods.get(default_) || (() => Error('oops'));
+  let get = (value) => methods.get(lookup_fn(value)) || methods.get(otherwise) || (() => Error('oops'));
 
   let set = (value, fn) => {
     if (methods.has(value)) return Error('oops');
@@ -33,9 +34,22 @@ let area = multi('area', o => get('shape', o))
 
 let rect_area = method(area, rect, ({height, width}) => height * width);
 let circle_area = method(area, circle, ({radius}) => Math.PI * (radius ** 2));
-method(area, default_, () => 'nothing to see here');
+method(area, _, () => 'nothing to see here');
 
 area({shape: circle, radius: 2}) //=
 area({shape: rect, width: 2, height: 3}) //=
 area() //=
+
+let type = x => x === null ? null : x.constructor;
+
+let foo = multi('foo', type);
+method(foo, String, () => 'string foo')
+method(foo, Number, () => 'number foo')
+method(foo, Object, () => 'object foo')
+method(foo, _, () => 'foo')
+
+foo(42) //=
+foo('') //=
+foo({}) //=
+foo(null) //=
 
