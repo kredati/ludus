@@ -35,13 +35,13 @@
     [ ] Develop a strategy for stack and other tracing.
   [ ] Consider alternatives to JS's built-ins, including call/cc.
   [ ] Research Logo's error handling & messages.
-[ ] Function composition and manipulation
-  [ ] Develop a core set of function combinators.
+[.] Function composition and manipulation
+  [x] Develop a core set of function combinators.
   [ ] Develop a strategy & fns for function annotation and decoration.
     [ ] Decorate already-existing functions
     [ ] Definition functions
   [ ] Develop a strategy for multiple dispatch
-    [ ] Dispatch on arity
+    [x] Dispatch on arity
     [ ] Dispatch on function (multimethods)
     [ ] Investigate/consider protocols & faster OO-based dispatch
 [ ] Core library on concretions
