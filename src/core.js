@@ -19,8 +19,8 @@ let get = n_ary('get',
 
 let get_in = n_ary('get_in',
   (obj) => partial(get_in, obj),
-  (obj, key) => get(obj, key),
-  (obj, key, if_absent) => get(obj, key, if_absent)
+  (obj, keys) => get_in(obj, keys, null),
+  (obj, keys, if_absent) => keys.reduce((o, k) => get(k, o, if_absent), obj)
 );
 
 export {get, get_in, boolean, is_nullish, when_nullish};
