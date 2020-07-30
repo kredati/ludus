@@ -43,7 +43,7 @@
   [ ] Develop a strategy for multiple dispatch
     [x] Dispatch on arity
     [ ] Dispatch on function (multimethods)
-    [ ] Investigate/consider protocols & faster OO-based dispatch
+    [?] Investigate/consider protocols & faster OO-based dispatch
 [ ] Core library on concretions
   [ ] Bools
   [ ] Nums
