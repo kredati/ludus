@@ -193,16 +193,23 @@ let recur = (...args) => new Proxy({
 // loop wraps a function that knows what to do with
 // the optional second argument is the max number of recursive loops
 // default value: 1,000,000
-let loop = (fn, max_iter = 1000000) => rename(`${fn.name}<looped>`, (...args) => {
-  let result = fn(...args),
-    iter = 0;
-  while (result[recur_tag] && iter < max_iter) {
-    result = fn(...result[recur_args]);
-    iter += 1;
-  }
-  if (iter >= max_iter) throw Error(`Too much recursion in ${fn.name || 'anonymous function'}.`)
-  return result;
-});
+let loop = (fn, max_iter = 1000000) => {
+  let looped = (...args) => {
+    let result = fn(...args),
+      iter = 0;
+    while (result[recur_tag] && iter < max_iter) {
+      result = fn(...result[recur_args]);
+      iter += 1;
+    }
+    if (iter >= max_iter) throw Error(`Too much recursion in ${fn.name || 'anonymous function'}.`)
+    return result;
+  };
+
+  return Object.defineProperties(looped, {
+    name: {value: `${fn.name || 'anonymous'}<looped>`},
+    length: {value: fn.length}
+  })
+};
 
 ///// other useful functional manipulations
 
@@ -455,9 +462,30 @@ let get_in = n_ary('get_in',
 );
 
 //////////////////// Transducers
-let reduce = loop((f, accum, coll) => {
-  let s = seq(coll);
-  return is_empty(s)
-    ? accum
-    : recur(f, f(accum, first(s)), rest(s));
-});
+let reduce = n_ary('reduce', 
+  (f, coll) => reduce(f, first(coll), rest(coll)),
+  loop((f, accum, coll) => {
+    let s = seq(coll);
+    return is_empty(s)
+      ? accum
+      : recur(f, f(accum, first(s)), rest(s));
+  }));
+
+let transduce = n_ary('transduce', 
+  (xf, rf, coll) => reduce(xf(rf), coll),
+  (xf, rf, accum, coll) => reduce(xf(rf), accum, coll));
+
+let mapper = (f) => (rf) => (accum, x) => rf(accum, f(x));
+
+let map = (f, init, coll) => reduce(mapper(f)(conj), init, coll);
+
+let inc = (x) => x + 1;
+
+let add = (x, y) => x + y;
+
+let neg = (x) => x * -1;
+
+let neg_inc = compose(mapper(neg), mapper(inc));
+let inc_neg = compose(mapper(inc), mapper(neg));
+
+transduce(neg_inc, conj, seq(null), range(3))
