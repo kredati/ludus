@@ -410,8 +410,6 @@ let range = n_ary('range',
   (start, max) => range(start, max, 1),
   (start, max, step) => generate(start, x => x + step, x => x >= max));
 
-//////////////////// Transducers
-
 
 //////////////////// Working with values
 ///// null
@@ -455,3 +453,11 @@ let get_in = n_ary('get_in',
   (obj, keys) => get_in(obj, keys, null),
   (obj, keys, if_absent) => keys.reduce((o, k) => get(k, o, if_absent), obj)
 );
+
+//////////////////// Transducers
+let reduce = loop((f, accum, coll) => {
+  let s = seq(coll);
+  return is_empty(s)
+    ? accum
+    : recur(f, f(accum, first(s)), rest(s));
+});
