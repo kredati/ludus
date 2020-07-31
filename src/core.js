@@ -414,12 +414,12 @@ let range = n_ary('range',
 //////////////////// Working with values
 ///// null
 // returns true of something is null or undefined
-let is_nullish = x => x == null;
+let is_null = x => x == null;
 
 // determines what to do when a value is nullish
-let when_nullish = n_ary('when_nullish',
-  (if_nullish) => partial(when_nullish, if_nullish),
-  (if_nullish, value) => value == null ? if_nullish : value
+let when_null = n_ary('when_null',
+  (if_null) => partial(when_null, if_null),
+  (if_null, value) => value == null ? if_null : value
 );
 
 ///// Objects & records
@@ -442,7 +442,7 @@ let get = n_ary('get',
   (key, obj) => get(key, obj, null),
   (key, obj, if_absent) => obj == null 
     ? if_absent 
-    : when_nullish(if_absent, obj[key])
+    : when_null(if_absent, obj[key])
 );
 
 // safe deep property access
