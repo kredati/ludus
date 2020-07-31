@@ -1,7 +1,8 @@
 // our library dependencies
 // these are not exposed to the user
 // immer for immutable native js data structures
-import {produce} from 'immer';
+import {produce, enableMapSet} from 'immer';
+enableMapSet();
 // record and tuple for value-equal compound data structures
 import {Record} from './record-tuple/record.js';
 import {Tuple} from './record-tuple/tuple.js';
@@ -369,13 +370,14 @@ let make_seq = (iterator) => {
   let current = iterator.next();
   let rest = once(() => current.done ? null : make_seq(iterator));
   let first = () => current.done ? null : current.value;
-  return create(Seq, {
+  let out = create(Seq, {
     [Symbol.iterator] () {
       return iterate(out);
     },
     rest,
     first
   });
+  return out;
 };
 
 let seq = (seqable) => {
@@ -397,7 +399,20 @@ let rest = (seq) => seq === null ? null : seq.rest();
 
 let cons = (value, seq_) => seq(cons_gen(value, seq_));
 
-let conj = (seq_, value) => cons(value, seq_);
+//let conj = (seq_, value) => cons(value, seq_);
+let conj = multi('conj', type)
+method(conj, types.Array, 
+  (arr, value) => produce(arr, draft => { draft.push(value); }));
+method(conj, types.Object,
+  (obj, [key, value]) => produce(obj, draft => { draft[key] = value; }));
+method(conj, types.String,
+  (str_1, str_2) => str_1.concat(str_2));
+method(conj, types.Set,
+  (set, value) => produce(set, draft => { draft.add(value); }));
+method(conj, types.Map,
+  (map, [key, value]) => produce(map, draft => draft.set(key, value)));
+method(conj, Seq,
+  (seq_, value) => seq(cons_gen(value, seq_)));
 
 let is_empty = seq => rest(seq) === null;
 
@@ -482,7 +497,15 @@ let map = n_ary('map',
   (f, coll) => transduce(map(f), conj, empty(type(coll)), coll)
 );
 
+conj([0], 1) //=
+conj({b: 2}, ['a', 1]) //=
+conj('foo', 'bar') //=
+conj(new Set('a'), 'b') //=
+conj(new Map([['quux', 'quuz']]), ['foo', 'bar']) //=
 
+for (let x of conj(seq([1, 2, 3]), 0)) {
+  x
+}
 
 let inc = (x) => x + 1;
 
