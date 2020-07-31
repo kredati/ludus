@@ -484,8 +484,3 @@ let inc = (x) => x + 1;
 let add = (x, y) => x + y;
 
 let neg = (x) => x * -1;
-
-let neg_inc = compose(mapper(neg), mapper(inc));
-let inc_neg = compose(mapper(inc), mapper(neg));
-
-transduce(neg_inc, conj, seq(null), range(3))
