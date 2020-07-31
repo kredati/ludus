@@ -477,7 +477,6 @@ let transduce = n_ary('transduce',
 
 let mapper = (f) => (rf) => (accum, x) => rf(accum, f(x));
 
-// let map = (f, init, coll) => reduce(mapper(f)(conj), init, coll);
 let map = n_ary('map',
   (f) => (rf) => (accum, x) => rf(accum, f(x)),
   (f, coll) => transduce(map(f), conj, empty(type(coll)), coll)
