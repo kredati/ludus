@@ -356,24 +356,26 @@ let iterate = lazy => {
   }
 }; 
 
-let lazy_iterator = (iterator) => {
+let Seq = data('Seq');
+
+let make_seq = (iterator) => {
   let current = iterator.next();
-  let rest = once(() => current.done ? null : lazy_iterator(iterator));
+  let rest = once(() => current.done ? null : make_seq(iterator));
   let first = () => current.done ? null : current.value;
-  let out = {
+  return create(Seq, {
     [Symbol.iterator] () {
       return iterate(out);
     },
     rest,
-    first,
-  }
-  return out;
-}
+    first
+  });
+};
 
 let seq = (seqable) => {
+  if (boolean(get(type_tag, seqable))) return seqable;
   if (seqable === null) return seq([]);
-  if (is_iterable(seqable)) return lazy_iterator(seqable[Symbol.iterator]());
-  if (is_record(seqable)) return lazy_iterator(obj_gen(seqable));
+  if (is_iterable(seqable)) return make_seq(seqable[Symbol.iterator]());
+  if (is_record(seqable)) return make_seq(obj_gen(seqable));
   throw Error(`${seqable} is not seqable.`);
 };
 
@@ -394,7 +396,7 @@ let is_empty = seq => rest(seq) === null;
 
 // a handy wrapper for a generator function
 // returns a lazy iterator over the generator
-let generate = (init, step, done) => lazy_iterator((function*() {
+let generate = (init, step, done) => make_seq((function*() {
   let value = init; //=
   while(!done(value)) {
     yield value;
