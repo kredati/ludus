@@ -400,7 +400,7 @@ let rest = (seq) => seq === null ? null : seq.rest();
 let cons = (value, seq_) => seq(cons_gen(value, seq_));
 
 //let conj = (seq_, value) => cons(value, seq_);
-let conj = multi('conj', type)
+let conj = multi('conj', type, () => null)
 method(conj, types.Array, 
   (arr, value) => produce(arr, draft => { draft.push(value); }));
 method(conj, types.Object,
@@ -413,6 +413,8 @@ method(conj, types.Map,
   (map, [key, value]) => produce(map, draft => draft.set(key, value)));
 method(conj, Seq,
   (seq_, value) => seq(cons_gen(value, seq_)));
+method(conj, types.null,
+  (_, value) => conj(seq(null), value));
 
 let empty = multi('empty', type, () => null);
 method(empty, types.Array, () => []);
@@ -420,7 +422,16 @@ method(empty, types.Object, () => ({}));
 method(empty, types.String, () => '');
 method(empty, types.Set, () => new Set());
 method(empty, types.Map, () => new Map());
-method(empty, Seq, () => seq([]));
+method(empty, Seq, () => seq(null));
+method(empty, types.null, () => null);
+
+let count = multi('count', type, () => null);
+method(count, types.Array, arr => arr.length);
+method(count, types.String, str => str.length);
+method(count, types.Set, set => set.size);
+method(count, types.Map, map => map.size);
+method(count, types.null, () => 0);
+method(count, types.Object, obj => into([], obj).length);
 
 let is_empty = seq => rest(seq) === null;
 
@@ -538,6 +549,8 @@ let keep = n_ary('keep',
   (f, coll) => transduce(keep(f), conj, empty(coll), coll)
 );
 
+
+
 //////////////////// REPL workspace
 
 conj([0], 1) //=
@@ -550,7 +563,9 @@ for (let x of conj(seq([1, 2, 3]), 0)) {
   x
 }
 
+// hold onto these
 
+// number functions
 let inc = (x) => x + 1;
 
 let add = (x, y) => x + y;
@@ -559,4 +574,6 @@ let neg = (x) => x * -1;
 
 let is_even = x => x % 2 === 0;
 
+// infinite sequence
 let repeatedly = (value) => generate(value, id, () => false);
+
