@@ -414,6 +414,14 @@ method(conj, types.Map,
 method(conj, Seq,
   (seq_, value) => seq(cons_gen(value, seq_)));
 
+let empty = multi('empty', type, () => null);
+method(empty, types.Array, () => []);
+method(empty, types.Object, () => ({}));
+method(empty, types.String, () => '');
+method(empty, types.Set, () => new Set());
+method(empty, types.Map, () => new Map());
+method(empty, Seq, () => seq([]));
+
 let is_empty = seq => rest(seq) === null;
 
 // a handy wrapper for a generator function
@@ -467,6 +475,11 @@ let get = n_ary('get',
     : when_null(if_absent, obj[key])
 );
 
+let has = n_ary('has',
+  (key) => partial(get, key),
+  (key, obj) => boolean(get(key, obj))
+);
+
 // safe deep property access
 // object-first
 // keys (strings or numbers)
@@ -477,25 +490,55 @@ let get_in = n_ary('get_in',
 );
 
 //////////////////// Transducers
+let completed = Symbol('ludus/completed');
+let complete = (accum) => ({value: accum, [completed]: true});
+
 let reduce = n_ary('reduce', 
   (f, coll) => reduce(f, first(coll), rest(coll)),
   loop((f, accum, coll) => {
     let s = seq(coll);
-    return is_empty(s)
-      ? accum
-      : recur(f, f(accum, first(s)), rest(s));
+    if (has(completed, accum)) return accum.value;
+    if (is_empty(s)) return accum;
+    return recur(f, f(accum, first(s)), rest(s));
   }));
 
 let transduce = n_ary('transduce', 
   (xf, rf, coll) => reduce(xf(rf), coll),
   (xf, rf, accum, coll) => reduce(xf(rf), accum, coll));
 
-let mapper = (f) => (rf) => (accum, x) => rf(accum, f(x));
-
 let map = n_ary('map',
   (f) => (rf) => (accum, x) => rf(accum, f(x)),
-  (f, coll) => transduce(map(f), conj, empty(type(coll)), coll)
+  (f, coll) => transduce(map(f), conj, empty(coll), coll)
 );
+
+let filter = n_ary('filter',
+  (f) => (rf) => (accum, x) => boolean(f(x)) ? rf(accum, x) : accum,
+  (f, coll) => transduce(filter(f), conj, empty(coll), coll)
+);
+
+let into = n_ary('into',
+  (to, from) => transduce(id, conj, to, from),
+  (to, from, xform) => transduce(xform, conj, to, from)
+);
+
+let take = n_ary('take',
+  (n) => {
+    let count = 0;
+    return (rf) => (accum, x) => {
+      if (count >= n) return complete(accum);
+      count += 1;
+      return rf(accum, x);
+    };
+  },
+  (n, coll) => transduce(take(n), conj, empty(coll), coll)
+);
+
+let keep = n_ary('keep',
+  (f) => (rf) => (accum, x) => f(x) == null ? accum : rf(accum, x),
+  (f, coll) => transduce(keep(f), conj, empty(coll), coll)
+);
+
+//////////////////// REPL workspace
 
 conj([0], 1) //=
 conj({b: 2}, ['a', 1]) //=
@@ -507,9 +550,13 @@ for (let x of conj(seq([1, 2, 3]), 0)) {
   x
 }
 
+
 let inc = (x) => x + 1;
 
 let add = (x, y) => x + y;
 
 let neg = (x) => x * -1;
 
+let is_even = x => x % 2 === 0;
+
+let repeatedly = (value) => generate(value, id, () => false);
