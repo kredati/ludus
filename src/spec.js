@@ -29,15 +29,45 @@ let is_record = r => is_object(r)
 
 let rename = (name, f) => Object.defineProperty(f, 'name', {value: name});
 
-let or = (...specs) => rename(
-  `or<${specs.map(f => f.name).join(', ')}>`, 
-  value => specs.some(spec => spec(value)));
+// Note to self:
+// a strategy for getting specs to work
+// there are really only three core combinators
+// and, or, not
+// and so each of these should carry metadata
+// - that it is a combinator
+// - what it is over
+// this is very simple
+// spec/explain can then do the messy work of figuring out
+// how to present spec failures
 
-let and = (...specs) => rename(
-  `and<${specs.map(f => f.name).join(', ')}>`,
-  value => specs.every(spec => spec(value)));
+let spec_tag = Symbol('ludus/spec')
 
-let not = spec => rename(`not<${spec.name}>`, value => !spec(value));
+let or = (...specs) => Object.defineProperties(
+  value => specs.some(spec => spec(value)),
+  {
+    name: {value: `or<${specs.map(s => s.name).join(', ')}>`},
+    [spec_tag]: {value: or},
+    joins: {value: specs}
+  }
+);
+
+let and = (...specs) => Object.defineProperties(
+  value => specs.every(spec => spec(value)),
+  {
+    name: {value: `and<${specs.map(s => s.name).join(', ')}>`},
+    [spec_tag]: {value: and},
+    joins: {value: specs}
+  }
+);
+
+let not = spec => Object.defineProperties(
+  value => !spec(value),
+  {
+    name: {value: `not<${spec.name}>`},
+    [spec_tag]: {value: not},
+    joins: [spec]
+  }
+);
 
 let maybe = spec => rename(`maybe<${spec.name}>`, or(spec, is_nil));
 
@@ -52,7 +82,7 @@ let tuple = (...specs) => rename(
 
 let property = (key, spec) => rename(
   `property<${key}: ${spec.name}>`,
-  x => x != null && ((is_object(x) || is_function(x)) && spec(x[key])));
+  x => x != null && spec(x[key]));
 
 let record = (name, record) => rename(
   `record<${name}>`, 
