@@ -549,6 +549,33 @@ let keep = n_ary('keep',
   (f, coll) => transduce(keep(f), conj, empty(coll), coll)
 );
 
+//////////////////// Spec
+// spec offers a robust set of ways to combine predicate functions
+// as well as some core predicates
+// unlike a type system, spec can use arbitrary predicates
+// and is fully exposed to the runtime
+
+///// predicates
+let is_string = s => typeof s === 'string';
+
+let is_number = n => typeof n === 'number';
+
+let is_boolean = b => typeof b === 'boolean';
+
+let is_symbol = s => typeof s === 'symbol';
+
+let is_object = o => o != null && o.constructor === Object;
+
+let is_array = a => Array.isArray();
+
+// TODO: add other predicates for core types
+
+///// combinators
+
+
+///// working with predicates
+
+
 
 
 //////////////////// REPL workspace
