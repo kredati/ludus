@@ -43,6 +43,10 @@ let call = (fn, ...args) => fn(...args);
 // calls a function with the arguments expressed as an iterable
 let apply = (fn, args) => fn(...args);
 
+// lisp-like, takes an interable with a function in the first
+// position and uses the remainder as arguments
+let ap = ([fn, ...args]) => fn(...args);
+
 // apply a function partially
 let partial = (fn, ...args1) => rename(
   `${fn.name}<partially applied>`, 
@@ -430,7 +434,7 @@ let make_seq = (iterator) => {
 
 let seq = (seqable) => {
   if (boolean(get(type_tag, seqable))) return seqable;
-  if (seqable === null) return seq([]);
+  if (seqable == null) return seq([]);
   if (is_iterable(seqable)) return make_seq(seqable[Symbol.iterator]());
   if (is_record(seqable)) return make_seq(obj_gen(seqable));
   throw Error(`${seqable} is not seqable.`);
@@ -444,9 +448,9 @@ let cons_gen = function* (value, seq) {
   yield* seq;
 }
 
-let first = (seq) => seq === null ? null : seq.first();
+let first = (seq_) => seq(seq_).first();
 
-let rest = (seq) => seq === null ? null : seq.rest();
+let rest = (seq_) => seq(seq_).rest();
 
 let cons = (value, seq_) => seq(cons_gen(value, seq_));
 
@@ -583,6 +587,25 @@ let some = n_ary('some',
   (f, coll) => transduce(some(f), (x, y) => x || y, false, coll)
 );
 
+let chunk = n_ary('chunk',
+  (n) => {
+    let chunk = [];
+    return (rf) => (accum, x) => {
+      chunk = conj(chunk, x);
+      if (chunk.length === n) {
+        let out = chunk;
+        chunk = [];
+        return rf(accum, out)
+      }
+      return accum;
+    };
+  },
+  (n, coll) => transduce(chunk(n), conj, empty(coll), coll)
+);
+
+let zip = (...seqs) => 
+  transduce(chunk(seqs.length), conj, [], interleave(...seqs));
+
 //////////////////// Spec
 // spec offers a robust set of ways to combine predicate functions
 // as well as some core predicates
@@ -664,16 +687,21 @@ let struct = (name, obj) => spec(
 
 let series = (...specs) => spec(
   `series<${specs.map(s => s.name).join(', ')}>`,
+  xs => every(ap, zip(specs, xs)),
   series,
   specs
 );
 
+series(is_string, is_number)(['foo', 42]) //=
+
 let many = (spec_) => spec(
   `many<${spec_.name}>`,
-  xs => every(x => spec_(x), xs),
+  xs => every(ap, zip(repeatedly(spec_), xs)),
   many,
   [spec_]
 );
+
+many(is_string)(['foo', 'bar', 'baz', 42]) //=
 
 and(not(is_empty), many(is_number))([1, 'foo']) //=
 
