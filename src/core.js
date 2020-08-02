@@ -574,7 +574,53 @@ let is_array = a => Array.isArray();
 // TODO: add other predicates for core types
 
 ///// combinators
+let spec_tag = Symbol('ludus/spec')
 
+let or = (...specs) => Object.defineProperties(
+  value => specs.some(spec => spec(value)),
+  {
+    name: {value: `or<${specs.map(s => s.name).join(', ')}>`},
+    [spec_tag]: {value: or},
+    joins: {value: specs}
+  }
+);
+
+let and = (...specs) => Object.defineProperties(
+  value => specs.every(spec => spec(value)),
+  {
+    name: {value: `and<${specs.map(s => s.name).join(', ')}>`},
+    [spec_tag]: {value: and},
+    joins: {value: specs}
+  }
+);
+
+let not = spec => Object.defineProperties(
+  value => !spec(value),
+  {
+    name: {value: `not<${spec.name}>`},
+    [spec_tag]: {value: not},
+    joins: [spec]
+  }
+);
+
+let maybe = spec => rename(`maybe<${spec.name}>`, or(spec, is_null));
+
+let property = (key, spec) => Object.defineProperties(
+  x => x != null && spec(x[key]),
+  {
+    name: {value: `property<${key}: ${spec.name}>`},
+    [spec_tag]: {value: property},
+    joins: [spec]
+  }
+);
+
+let struct = (name, obj) => rename(
+  `struct<${name}>`, 
+  and(...Object.entries(obj).map(([key, spec]) => property(key, spec))));
+
+let tup = (...specs) => rename(`tup${specs.map(s => s.name).join(', ')}`, 
+  and(value => value.length === specs.length, protocol('tuple', specs))
+);
 
 ///// working with predicates
 
