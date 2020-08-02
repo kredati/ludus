@@ -388,6 +388,9 @@ let seq = (seqable) => {
   throw Error(`${seqable} is not seqable.`);
 };
 
+// TODO: decide if cons_gen should add the new element to the beginning or end
+// makes sense to do it at the end for finite seqs
+// but not for infinite ones
 let cons_gen = function* (value, seq) {
   yield value;
   yield* seq;
