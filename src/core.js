@@ -231,6 +231,54 @@ let id = x => x;
 // do nothing
 let no_op = () => {};
 
+//////////////////// Working with values
+///// null
+// returns true of something is null or undefined
+let is_null = x => x == null;
+
+// determines what to do when a value is nullish
+let when_null = n_ary('when_null',
+  (if_null) => partial(when_null, if_null),
+  (if_null, value) => value == null ? if_null : value
+);
+
+///// Objects & records
+// At least to start, Ludus has no notion of values other than
+// bare "records": object literals with only string keys.
+// This simplifies a great deal.
+// In addition, this means that Ludus's type system is incredibly
+// simple. It should be sufficient for at least the core system.
+
+// tells if something is an object literal
+let is_record = x => 
+  x != null 
+  && Reflect.getPrototypeOf(Reflect.getPrototypeOf(x)) === null;
+
+// safer property access
+// never throws
+// returns null if something is absent
+let get = n_ary('get',
+  (key) => partial(get, key),
+  (key, obj) => get(key, obj, null),
+  (key, obj, if_absent) => obj == null 
+    ? if_absent 
+    : when_null(if_absent, obj[key])
+);
+
+let has = n_ary('has',
+  (key) => partial(get, key),
+  (key, obj) => boolean(get(key, obj))
+);
+
+// safe deep property access
+// object-first
+// keys (strings or numbers)
+let get_in = n_ary('get_in',
+  (obj) => partial(get_in, obj),
+  (obj, keys) => get_in(obj, keys, null),
+  (obj, keys, if_absent) => keys.reduce((o, k) => get(k, o, if_absent), obj)
+);
+
 //////////////////// Types
 // Ludus's type system is orthogonal to Javascript's
 // We know about a few builtin JS types, as below.
@@ -436,7 +484,7 @@ method(count, types.Map, map => map.size);
 method(count, types.null, () => 0);
 method(count, types.Object, obj => into([], obj).length);
 
-let is_empty = seq => rest(seq) === null;
+let is_empty = seq_ => rest(seq(seq_)) === null;
 
 // a handy wrapper for a generator function
 // returns a lazy iterator over the generator
@@ -454,54 +502,6 @@ let range = n_ary('range',
   (start, max) => range(start, max, 1),
   (start, max, step) => generate(start, x => x + step, x => x >= max));
 
-
-//////////////////// Working with values
-///// null
-// returns true of something is null or undefined
-let is_null = x => x == null;
-
-// determines what to do when a value is nullish
-let when_null = n_ary('when_null',
-  (if_null) => partial(when_null, if_null),
-  (if_null, value) => value == null ? if_null : value
-);
-
-///// Objects & records
-// At least to start, Ludus has no notion of values other than
-// bare "records": object literals with only string keys.
-// This simplifies a great deal.
-// In addition, this means that Ludus's type system is incredibly
-// simple. It should be sufficient for at least the core system.
-
-// tells if something is an object literal
-let is_record = x => 
-  x != null 
-  && Reflect.getPrototypeOf(Reflect.getPrototypeOf(x)) === null;
-
-// safer property access
-// never throws
-// returns null if something is absent
-let get = n_ary('get',
-  (key) => partial(get, key),
-  (key, obj) => get(key, obj, null),
-  (key, obj, if_absent) => obj == null 
-    ? if_absent 
-    : when_null(if_absent, obj[key])
-);
-
-let has = n_ary('has',
-  (key) => partial(get, key),
-  (key, obj) => boolean(get(key, obj))
-);
-
-// safe deep property access
-// object-first
-// keys (strings or numbers)
-let get_in = n_ary('get_in',
-  (obj) => partial(get_in, obj),
-  (obj, keys) => get_in(obj, keys, null),
-  (obj, keys, if_absent) => keys.reduce((o, k) => get(k, o, if_absent), obj)
-);
 
 //////////////////// Transducers
 let completed = Symbol('ludus/completed');
@@ -552,6 +552,11 @@ let keep = n_ary('keep',
   (f, coll) => transduce(keep(f), conj, empty(coll), coll)
 );
 
+let every = n_ary('every',
+  (f) => (rf) => (accum, x) => f(x) ? rf(true, true) : complete(false),
+  (f, coll) => transduce(every(f), (x, y) => x && y, true, coll)
+);
+
 //////////////////// Spec
 // spec offers a robust set of ways to combine predicate functions
 // as well as some core predicates
@@ -559,73 +564,105 @@ let keep = n_ary('keep',
 // and is fully exposed to the runtime
 
 ///// predicates
+// TODO: add more useful predicates
+let is = n_ary('is',
+  (type) => rename(`is<${type.description}>`, partial(is, type)),
+  (type_, value) => type(value) === type_
+);
+
 let is_string = s => typeof s === 'string';
 
 let is_number = n => typeof n === 'number';
+
+let is_int = n => is_number(n) && n % 1 === 0;
 
 let is_boolean = b => typeof b === 'boolean';
 
 let is_symbol = s => typeof s === 'symbol';
 
-let is_object = o => o != null && o.constructor === Object;
+let is_object = o => is(types.Object, o);
 
-let is_array = a => Array.isArray();
+let is_array = a => is(types.Array, a);
 
-// TODO: add other predicates for core types
+let is_map = m => is(types.Map, m);
+
+let is_set = s => is(types.Set, s)
 
 ///// combinators
 let spec_tag = Symbol('ludus/spec')
 
-let or = (...specs) => Object.defineProperties(
+let spec = n_ary('spec',
+  (name, predicate) => rename(name, predicate),
+  (name, predicate, combinator, joins) => Object.defineProperties(
+    predicate, {
+      name: {value: name},
+      [spec_tag]: {value: combinator},
+      joins: {value: joins}
+    })
+);
+
+let or = (...specs) => spec(
+  `or<${specs.map(s => s.name).join(', ')}>`,
   value => specs.some(spec => spec(value)),
-  {
-    name: {value: `or<${specs.map(s => s.name).join(', ')}>`},
-    [spec_tag]: {value: or},
-    joins: {value: specs}
-  }
+  or,
+  specs
 );
 
-let and = (...specs) => Object.defineProperties(
+let and = (...specs) => spec(
+  `and<${specs.map(s => s.name).join(', ')}>`,
   value => specs.every(spec => spec(value)),
-  {
-    name: {value: `and<${specs.map(s => s.name).join(', ')}>`},
-    [spec_tag]: {value: and},
-    joins: {value: specs}
-  }
+  and,
+  specs
 );
 
-let not = spec => Object.defineProperties(
-  value => !spec(value),
-  {
-    name: {value: `not<${spec.name}>`},
-    [spec_tag]: {value: not},
-    joins: [spec]
-  }
+let not = spec_ => spec(
+  `not<${spec_.name}>`,
+  value => !spec_(value),
+  not,
+  [spec_]
 );
 
-let maybe = spec => rename(`maybe<${spec.name}>`, or(spec, is_null));
+let maybe = (spec_) => spec(`maybe<${spec_.name}>`, or(spec_, is_null));
 
-let property = (key, spec) => Object.defineProperties(
-  x => x != null && spec(x[key]),
-  {
-    name: {value: `property<${key}: ${spec.name}>`},
-    [spec_tag]: {value: property},
-    joins: [spec]
-  }
+let property = (key, spec_) => spec(
+  `property<${key}: ${spec_.name}>`,
+  x => x != null && spec_(x[key]),
+  property,
+  [spec_]
 );
 
-let struct = (name, obj) => rename(
+let struct = (name, obj) => spec(
   `struct<${name}>`, 
-  and(...Object.entries(obj).map(([key, spec]) => property(key, spec))));
+  and(...Object.entries(obj).map(([key, spec_]) => property(key, spec_)))
+);
 
-let tup = (...specs) => rename(`tup${specs.map(s => s.name).join(', ')}`, 
+let series = (...specs) => spec(
+  `series<${specs.map(s => s.name).join(', ')}>`, 
   and(value => value.length === specs.length, protocol('tuple', specs))
 );
 
+let many = (spec_) => spec(
+  `many<${spec_.name}>`,
+  xs => every(x => spec_(x), xs),
+  many,
+  [spec_]
+);
+
 ///// working with predicates
+let check = (spec, value) => spec(value);
 
+let invalid = Symbol('ludus/spec/invalid');
 
+let is_invalid = x => x === invalid;
 
+let conform = (spec, value) => spec(value) ? value : invalid;
+
+let assert = (spec, value) => spec(value) 
+  ? value 
+  : raise(Error, `${value} did not conform to ${spec.name}`);
+  
+// TODO: add an explanation regime
+// explain should be a recursive multimethod that accumulates failures
 
 //////////////////// REPL workspace
 
