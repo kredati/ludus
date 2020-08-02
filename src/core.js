@@ -488,6 +488,7 @@ let is_empty = seq_ => rest(seq(seq_)) === null;
 
 // a handy wrapper for a generator function
 // returns a lazy iterator over the generator
+// TODO: add splats and `recur` to this to allow more robust generation
 let generate = (init, step, done) => make_seq((function*() {
   let value = init; //=
   while(!done(value)) {
@@ -502,6 +503,26 @@ let range = n_ary('range',
   (start, max) => range(start, max, 1),
   (start, max, step) => generate(start, x => x + step, x => x >= max));
 
+let cycle = (seqable) => make_seq((function*() {
+    yield* seq(seqable);
+    yield* cycle(seqable);
+  })());
+
+// interleaves seqs
+// given a list of seqs, produce a seq that's the first element
+// from each, then the second, until one of them is empty
+let interleave = (...seqables) => make_seq((function* () {
+  let seqs = map(seq, seqables);
+
+  while (true) {
+    if (some(is_empty, seqs)) return;
+    let firsts = map(first, seqs);
+    yield* firsts;
+    seqs = map(rest, seqs);
+  }
+})());
+
+let repeatedly = (value) => generate(value, id, () => false);
 
 //////////////////// Transducers
 let completed = Symbol('ludus/completed');
@@ -553,8 +574,13 @@ let keep = n_ary('keep',
 );
 
 let every = n_ary('every',
-  (f) => (rf) => (accum, x) => f(x) ? rf(true, true) : complete(false),
+  (f) => (rf) => (_, x) => boolean(f(x)) ? rf(true, true) : complete(false),
   (f, coll) => transduce(every(f), (x, y) => x && y, true, coll)
+);
+
+let some = n_ary('some',
+  (f) => (rf) => (_, x) => boolean(f(x)) ? complete(true) : rf(false, false),
+  (f, coll) => transduce(some(f), (x, y) => x || y, false, coll)
 );
 
 //////////////////// Spec
@@ -637,8 +663,9 @@ let struct = (name, obj) => spec(
 );
 
 let series = (...specs) => spec(
-  `series<${specs.map(s => s.name).join(', ')}>`, 
-  and(value => value.length === specs.length, protocol('tuple', specs))
+  `series<${specs.map(s => s.name).join(', ')}>`,
+  series,
+  specs
 );
 
 let many = (spec_) => spec(
@@ -647,6 +674,8 @@ let many = (spec_) => spec(
   many,
   [spec_]
 );
+
+and(not(is_empty), many(is_number))([1, 'foo']) //=
 
 ///// working with predicates
 let check = (spec, value) => spec(value);
@@ -686,7 +715,4 @@ let add = (x, y) => x + y;
 let neg = (x) => x * -1;
 
 let is_even = x => x % 2 === 0;
-
-// infinite sequence
-let repeatedly = (value) => generate(value, id, () => false);
 
