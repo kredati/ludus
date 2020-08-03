@@ -7,6 +7,8 @@ enableMapSet();
 import {Record} from './record-tuple/record.js';
 import {Tuple} from './record-tuple/tuple.js';
 
+export let imports = {produce, Record, Tuple};
+
 /////////////////// Errors & handling
 // throws an error as a function rather than a statement
 let raise = (error, message) => { throw new error(message) };
@@ -24,6 +26,8 @@ let bound = fn => (...args) => {
     return e;
   }
 };
+
+export let errors = {raise, report, bound};
 
 /////////////////// Absolute core value functions
 ///// booleans
@@ -235,6 +239,13 @@ let id = x => x;
 // do nothing
 let no_op = () => {};
 
+///// defn
+let defn = n_ary('defn',
+  (attrs) => 
+);
+
+export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, pipe, pipe_some, multi, method, has_method, methods, delete_method };
+
 //////////////////// Working with values
 ///// null
 // returns true of something is null or undefined
@@ -283,6 +294,8 @@ let get_in = n_ary('get_in',
   (obj, keys, if_absent) => keys.reduce((o, k) => get(k, o, if_absent), obj)
 );
 
+export let values = {boolean, is_null, is_record, when_null, get, has, get_in}
+
 //////////////////// Types
 // Ludus's type system is orthogonal to Javascript's
 // We know about a few builtin JS types, as below.
@@ -299,7 +312,7 @@ let get_in = n_ary('get_in',
 
 // A mapping of constructor names/type names to types
 // to be accessed as types.String in multimethods
-let types = {
+export let type_map = {
   String: Symbol('ludus/type/string'),
   Number: Symbol('ludus/type/number'),
   Boolean: Symbol('ludus/type/boolean'),
@@ -321,17 +334,17 @@ let type_tag = 'ludus/type';
 
 // a Map containing a mapping of builtin constructors to Ludus types
 let constructors = new WeakMap([
-  [String, types.String],
-  [Number, types.Number],
-  [Boolean, types.Boolean],
-  [Symbol, types.Symbol],
-  [Function, types.Function],
-  [Array, types.Array],
-  [Object, types.Object],
-  [Map, types.Map],
-  [Set, types.Set],
-  [Record, types.Record],
-  [Tuple, types.Tuple]
+  [String, type_map.String],
+  [Number, type_map.Number],
+  [Boolean, type_map.Boolean],
+  [Symbol, type_map.Symbol],
+  [Function, type_map.Function],
+  [Array, type_map.Array],
+  [Object, type_map.Object],
+  [Map, type_map.Map],
+  [Set, type_map.Set],
+  [Record, type_map.Record],
+  [Tuple, type_map.Tuple]
 ]);
 
 // registers a constructor in the constructor map
@@ -372,7 +385,7 @@ let create = (type, obj) => {
 // a function to get the type of a thing
 let type = (x) => {
   // base case: null or undefined
-  if (x == null) return types.null;
+  if (x == null) return type_map.null;
 
   // next: check if the object has a type tag
   let tagged_type = get(type_tag, x);
@@ -382,8 +395,10 @@ let type = (x) => {
   if (boolean(constructed_type)) return constructed_type;
 
   // finally, return an unknown type so users can extend the type system
-  return types.unknown;
+  return type_map.unknown;
 };
+
+export let types = { type, create, data, register_constructor, map: type_map, ...type_map };
 
 //////////////////// Sequences
 // Sequences allow for abstracted lazy iteration across everything
@@ -456,37 +471,37 @@ let cons = (value, seq_) => seq(cons_gen(value, seq_));
 
 //let conj = (seq_, value) => cons(value, seq_);
 let conj = multi('conj', type, () => null)
-method(conj, types.Array, 
+method(conj, type_map.Array, 
   (arr, value) => produce(arr, draft => { draft.push(value); }));
-method(conj, types.Object,
+method(conj, type_map.Object,
   (obj, [key, value]) => produce(obj, draft => { draft[key] = value; }));
-method(conj, types.String,
+method(conj, type_map.String,
   (str_1, str_2) => str_1.concat(str_2));
-method(conj, types.Set,
+method(conj, type_map.Set,
   (set, value) => produce(set, draft => { draft.add(value); }));
-method(conj, types.Map,
+method(conj, type_map.Map,
   (map, [key, value]) => produce(map, draft => draft.set(key, value)));
 method(conj, Seq,
   (seq_, value) => seq(cons_gen(value, seq_)));
-method(conj, types.null,
+method(conj, type_map.null,
   (_, value) => conj(seq(null), value));
 
 let empty = multi('empty', type, () => null);
-method(empty, types.Array, () => []);
-method(empty, types.Object, () => ({}));
-method(empty, types.String, () => '');
-method(empty, types.Set, () => new Set());
-method(empty, types.Map, () => new Map());
+method(empty, type_map.Array, () => []);
+method(empty, type_map.Object, () => ({}));
+method(empty, type_map.String, () => '');
+method(empty, type_map.Set, () => new Set());
+method(empty, type_map.Map, () => new Map());
 method(empty, Seq, () => seq(null));
-method(empty, types.null, () => null);
+method(empty, type_map.null, () => null);
 
 let count = multi('count', type, () => null);
-method(count, types.Array, arr => arr.length);
-method(count, types.String, str => str.length);
-method(count, types.Set, set => set.size);
-method(count, types.Map, map => map.size);
-method(count, types.null, () => 0);
-method(count, types.Object, obj => into([], obj).length);
+method(count, type_map.Array, arr => arr.length);
+method(count, type_map.String, str => str.length);
+method(count, type_map.Set, set => set.size);
+method(count, type_map.Map, map => map.size);
+method(count, type_map.null, () => 0);
+method(count, type_map.Object, obj => into([], obj).length);
 
 let is_empty = seq_ => rest(seq(seq_)) === null;
 
@@ -527,6 +542,8 @@ let interleave = (...seqables) => make_seq((function* () {
 })());
 
 let repeatedly = (value) => generate(value, id, () => false);
+
+export let seqs = {repeatedly, interleave, cycle, range, generate, is_empty, count, empty, conj, rest, first, seq, Seq, is_iterable};
 
 //////////////////// Transducers
 let completed = Symbol('ludus/completed');
@@ -606,6 +623,8 @@ let chunk = n_ary('chunk',
 let zip = (...seqs) => 
   transduce(chunk(seqs.length), conj, [], interleave(...seqs));
 
+export let transducers = {reduce, transduce, into, map, complete, filter, take, zip, chunk, every, some, keep};
+
 //////////////////// Spec
 // spec offers a robust set of ways to combine predicate functions
 // as well as some core predicates
@@ -629,13 +648,15 @@ let is_boolean = b => typeof b === 'boolean';
 
 let is_symbol = s => typeof s === 'symbol';
 
-let is_object = o => is(types.Object, o);
+let is_object = o => is(type_map.Object, o);
 
-let is_array = a => is(types.Array, a);
+let is_array = a => is(type_map.Array, a);
 
-let is_map = m => is(types.Map, m);
+let is_map = m => is(type_map.Map, m);
 
-let is_set = s => is(types.Set, s)
+let is_set = s => is(type_map.Set, s);
+
+export let predicates = {is, is_string, is_number, is_int, is_boolean, is_symbol, is_object, is_array, is_map, is_set};
 
 ///// combinators
 let spec_tag = Symbol('ludus/spec')
@@ -714,6 +735,11 @@ let assert = (spec, value) => spec(value)
   
 // TODO: add an explanation regime
 // explain should be a recursive multimethod that accumulates failures
+
+
+//////////////////// Exports
+let core = {imports, errors, functions, transducers, predicates, values, seqs, types };
+export default core;
 
 //////////////////// REPL workspace
 
