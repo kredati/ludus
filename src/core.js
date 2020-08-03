@@ -240,9 +240,6 @@ let id = x => x;
 let no_op = () => {};
 
 ///// defn
-let defn = n_ary('defn',
-  (attrs) => 
-);
 
 export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, pipe, pipe_some, multi, method, has_method, methods, delete_method };
 
