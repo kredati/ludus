@@ -40,26 +40,28 @@
   [ ] Develop a strategy & fns for function annotation and decoration.
     [ ] Decorate already-existing functions
     [ ] Definition functions
-  [ ] Develop a strategy for multiple dispatch
+  [x] Develop a strategy for multiple dispatch
     [x] Dispatch on arity
-    [ ] Dispatch on function (multimethods)
+    [x] Dispatch on function (multimethods)
     [?] Investigate/consider protocols & faster OO-based dispatch
 [ ] Core library on scalars
   [ ] Bools
   [ ] Nums
   [ ] Strs (although are Strs actually sequences?)
+      ^- yes, but they will also have specific functions, too
   [ ] Symbols
-[ ] Seqs, colls, transducers: functions over collections
-  [ ] Finalize seq
-  [ ] Develop coll
-  [ ] Write basic transducer scheme
-  [ ] Write core seq/coll fns
+[x] Seqs, colls, transducers: functions over collections
+  [x] Finalize seq
+  [?] Develop coll
+  [x] Write basic transducer scheme
+  [x] Write core seq/coll fns
 [ ] Control flow
-  [ ] Develop a loop/recur construct
-  [ ] Develop tools for handling recursion well, including unterminated recursion
+  [x] Develop a loop/recur construct
+  [x] Develop tools for handling recursion well, including unterminated recursion
   [ ] cond
-  [ ] match --if it's necessary with multimethods, or possible w/o ADTs
+  [?] match --if it's necessary with multimethods, or possible w/o ADTs
 [ ] Spec
+    ^- secretly, Spec is the same as parser combinators
 [ ] Parser combinators
   [ ] CSV parser
   [ ] JSON parser
@@ -86,6 +88,7 @@
   [ ] file-based slurp & spit
   [ ] eval
     [ ] Research eval/Function(), etc.
+        ^- the issue is handling scope
     [ ] Ludus -> JS
     [?] Ludus -> CLJS
   [ ] modules and namespaces
