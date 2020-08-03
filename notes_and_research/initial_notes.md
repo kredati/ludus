@@ -44,7 +44,7 @@
     [x] Dispatch on arity
     [ ] Dispatch on function (multimethods)
     [?] Investigate/consider protocols & faster OO-based dispatch
-[ ] Core library on concretions
+[ ] Core library on scalars
   [ ] Bools
   [ ] Nums
   [ ] Strs (although are Strs actually sequences?)
@@ -60,11 +60,6 @@
   [ ] cond
   [ ] match --if it's necessary with multimethods, or possible w/o ADTs
 [ ] Spec
-[ ] State management
-  [ ] Develop constructs for mutable state
-[ ] Environments
-  [ ] Devise various levels of protection & error handling
-  [ ] Node vs. browser
 [ ] Parser combinators
   [ ] CSV parser
   [ ] JSON parser
@@ -72,6 +67,12 @@
     [ ] Define Ludus grammar
     [ ] Implement Ludus grammar
   [ ] Markdown parser
+[ ] State management
+  [ ] Investigate more thoroughly clj's atoms, etc. ([cf](https://www.braveclojure.com/zombie-metaphysics))
+  [ ] Develop constructs for mutable state
+[ ] Environments
+  [ ] Devise various levels of protection & error handling
+  [ ] Node vs. browser
 [ ] Text handling
   [ ] Research Logo text handling
   [ ] Words & sentences
@@ -111,4 +112,8 @@
     [ ] classes/extends/prototypes
 [ ] Conventions for interactive apps
   [ ] Elmish/Redux pattern?
-  [ ] Resea
+[ ] Databases?
+  [ ] Consider [datascript](https://github.com/tonsky/datascript)
+      ^- It's for both cljs and js!, and is so much easier than SQL
+      ^- It's in memory, but [can be serialized apparently simply](https://github.com/tonsky/datascript/wiki/Tips-&-tricks)
+
