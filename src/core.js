@@ -687,12 +687,10 @@ let struct = (name, obj) => spec(
 
 let series = (...specs) => spec(
   `series<${specs.map(s => s.name).join(', ')}>`,
-  xs => every(ap, zip(specs, xs)),
+  xs => count(xs) === count(specs) && every(ap, zip(specs, xs)),
   series,
   specs
 );
-
-series(is_string, is_number)(['foo', 42]) //=
 
 let many = (spec_) => spec(
   `many<${spec_.name}>`,
@@ -700,10 +698,6 @@ let many = (spec_) => spec(
   many,
   [spec_]
 );
-
-many(is_string)(['foo', 'bar', 'baz', 42]) //=
-
-and(not(is_empty), many(is_number))([1, 'foo']) //=
 
 ///// working with predicates
 let check = (spec, value) => spec(value);
