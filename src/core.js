@@ -241,7 +241,7 @@ let no_op = () => {};
 
 ///// defn
 
-export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, pipe, pipe_some, multi, method, has_method, methods, delete_method };
+export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, pipe, pipe_some, multi, method, has_method, methods, delete_method, rename };
 
 //////////////////// Working with values
 ///// null
