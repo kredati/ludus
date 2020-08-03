@@ -1,0 +1,6 @@
+# On spec and parse
+There's a lovely little essay on spec at https://swannodette.github.io/2016/06/03/tools-for-thought/. One of the insights here is this: "clojure.spec takes Matt Might et. al. Parsing with Derivatives and really, really runs with it. By casting validation as fundamentally a parsing problem (computer science!), we get a wonderfully expressive language for crisply describing our Clojure programs without changing how we joyfully write them." (The link for Matt Might et al. is http://matt.might.net/papers/might2011derivatives.pdf.)
+
+The fundamental idea here is that spec might secretly be a parser combinator, and that the same infrastructure might be used for both. This actually makes an extraordinary amount of sense when it comes down to it, since you might want to match zero-or-many or one-or-many items. Parser combinators pop chars off a seq, but they could just as well pop arguments off a list of args, etc.
+
+Also in other words, parser combinators are secretly actually boolean combinators across sequences, and it's only just coincidence that they're normatively understood as parsers.
