@@ -1,8 +1,14 @@
 //////////////////// A REPL playground
-import core, { types, functions } from './core.js';
+import core, { types, functions, transducers, values } from './core.js';
 
-let {n_ary, rename, loop} = functions;
+let {n_ary, rename, loop, multi, pipe} = functions;
 let {type} = types;
+let {get, boolean} = values;
+let {every, transduce, map} = transducers;
+
+let explain = multi('explain', get('ludus/spec'), 
+  (predicate, value) => 
+    `${value} : ${type(value)} failed predicate ${predicate}`);
 
 // wraps a function in a try/catch to give better error messages
 let handle = (name, body) => rename(name,
@@ -44,16 +50,24 @@ let assert = n_ary('assert',
   (pred) => partial(assert, pred),
   (pred, value) => pred(value) 
     ? value 
-    : raise(Error, `${value} did not pass assertion ${pred.name}`)
+    : raise(Error, explain(pred, value))
 );
 
 let pre_post = (pre, post, body) => {
   let out = (...args) => {
-    let 
+    let pass_pre = transduce(map(pipe(apply_to(args), boolean)), (x, y) => x && y, true, pre);
   };
 
   return out;
 };
+
+let quux = x => x === 'foo' ? 'foo' : null;
+let quuz = x => x.length === 3 ? 3 : null;
+let and = (x, y) => x && y;
+let id = x => x;
+
+let bar = transduce(map(pipe(apply_to(['bar']), boolean)), and, true, [quux, quuz])
+bar
 
 // allows for the declaration of functions with various kinds of metadata
 let defn = n_ary('defn',
@@ -62,7 +76,7 @@ let defn = n_ary('defn',
       fn_ = fn(name, body);
 
     let out = (...args) => {
-
+      
     };
 
     return Object.assign(fn(name, body), meta);
