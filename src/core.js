@@ -152,7 +152,7 @@ let pipe = (...fns) => rename('pipeline', x => {
       throw e;
     }
   }
-  return result;
+  return x;
 });
 
 // a function pipeline that short-circuits when it hits a null result
