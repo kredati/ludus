@@ -586,6 +586,9 @@ let take = n_ary('take',
   (n, coll) => transduce(take(n), conj, empty(coll), coll)
 );
 
+// TODO: make keep a nullary reducer?
+// switch not on arity but on the type of the argument: function or not?
+// e.g. multimethod, not n_ary
 let keep = n_ary('keep',
   (f) => (rf) => (accum, x) => f(x) == null ? accum : rf(accum, x),
   (f, coll) => transduce(keep(f), conj, empty(coll), coll)
