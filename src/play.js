@@ -1,14 +1,15 @@
 //////////////////// A REPL playground
-import core, { types, functions, transducers, values } from './core.js';
+import { types, functions, values, predicates } from './core.js';
 
-let {n_ary, rename, loop, multi, pipe} = functions;
+let {n_ary, rename, loop, multi, recur} = functions;
 let {type} = types;
-let {get, boolean} = values;
-let {every, transduce, map} = transducers;
+let {get} = values;
+let {is_number} = predicates;
 
 let explain = multi('explain', get('ludus/spec'), 
-  (predicate, value) => 
-    `${value} : ${type(value)} failed predicate ${predicate}`);
+  (predicate, value) => predicate(value)
+    ? null
+    : `${value} : ${type(value).description} failed predicate ${predicate.name || predicate.toString()}`);
 
 // wraps a function in a try/catch to give better error messages
 let handle = (name, body) => rename(name,
@@ -16,8 +17,8 @@ let handle = (name, body) => rename(name,
     try {
       return body(...args);
     } catch (e) {
-      let msg = `${e.name} thrown in ${name} called with (${args.join(', ')})`,
-        msgs = e.msgs || [];
+      let msg = `${e.name} thrown in ${name} called with (${args.map(x => x.toString()).join(', ')})`;
+      let msgs = e.msgs || [];
       
       msgs.push(msg);
       console.error(msg);
@@ -27,10 +28,11 @@ let handle = (name, body) => rename(name,
 
 // wraps a plain function with the Ludus bells & whistles:
 // loop/recur, handle, and arity dispatch if given an array of functions
+// NB: The reason the second arity takes an array rather than a variadic
+//   rest args is n_ary, at current, only allows explicit arities as clauses
 let fn = n_ary('fn',
   (body) => fn(body.name || 'anonymous', body),
   (name, body) => {
-    console.log(name)
     switch (type(body)) {
       case types.Function:
         return rename(name,
@@ -55,42 +57,45 @@ let assert = n_ary('assert',
 
 let pre_post = (pre, post, body) => {
   let out = (...args) => {
-    let pass_pre = transduce(map(pipe(apply_to(args), boolean)), (x, y) => x && y, true, pre);
+    let pass_pre = true;
+    for (let pred of pre) {
+      pass_pre = pass_pre && pred(...args);
+      if (!pass_pre) throw Error(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
+    }
+
+    let result = body(...args);
+
+    let pass_post = true;
+    for (let pred of post) {
+      pass_post = pass_post && pred(result);
+      if (!pass_post) throw Error(`Returns from ${body.name} did not conform to spec.\n${explain(pred, result)}`);
+    }
+
+    return result;
   };
 
-  return out;
+  return rename(body.name, out);
 };
 
-let quux = x => x === 'foo' ? 'foo' : null;
-let quuz = x => x.length === 3 ? 3 : null;
-let and = (x, y) => x && y;
-let id = x => x;
+// questions:
+// - do we really want to overload `body` in this way? (probably)
+// - how to handle the multiple options of args to defn? (probably this needs to be a multimethod; alternately, be less permissive than clj)
+// - alternately, don't use positional arguents?
+// - do we really want a special `sign` form? (no.)
 
-let bar = transduce(map(pipe(apply_to(['bar']), boolean)), and, true, [quux, quuz])
-bar
 
 // allows for the declaration of functions with various kinds of metadata
 let defn = n_ary('defn',
   (attrs) => {
-    let {name, body, ...meta} = attrs,
-      fn_ = fn(name, body);
+    let {name, body, ...meta} = attrs;
+    let fn_ = fn(name, body);
 
-    let out = (...args) => {
-      
-    };
+    let out = pre_post(meta.pre || [], meta.post || [], fn_);
 
-    return Object.assign(fn(name, body), meta);
-  },
+    return Object.defineProperty(rename(name, out), 'meta', {value: meta});
+  }
 );
 
-let foo = defn({
-  name: 'foo',
-  doc: 'returns foo',
-  meta: {bar: 'baz'},
-  pre: [],
-  post: [],
-  sign: [],
-  body: () => 'foo'
-});
-
-foo 
+let is_natural = n => is_int(n) && n >= 0;
+let is_positive = n => n > 0;
+let is_positive_int = n => is_int(n) && is_positive(n);
