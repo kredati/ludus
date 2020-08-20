@@ -221,6 +221,22 @@ let loop = (fn, max_iter = 1000000) => {
   })
 };
 
+// handle wraps a function with try/catch to make error handling
+// more graceful and informative
+let handle = (name, body) => rename(name,
+  (...args) => {
+    try {
+      return body(...args);
+    } catch (e) {
+      let msg = `${e.name} thrown in ${name} called with (${args.map(x => x.toString()).join(', ')})`;
+      let msgs = e.msgs || [];
+      
+      msgs.push(msg);
+      console.error(msg);
+      throw e;
+    }
+  });
+
 ///// other useful functional manipulations
 
 // runs a function once, and afterwards returns the result
