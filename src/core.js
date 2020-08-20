@@ -190,6 +190,7 @@ let recur_handler = {
     throw Error('recur must only be used in the tail position inside of loop.');
   }
 };
+
 let recur = (...args) => new Proxy({
   [recur_tag]: true, [recur_args]: args,
   [Symbol.toPrimitive] () {
@@ -221,6 +222,7 @@ let loop = (fn, max_iter = 1000000) => {
   })
 };
 
+///// error handling: handle
 // handle wraps a function with try/catch to make error handling
 // more graceful and informative
 let handle = (name, body) => rename(name,
@@ -236,6 +238,67 @@ let handle = (name, body) => rename(name,
       throw e;
     }
   });
+
+///// function definition
+// fn wraps a function in bare ludus bells & whistles:
+// handle, n_ary, and loop
+let fn = n_ary('fn',
+  (body) => fn(body.name || 'anonymous', body),
+  (name, body) => {
+    switch (type(body)) {
+      case types.Function:
+        return rename(name,
+          loop(handle(name, body)));
+      case types.Array:
+        return rename(name, 
+          loop(handle(name, n_ary(name, ...body))));
+    }
+  }
+);
+
+// pre_post wraps a function with predicates that evaluate
+// the arguments and return values
+// evaluation of predicates is ludus-truthy and -falsy
+// predicates are n-ary
+// short circuits on first error
+// dispatches error message to `explain`
+// TODO: reconsider short-circuiting: accumulate all failures?
+let pre_post = (pre, post, body) => rename(body.name, (...args) => {
+    let pass_pre = true;
+    for (let pred of pre) {
+      pass_pre = pass_pre && boolean(pred(...args));
+      if (!pass_pre) throw Error(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
+    }
+
+    let result = body(...args);
+
+    let pass_post = true;
+    for (let pred of post) {
+      pass_post = pass_post && boolean(pred(result));
+      if (!pass_post) throw Error(`Returns from ${body.name} did not conform to spec.\n${explain(pred, result)}`);
+    }
+
+    return result;
+  });
+
+// questions:
+// - do we really want to overload `body` in this way? (probably)
+// - how to handle the multiple options of args to defn? (probably this needs to be a multimethod; alternately, be less permissive than clj)
+// - alternately, don't use positional arguents?
+// - do we really want a special `sign` form? (no.)
+
+
+// allows for the declaration of functions with various kinds of metadata
+let defn = n_ary('defn',
+  (attrs) => {
+    let {name, body, ...meta} = attrs;
+    let fn_ = fn(name, body);
+
+    let out = pre_post(meta.pre || [], meta.post || [], fn_);
+
+    return Object.defineProperty(rename(name, out), 'meta', {value: meta});
+  }
+);
 
 ///// other useful functional manipulations
 
