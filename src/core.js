@@ -754,7 +754,10 @@ let assert = (spec, value) => spec(value)
   
 // TODO: add an explanation regime
 // explain should be a recursive multimethod that accumulates failures
-
+let explain = multi('explain', get('ludus/spec'), 
+  (predicate, value) => predicate(value)
+    ? null
+    : `${value} : ${type(value).description} failed predicate ${predicate.name || predicate.toString()}`);
 
 //////////////////// Exports
 let core = {imports, errors, functions, transducers, predicates, values, seqs, types };
