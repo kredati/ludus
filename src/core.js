@@ -63,6 +63,7 @@ let partial = (fn, ...args1) => rename(
 // n_ary cannot be used to create indefinitely variadic functions:
 // no args, no rest values
 // TODO: consider if this should change
+// TODO: throw an error if the function has multiple overloads on the same arity
 let n_ary = (name, ...fns) => {
   let arity_map = fns.reduce((map, fn) => Object.assign(map, {[fn.length]: fn}), {});
 
@@ -623,6 +624,24 @@ let chunk = n_ary('chunk',
 let zip = (...seqs) => 
   transduce(chunk(seqs.length), conj, [], interleave(...seqs));
 
+///// Transduers to add
+// cat
+// flat
+// unique
+// dedupe
+// interpose
+// chunk_by
+// repeat
+// drop
+// drop_while
+// drop_nth
+// take_while
+// take_nth
+// remove
+// none
+// on_keys
+// on_values
+
 export let transducers = {reduce, transduce, into, map, complete, filter, take, zip, chunk, every, some, keep};
 
 //////////////////// Spec
@@ -742,16 +761,6 @@ let core = {imports, errors, functions, transducers, predicates, values, seqs, t
 export default core;
 
 //////////////////// REPL workspace
-
-conj([0], 1) //=
-conj({b: 2}, ['a', 1]) //=
-conj('foo', 'bar') //=
-conj(new Set('a'), 'b') //=
-conj(new Map([['quux', 'quuz']]), ['foo', 'bar']) //=
-
-for (let x of conj(seq([1, 2, 3]), 0)) {
-  x
-}
 
 // hold onto these
 
