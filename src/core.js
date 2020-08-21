@@ -399,11 +399,12 @@ let is_record = x =>
 // works for arrays and objects, unlike the equivalent in clj
 // ludus will discourage (prevent) direct property access
 // allows for default values if property is null
-// NB: This is one of our foundational core functions
+// NB: This is a foundational functions
+// NB: note differences from clj property access
 let get = n_ary('get',
   (key) => partial(get, key),
-  (key, obj) => get(key, obj, null),
-  (key, obj, if_absent) => {
+  (key, obj) => get(key, null, obj),
+  (key, if_absent, obj) => {
     if (obj == null) return if_absent;
 
     let value = obj[key];
