@@ -35,15 +35,18 @@ export let errors = {raise, report, bound};
 ///// booleans
 // better boolean: returns false only when an object is nullish or false
 // js coerces many values (0, '', etc.) to false
+// NB: this is a foundational function
 let boolean = x => x == null || x === false ? false : true;
 
 /////////////////// Functions
 ///// Utils
 // renames a function
+// NB: this is a foundational function
 let rename = (name, fn) => Object.defineProperty(fn, 'name', {value: name});
 
 ///// Function application
 // calls a function with the arguments passed in
+// NB: this is a foundational function
 let call = (fn, ...args) => fn(...args);
 
 // calls a function with the arguments expressed as an iterable
@@ -53,7 +56,14 @@ let apply = (fn, args) => fn(...args);
 // position and uses the remainder as arguments
 let ap = ([fn, ...args]) => fn(...args);
 
-// apply a function partially
+// TODO: research behavior where `partial` + `n_ary` where calling
+//    a partial function with no args returns the partial function
+//    e.g., get('foo')() ~= get('foo')()()() ~= get('foo')
+//    this is because of how `partial`'s handle nullary calls
+//    with no new args, it calls with the original args, which dispatches
+//    to the same arity as the first call
+// partial: apply a function partially
+// NB: this is a foundational function
 let partial = (fn, ...args1) => rename(
   `${fn.name}<partially applied>`, 
   (...args2) => call(fn, ...args1, ...args2));
@@ -67,6 +77,7 @@ let partial = (fn, ...args1) => rename(
 // TODO: consider if this should change, passing extra args to the clause with
 //       the highest arity
 // TODO: throw an error if the function has multiple overloads on the same arity
+// NB: this is a foundational function
 let n_ary = (name, ...fns) => {
   let arity_map = fns.reduce((map, fn) => Object.assign(map, {[fn.length]: fn}), {});
 
