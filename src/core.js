@@ -134,29 +134,43 @@ let delete_method = (multimethod, value) =>
 
 ///// Function combinators
 
-// composes two functions
+// compose composes two functions
 let compose = (f1, f2) => (...args) => f1(f2(...args));
 
-// forwards the result of one function to the next
+// forward forwards the result of one function to the next
 // reverses the argument order of compose
 let forward = (f1, f2) => compose(f2, f1);
+
+// comp composes all functions passed as arguments
+let comp = (...fns) => rename('composed', pipe(fns.reverse()));
 
 // creates a pipeline of functions
 // the returned pipeline function takes a single argument
 // if an error is thrown, it catches the error, reports it, and re-throws it
-let pipe = (...fns) => rename('pipeline', x => {
+// function pipelines are unary: even the first function must be unary
+let pipe = (first, ...fns) => rename('pipeline', (...args) => {
+  let result;
+  try {
+    result = first(...args);
+  } catch (e) {
+    report(`Error in function pipeline while calling ${fn.name} with (${args.map(arg => arg.toString()).join(', ')}).`);
+    throw e;
+  }
+
   for (let fn of fns) {
     try {
-      x = fn(x);
+      result = fn(result);
     } catch (e) {
-      report(`Error in function pipeline while calling ${fn.name} with ${x}.`);
+      report(`Error in function pipeline while calling ${fn.name} with ${result}.`);
       throw e;
     }
   }
-  return x;
+  return result;
 });
 
-// a function pipeline that short-circuits when it hits a null result
+// pipe_some builds a function pipeline that short-circuits 
+// it short circuits on its first null result and returns null
+// it has the same error handling as pipe
 let pipe_some = (...fns) => rename('pipeline', x => {
   for (let f of fns) {
     try {
@@ -173,12 +187,16 @@ let pipe_some = (...fns) => rename('pipeline', x => {
 ///// loop & recur
 // loop & recur allow for tail-call-optimized single-recursion
 // no mutual recursion, which frankly Ludus users are unlikely to need
+// NB: Clj's loop & recur don't allow for mutual recursion
 
-// recur returns a special object that encapsulates arguments
+// recur is a proxy for a tail-recursive call inside a `loop`ed function
+// it returns a special object that encapsulates arguments
 // it has two symbol-keyed properties
 // it also has a proxy that throws errors when anything else is accessed
 // this allows for errors to be thrown when `recur` is used not in tail position
 // in a function wrapped by `loop`
+// TODO: investigate if this is fast enough?--the proxy slows things down
+//   and `recur` is going to be used in tight loops
 let recur_tag = Symbol('ludus/recur');
 let recur_args = Symbol('ludus/recur/args');
 let recur_handler = {
@@ -206,14 +224,18 @@ let recur = (...args) => new Proxy({
 // default value: 1,000,000
 let loop = (fn, max_iter = 1000000) => {
   let looped = (...args) => {
-    let result = fn(...args),
-      iter = 0;
+    let result = fn(...args);
+    let iter = 0;
+
     while (result[recur_tag] && iter < max_iter) {
       result = fn(...result[recur_args]);
       iter += 1;
     }
-    if (iter >= max_iter) throw Error(`Too much recursion in ${fn.name || 'anonymous function'}.`)
-    return result;
+
+    if (iter >= max_iter) 
+      throw Error(`Too much recursion in ${fn.name || 'anonymous function'}.`)
+    
+      return result;
   };
 
   return Object.defineProperties(looped, {
@@ -225,6 +247,7 @@ let loop = (fn, max_iter = 1000000) => {
 ///// error handling: handle
 // handle wraps a function with try/catch to make error handling
 // more graceful and informative
+// TODO: improve this
 let handle = (name, body) => rename(name,
   (...args) => {
     try {
@@ -242,6 +265,9 @@ let handle = (name, body) => rename(name,
 ///// function definition
 // fn wraps a function in bare ludus bells & whistles:
 // handle, n_ary, and loop
+// TODO: consider skipping "handle" in production
+// TODO: consider making the user explicitly add `loop`/`recur` handling 
+//   (i.e, `defrec`)
 let fn = n_ary('fn',
   (body) => fn(body.name || 'anonymous', body),
   (name, body) => {
@@ -281,24 +307,28 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
     return result;
   });
 
+// and, finally,
+
+///// defn
+// defn integrates all the handy ludus function definition schemes
+// to fn, it adds pre_post, as well as arbitrary metadata
+// to work, it requires:
+// - a name :: string
+// - a body :: function | array<function>
+// - if pre or post are present, they be iterable<function>
 // questions:
-// - do we really want to overload `body` in this way? (probably)
 // - how to handle the multiple options of args to defn? (probably this needs to be a multimethod; alternately, be less permissive than clj)
 // - alternately, don't use positional arguents?
-// - do we really want a special `sign` form? (no.)
+// TODO: devise a method of avoiding pre_post in "production"
+let defn = (attrs) => {
+  let {name, body, ...meta} = attrs;
+  let out = pre_post(meta.pre || [], meta.post || [], fn(name, body));
 
-
-// allows for the declaration of functions with various kinds of metadata
-let defn = n_ary('defn',
-  (attrs) => {
-    let {name, body, ...meta} = attrs;
-    let fn_ = fn(name, body);
-
-    let out = pre_post(meta.pre || [], meta.post || [], fn_);
-
-    return Object.defineProperty(rename(name, out), 'meta', {value: meta});
-  }
-);
+  return Object.defineProperty(
+    rename(name, out), 
+    'meta', 
+    {value: {name, body, ...meta}});
+};
 
 ///// other useful functional manipulations
 
