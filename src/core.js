@@ -392,9 +392,15 @@ let is_record = x =>
 let get = n_ary('get',
   (key) => partial(get, key),
   (key, obj) => get(key, obj, null),
-  (key, obj, if_absent) => obj == null 
-    ? if_absent 
-    : when_null(if_absent, obj[key])
+  (key, obj, if_absent) => {
+    if (obj == null) return if_absent;
+
+    let value = obj[key];
+    
+    if (value == null) return if_absent;
+    
+    return value;
+  }
 );
 
 // has: safer property existence testing
