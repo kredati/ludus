@@ -429,8 +429,8 @@ let has = n_ary('has',
 // keys (strings or numbers)
 let get_in = n_ary('get_in',
   (obj) => partial(get_in, obj),
-  (obj, keys) => get_in(obj, keys, null),
-  (obj, keys, if_absent) => keys.reduce((o, k) => get(k, o, if_absent), obj)
+  (obj, keys) => get_in(obj, null, keys),
+  (obj, if_absent, keys) => keys.reduce((o, k) => get(k, o, if_absent), obj)
 );
 
 export let values = {boolean, is_null, is_record, when_null, get, has, get_in}
