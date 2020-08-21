@@ -3,6 +3,7 @@
 // immer for immutable native js data structures
 import {produce, enableMapSet} from 'immer';
 enableMapSet();
+
 // record and tuple for value-equal compound data structures
 import {Record} from './record-tuple/record.js';
 import {Tuple} from './record-tuple/tuple.js';
@@ -11,6 +12,7 @@ export let imports = {produce, Record, Tuple};
 
 /////////////////// Errors & handling
 // throws an error as a function rather than a statement
+// TODO: get these working more robustly
 let raise = (error, message) => { throw new error(message) };
 
 // sends its messages to the error console
@@ -58,18 +60,19 @@ let partial = (fn, ...args1) => rename(
 
 ///// Function dispatch
 
-// create a function that dispatches on the number of arguments
+// n_ary creates a function that dispatches on the number of arguments
 // note that this throws if the arity does not match any of those passed in
 // n_ary cannot be used to create indefinitely variadic functions:
 // no args, no rest values
-// TODO: consider if this should change
+// TODO: consider if this should change, passing extra args to the clause with
+//       the highest arity
 // TODO: throw an error if the function has multiple overloads on the same arity
 let n_ary = (name, ...fns) => {
   let arity_map = fns.reduce((map, fn) => Object.assign(map, {[fn.length]: fn}), {});
 
   let match_arity = (...args) => {
-    let arity = args.length,
-      match = arity_map[arity];
+    let arity = args.length;
+    let match = arity_map[arity];
 
     return match 
       ? match(...args) 
@@ -95,6 +98,10 @@ let method_not_found = (name) => (...args) =>
 // a multimethod dispatches on the value returned from the function `on`
 // the optional third argument is the default function
 // if no function is supplied, the default is to raise an error
+// TODO: consider if multimethods should automagically convert objects
+//    to records and arrays to tuples for value equality
+// TODO: this would require developing recursive conversion, and also
+//    reworking the conversion algorithms
 let multi_tag = Symbol('ludus/multimethod');
 let multi = (name, on, not_found = method_not_found(name)) => {
   let map = new Map();
@@ -117,6 +124,7 @@ let multi = (name, on, not_found = method_not_found(name)) => {
 };
 
 // adds a method (function) to a multimethod
+// TODO: consider raising an error if the value already corresponds to a method
 let method = (multimethod, value, fn) => {
   multimethod[multi_tag].set(value, fn);
   return multimethod;
@@ -332,7 +340,7 @@ let defn = (attrs) => {
 
 ///// other useful functional manipulations
 
-// runs a function once, and afterwards returns the result
+// once runs a function exactly once, and afterwards returns the result
 // (necessary for seq)
 let never = Symbol('ludus/never');
 let once = (fn) => {
@@ -349,9 +357,7 @@ let id = x => x;
 // do nothing
 let no_op = () => {};
 
-///// defn
-
-export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, pipe, pipe_some, multi, method, has_method, methods, delete_method, rename };
+export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, comp, pipe, pipe_some, multi, method, has_method, methods, delete_method, rename, fn, handle, pre_post, defn };
 
 //////////////////// Working with values
 ///// null
@@ -376,9 +382,13 @@ let is_record = x =>
   x != null 
   && Reflect.getPrototypeOf(Reflect.getPrototypeOf(x)) === null;
 
-// safer property access
+// get: safer property access
 // never throws
 // returns null if something is absent
+// works for arrays and objects, unlike the equivalent in clj
+// ludus will discourage (prevent) direct property access
+// allows for default values if property is null
+// NB: This is one of our foundational core functions
 let get = n_ary('get',
   (key) => partial(get, key),
   (key, obj) => get(key, obj, null),
@@ -387,12 +397,16 @@ let get = n_ary('get',
     : when_null(if_absent, obj[key])
 );
 
+// has: safer property existence testing
+// never throws
+// returns false if a property is undefined OR is explicitly null
+// TODO: consider if it should only return false on undefined props
 let has = n_ary('has',
   (key) => partial(get, key),
   (key, obj) => boolean(get(key, obj))
 );
 
-// safe deep property access
+// get_in: safe deep property access
 // object-first
 // keys (strings or numbers)
 let get_in = n_ary('get_in',
