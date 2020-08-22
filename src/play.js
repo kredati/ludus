@@ -1,10 +1,9 @@
 //////////////////// A REPL playground
 import { types, functions, values, predicates } from './core.js';
 
-let {n_ary, rename, loop, multi, recur} = functions;
+let {n_ary, rename, loop, multi} = functions;
 let {type} = types;
 let {get} = values;
-let {is_number} = predicates;
 
 let explain = multi('explain', get('ludus/spec'), 
   (predicate, value) => predicate(value)
@@ -42,17 +41,6 @@ let fn = n_ary('fn',
           loop(handle(name, n_ary(name, ...body))));
     }
   }
-);
-
-let call_with = (...args) => (fn) => fn(...args);
-
-let apply_to = (args) => (fn) => fn(...args);
-
-let assert = n_ary('assert', 
-  (pred) => partial(assert, pred),
-  (pred, value) => pred(value) 
-    ? value 
-    : raise(Error, explain(pred, value))
 );
 
 let pre_post = (pre, post, body) => {
@@ -95,7 +83,3 @@ let defn = n_ary('defn',
     return Object.defineProperty(rename(name, out), 'meta', {value: meta});
   }
 );
-
-let is_natural = n => is_int(n) && n >= 0;
-let is_positive = n => n > 0;
-let is_positive_int = n => is_int(n) && is_positive(n);
