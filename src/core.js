@@ -440,7 +440,7 @@ export let values = {boolean, is_null, is_record, when_null, get, has, get_in}
 // We know about a few builtin JS types, as below.
 // We can learn about arbitrary additional JS types, but
 // Ludus is not optimized for them: Ludus does not walk the
-// inheritance tree, although it could be made to do so with the
+// inheritance tree, although it could be made to do so with
 // clever prototypes.
 //
 // Everything else is object literal/records with
@@ -498,10 +498,10 @@ let register_constructor = (constructor) => {
 };
 
 ///// Ludus types
+// TODO: finish designing & implementing this
 // Ludus types are unique Records, each having the shape
 // {'ludus/type': Symbol}.
 // They also have specs, which we keep track of in a map.
-// 
 let type_specs = new WeakMap();
 
 let data = (name, spec) => {
@@ -544,6 +544,15 @@ export let types = { type, create, data, register_constructor, map: type_map, ..
 // (well, almost everything): Arrays, Maps, Sets, Objects, Strings,
 // generators, etc.
 
+// TODO: like whoa: clean this section up and document it better
+// Do this soon! Before, even, working on spec, since getting seqs
+// clean and right is important for nearly all the things
+
+// TODO: I believe the immer `produce` bits are actually running
+// in O(n**2), which really isn't great. Make `conj` work on
+// seqs of seqs (and then carry that optimization forward into
+// transducers)
+
 // a generator that iterates through the keys of an object
 // only covers string keys
 // only outputs own properties
@@ -556,9 +565,10 @@ let obj_gen = function* (obj) {
 
 let is_iterable = x => x != null && typeof x[Symbol.iterator] === 'function';
 
-let iterate = lazy => {
-  let first = lazy.first(),
-    rest = lazy.rest();
+let iterate = (lazy) => {
+  let first = lazy.first();
+  let rest = lazy.rest();
+
   return {
     next () {
       if (rest === null) return {done: true}
@@ -594,9 +604,13 @@ let seq = (seqable) => {
   throw Error(`${seqable} is not seqable.`);
 };
 
+// 
 // TODO: decide if cons_gen should add the new element to the beginning or end
 // makes sense to do it at the end for finite seqs
 // but not for infinite ones
+// problem: we cannot tell if a lazy seq is finite or not
+// consideration: we're not actually in lisp-world where the singly-linked
+//    list is our normative datatype
 let cons_gen = function* (value, seq) {
   yield value;
   yield* seq;
@@ -608,7 +622,10 @@ let rest = (seq_) => seq(seq_).rest();
 
 let cons = (value, seq_) => seq(cons_gen(value, seq_));
 
-//let conj = (seq_, value) => cons(value, seq_);
+// conj: clj's conj as a multimethod
+// This is a core function which will get called in tight loops
+// TODO: consider optimizing this using prototype-based dispatch
+//    But only after finishing proof-of-concept
 let conj = multi('conj', type, () => null)
 method(conj, type_map.Array, 
   (arr, value) => produce(arr, draft => { draft.push(value); }));
