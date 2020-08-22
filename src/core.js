@@ -548,14 +548,15 @@ export let types = { type, create, data, register_constructor, map: type_map, ..
 // Do this soon! Before, even, working on spec, since getting seqs
 // clean and right is important for nearly all the things
 
-// TODO: I believe the immer `produce` bits are actually running
+// TODO: I believe the immer `produce` bits in conj are actually running
 // in O(n**2), which really isn't great. Make `conj` work on
 // seqs of seqs (and then carry that optimization forward into
 // transducers)
 
-// a generator that iterates through the keys of an object
+// obj_gen: creates a generator that iterates through the keys of an object
 // only covers string keys
 // only outputs own properties
+// is lazy
 // not exported
 let obj_gen = function* (obj) {
   for (let key in obj) {
@@ -563,8 +564,10 @@ let obj_gen = function* (obj) {
   }
 };
 
+// is_iterable: tells is someething is iterable
 let is_iterable = x => x != null && typeof x[Symbol.iterator] === 'function';
 
+// iterate: creates an iterator over a seq
 let iterate = (lazy) => {
   let first = lazy.first();
   let rest = lazy.rest();
@@ -580,27 +583,43 @@ let iterate = (lazy) => {
   }
 }; 
 
+// Seq: a ludus datatype
+// TODO: remove this dependency, although conform to the protocol
 let Seq = data('Seq');
+let seq_tag = Symbol('ludus/seq');
 
+// make_seq: takes anything that conforms to the iteration protocol
+// and returns a seq over it
+// seqs themselves conform to the iteration protocol
+// they also have `first` and `rest` methods
+// they are immutable, stateless, and lazy
 let make_seq = (iterator) => {
   let current = iterator.next();
   let rest = once(() => current.done ? null : make_seq(iterator));
   let first = () => current.done ? null : current.value;
-  let out = create(Seq, {
+  let out = {
+    [type_tag]: seq_tag,
     [Symbol.iterator] () {
       return iterate(out);
     },
     rest,
     first
-  });
+  };
   return out;
 };
 
+// seq: creates a (lazy, immutable) seq over a "seqable"
 let seq = (seqable) => {
-  if (boolean(get(type_tag, seqable))) return seqable;
+  // if it's already a seq, just return it
+  if (get(type_tag, seqable) === seq_tag) return seqable;
+  // if it's null, return an empty seq
   if (seqable == null) return seq([]);
+  // if it's iterable, return a seq over a new iterator over it
+  // strings, arrays, Maps, and Sets are iterable
   if (is_iterable(seqable)) return make_seq(seqable[Symbol.iterator]());
+  // if it's a record (object literal) return a seq over an object generator
   if (is_record(seqable)) return make_seq(obj_gen(seqable));
+  // otherwise we don't know what to do; throw your hands up
   throw Error(`${seqable} is not seqable.`);
 };
 
@@ -614,7 +633,27 @@ let seq = (seqable) => {
 let cons_gen = function* (value, seq) {
   yield value;
   yield* seq;
-}
+};
+
+// before: grows a seq by adding a value to the beginning
+// consumes a seqable, returns a seq
+// runs in O(1) for all collections
+let before = function(seqable, value) {
+  // get our seq first, so that if it's not actually seqable, we throw early
+  let seq_ = seq(seqable);
+  yield value;
+  yield* seq_;
+};
+
+// after: grows a seq by adding a value to the end
+// consumes a seqable, returns a seq
+// runs in O(1) for all collections
+// NB: if you add something at the end of an infinite seq, 
+//    it will never arrive
+let after = function* (seqable, value) {
+  yield* seq(seqable);
+  yield value;
+};
 
 let first = (seq_) => seq(seq_).first();
 
@@ -626,6 +665,9 @@ let cons = (value, seq_) => seq(cons_gen(value, seq_));
 // This is a core function which will get called in tight loops
 // TODO: consider optimizing this using prototype-based dispatch
 //    But only after finishing proof-of-concept
+// TODO: replace this with an operation that consumes and returns
+//    a sequence, not a multimethod: as after, above
+// TODO: consider renaming after & before as append & prepend
 let conj = multi('conj', type, () => null)
 method(conj, type_map.Array, 
   (arr, value) => produce(arr, draft => { draft.push(value); }));
