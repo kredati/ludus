@@ -703,7 +703,7 @@ method(count, type_map.Object, obj => into([], obj).length);
 
 let is_empty = seq_ => rest(seq(seq_)) === null;
 
-// a handy wrapper for a generator function
+// generate: a handy wrapper for a generator function
 // returns a lazy iterator over the generator
 // TODO: add splats and `recur` to this to allow more robust generation
 let generate = (init, step, done) => make_seq((function*() {
