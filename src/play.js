@@ -83,3 +83,63 @@ let defn = n_ary('defn',
     return Object.defineProperty(rename(name, out), 'meta', {value: meta});
   }
 );
+
+////// playing with assoc, conj, prototypes:
+// immutable data types for real!
+
+// assoc adds or modifies the value at the key
+// works for objects and arrays
+let assoc = (obj, key, value) => {
+  // test for equality: if the object already has an equal key at that value,
+  // just return the object (and it will be === to the obj)
+  // TODO: make this robust, using `eq` (also TODO: write `eq`)
+  if (obj[key] === value) return obj;
+  if (obj.length && (key >= obj.length || key < 0)) 
+    throw Error(`Cannot assoc properties to indexes that are out of bounds.`)
+  return Object.assign(Object.create(obj), {[key]: value})
+};
+
+let keys = (obj) => {
+  let keys = [];
+  for (let key in obj) {
+    keys.push(key);
+  }
+  return keys;
+};
+
+let show = (obj) => {
+  switch(obj.constructor) {
+    case Array:
+      return `[${obj.join(', ')}]`;
+    case Object:
+      return `{${keys(obj).sort().map(k => `${k}: ${obj[k]}`).join(', ')}}`;
+    case String:
+      return `'${obj}'`;
+  }
+};
+
+let conj = (coll, value) => {
+  switch(coll.constructor) {
+    case Array: {
+      let length = coll.length;
+      let out = Object.create(coll);
+      out[length] = value;
+      Object.defineProperty(out, 'length', {value: length + 1});
+      return out;
+    }
+    case String:
+      return coll + value;
+    case Object: {
+      if (value.constructor === Object) {
+        return Object.assign(Object.create(coll), value);
+      }
+      if (value.constructor === Array) {
+        let [k, v] = value;
+        return assoc(coll, k, v);
+      }
+    }
+  }
+};
+
+show(conj(conj(conj([], 1), 2), 3)); //=
+show(conj({a: 1, b: 2}, {c: 3, d: 4})); //=
