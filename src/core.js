@@ -1,14 +1,11 @@
 // our library dependencies
 // these are not exposed to the user
-// immer for immutable native js data structures
-import {produce, enableMapSet} from 'immer';
-enableMapSet();
 
 // record and tuple for value-equal compound data structures
 import {Record} from './record-tuple/record.js';
 import {Tuple} from './record-tuple/tuple.js';
 
-export let imports = {produce, Record, Tuple};
+export let imports = {Record, Tuple};
 
 /////////////////// Errors & handling
 // throws an error as a function rather than a statement
@@ -638,7 +635,7 @@ let cons_gen = function* (value, seq) {
 // before: grows a seq by adding a value to the beginning
 // consumes a seqable, returns a seq
 // runs in O(1) for all collections
-let before = function(seqable, value) {
+let before = function* (seqable, value) {
   // get our seq first, so that if it's not actually seqable, we throw early
   let seq_ = seq(seqable);
   yield value;
@@ -665,9 +662,10 @@ let cons = (value, seq_) => seq(cons_gen(value, seq_));
 // This is a core function which will get called in tight loops
 // TODO: consider optimizing this using prototype-based dispatch
 //    But only after finishing proof-of-concept
+//    Dispatch is premature optimization
 // TODO: replace this with an operation that consumes and returns
 //    a sequence, not a multimethod: as after, above
-// TODO: consider renaming after & before as append & prepend
+//    NO: fix the implementations to run in constant time
 let conj = multi('conj', type, () => null)
 method(conj, type_map.Array, 
   (arr, value) => produce(arr, draft => { draft.push(value); }));
