@@ -33,7 +33,7 @@ export let errors = {raise, report, bound};
 // better boolean: returns false only when an object is nullish or false
 // js coerces many values (0, '', etc.) to false
 // NB: this is a foundational function
-let boolean = x => x == null || x === false ? false : true;
+let boolean = x => x == undefined || x === false ? false : true;
 
 /////////////////// Functions
 ///// Utils
@@ -61,9 +61,14 @@ let ap = ([fn, ...args]) => fn(...args);
 //    to the same arity as the first call
 // partial: apply a function partially
 // NB: this is a foundational function
-let partial = (fn, ...args1) => rename(
-  `${fn.name}<partially applied>`, 
-  (...args2) => call(fn, ...args1, ...args2));
+let partial = (fn, ...args1) => {
+  let partial_name = 
+    `${fn.name}<partial (${args1.map(x => x.toString()).join(', ')})>`;
+  return rename(partial_name, 
+    (...args2) => args2.length 
+      ? call(fn, ...args1, ...args2) 
+      : raise(Error, `Partially applied functions must be called with at least 1 argument. You called ${partial_name} with 0 args.`));
+  };
 
 ///// Function dispatch
 
@@ -185,13 +190,13 @@ let pipe = (first, ...fns) => rename('pipeline', (...args) => {
 });
 
 // pipe_some builds a function pipeline that short-circuits 
-// it short circuits on its first null result and returns null
+// it short circuits on its first undefined result and returns undefined
 // it has the same error handling as pipe
 let pipe_some = (...fns) => rename('pipeline', x => {
   for (let f of fns) {
     try {
       x = f(x);
-      if (x == null) return x;
+      if (x == undefined) return undefined;
     } catch (e) {
       report(`Error thrown in function while calling ${f.name} with ${x}.`);
       throw e;
@@ -284,6 +289,8 @@ let handle = (name, body) => rename(name,
 // TODO: consider skipping "handle" in production
 // TODO: consider making the user explicitly add `loop`/`recur` handling 
 //   (i.e, `defrec`)
+// TODO: consider changing the order of `loop`/`handle`/`n_ary` for better
+//   performance?
 let fn = n_ary('fn',
   (body) => fn(body.name || 'anonymous', body),
   (name, body) => {
@@ -368,14 +375,14 @@ let no_op = () => {};
 export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op, once, forward, compose, comp, pipe, pipe_some, multi, method, has_method, methods, delete_method, rename, fn, handle, pre_post, defn };
 
 //////////////////// Working with values
-///// null
-// returns true of something is null or undefined
-let is_null = x => x == null;
+///// undefined
+// returns true of something is undefined or null
+let is_undef = x => x == undefined;
 
 // determines what to do when a value is nullish
-let when_null = n_ary('when_null',
-  (if_null) => partial(when_null, if_null),
-  (if_null, value) => value == null ? if_null : value
+let when_undef = n_ary('when_undef',
+  (if_undef) => partial(when_undef, if_undef),
+  (if_undef, value) => value == undefined ? if_undef : value
 );
 
 ///// Objects & records
@@ -384,11 +391,6 @@ let when_null = n_ary('when_null',
 // This simplifies a great deal.
 // In addition, this means that Ludus's type system is incredibly
 // simple. It should be sufficient for at least the core system.
-
-// tells if something is an object literal
-let is_record = x => 
-  x != null 
-  && Reflect.getPrototypeOf(Reflect.getPrototypeOf(x)) === null;
 
 // get: safer property access
 // never throws
@@ -400,13 +402,13 @@ let is_record = x =>
 // NB: note differences from clj property access
 let get = n_ary('get',
   (key) => partial(get, key),
-  (key, obj) => get(key, null, obj),
+  (key, obj) => get(key, undefined, obj),
   (key, if_absent, obj) => {
-    if (obj == null) return if_absent;
+    if (obj == undefined) return if_absent;
 
     let value = obj[key];
     
-    if (value == null) return if_absent;
+    if (value == undefined) return if_absent;
     
     return value;
   }
@@ -426,11 +428,11 @@ let has = n_ary('has',
 // keys (strings or numbers)
 let get_in = n_ary('get_in',
   (obj) => partial(get_in, obj),
-  (obj, keys) => get_in(obj, null, keys),
+  (obj, keys) => get_in(obj, undefined, keys),
   (obj, if_absent, keys) => keys.reduce((o, k) => get(k, o, if_absent), obj)
 );
 
-export let values = {boolean, is_null, is_record, when_null, get, has, get_in}
+export let values = {boolean, is_undef, when_undef, get, has, get_in}
 
 //////////////////// Types
 // Ludus's type system is orthogonal to Javascript's
@@ -455,7 +457,7 @@ export let type_map = {
   Symbol: Symbol('ludus/type/symbol'),
   Function: Symbol('ludus/type/function'),
   Array: Symbol('ludus/type/array'),
-  null: Symbol('ludus/type/null'),
+  undefined: Symbol('ludus/type/undefined'),
   Object: Symbol('ludus/type/object'),
   Map: Symbol('ludus/type/map'),
   Set: Symbol('ludus/type/set'),
@@ -511,6 +513,7 @@ let data = (name, spec) => {
 };
 
 // create an object of a given type
+// TODO: automagically use `new` if the type is a constructor
 let create = (type, obj) => {
   // check spec
   // if (!check(type_specs.get(type), obj)) throw
@@ -521,7 +524,7 @@ let create = (type, obj) => {
 // a function to get the type of a thing
 let type = (x) => {
   // base case: null or undefined
-  if (x == null) return type_map.null;
+  if (x == undefined) return type_map.undefined;
 
   // next: check if the object has a type tag
   let tagged_type = get(type_tag, x);
@@ -571,8 +574,8 @@ let iterate = (lazy) => {
 
   return {
     next () {
-      if (rest === null) return {done: true}
-      let next = {value: first, done: rest === null};
+      if (rest === undefined) return {done: true}
+      let next = {value: first, done: rest === undefined};
       first = rest.first();
       rest = rest.rest();
       return next;
@@ -592,8 +595,8 @@ let seq_tag = Symbol('ludus/seq');
 // they are immutable, stateless, and lazy
 let make_seq = (iterator) => {
   let current = iterator.next();
-  let rest = once(() => current.done ? null : make_seq(iterator));
-  let first = () => current.done ? null : current.value;
+  let rest = once(() => current.done ? undefined : make_seq(iterator));
+  let first = () => current.done ? undefined : current.value;
   let out = {
     [type_tag]: seq_tag,
     [Symbol.iterator] () {
@@ -609,13 +612,13 @@ let make_seq = (iterator) => {
 let seq = (seqable) => {
   // if it's already a seq, just return it
   if (get(type_tag, seqable) === seq_tag) return seqable;
-  // if it's null, return an empty seq
-  if (seqable == null) return seq([]);
+  // if it's undefined, return an empty seq
+  if (seqable == undefined) return seq([]);
   // if it's iterable, return a seq over a new iterator over it
   // strings, arrays, Maps, and Sets are iterable
   if (is_iterable(seqable)) return make_seq(seqable[Symbol.iterator]());
   // if it's a record (object literal) return a seq over an object generator
-  if (is_record(seqable)) return make_seq(obj_gen(seqable));
+  if (is_object(seqable)) return make_seq(obj_gen(seqable));
   // otherwise we don't know what to do; throw your hands up
   throw Error(`${seqable} is not seqable.`);
 };
@@ -634,7 +637,7 @@ let cons_gen = function* (value, seq) {
 
 // before: grows a seq by adding a value to the beginning
 // consumes a seqable, returns a seq
-// runs in O(1) for all collections
+// runs in O(1) for all seqs
 let before = function* (seqable, value) {
   // get our seq first, so that if it's not actually seqable, we throw early
   let seq_ = seq(seqable);
@@ -644,7 +647,7 @@ let before = function* (seqable, value) {
 
 // after: grows a seq by adding a value to the end
 // consumes a seqable, returns a seq
-// runs in O(1) for all collections
+// runs in O(1) for all seqs
 // NB: if you add something at the end of an infinite seq, 
 //    it will never arrive
 let after = function* (seqable, value) {
@@ -682,24 +685,24 @@ method(conj, Seq,
 method(conj, type_map.null,
   (_, value) => conj(seq(null), value));
 
-let empty = multi('empty', type, () => null);
+let empty = multi('empty', type, () => undefined);
 method(empty, type_map.Array, () => []);
 method(empty, type_map.Object, () => ({}));
 method(empty, type_map.String, () => '');
 method(empty, type_map.Set, () => new Set());
 method(empty, type_map.Map, () => new Map());
 method(empty, Seq, () => seq(null));
-method(empty, type_map.null, () => null);
+method(empty, type_map.undefined, () => undefined);
 
-let count = multi('count', type, () => null);
+let count = multi('count', type, () => undefined);
 method(count, type_map.Array, arr => arr.length);
 method(count, type_map.String, str => str.length);
 method(count, type_map.Set, set => set.size);
 method(count, type_map.Map, map => map.size);
-method(count, type_map.null, () => 0);
+method(count, type_map.undefined, () => 0);
 method(count, type_map.Object, obj => into([], obj).length);
 
-let is_empty = seq_ => rest(seq(seq_)) === null;
+let is_empty = seq_ => rest(seq(seq_)) === undefined;
 
 // generate: a handy wrapper for a generator function
 // returns a lazy iterator over the generator
@@ -789,7 +792,7 @@ let take = n_ary('take',
 // switch not on arity but on the type of the argument: function or not?
 // e.g. multimethod, not n_ary
 let keep = n_ary('keep',
-  (f) => (rf) => (accum, x) => f(x) == null ? accum : rf(accum, x),
+  (f) => (rf) => (accum, x) => f(x) == undefined ? accum : rf(accum, x),
   (f, coll) => transduce(keep(f), conj, empty(coll), coll)
 );
 
@@ -862,6 +865,7 @@ let is_number = n => typeof n === 'number';
 let is_int = n => is_number(n) && n % 1 === 0;
 
 let is_boolean = b => typeof b === 'boolean';
+let is_bool = is_boolean;
 
 let is_symbol = s => typeof s === 'symbol';
 
@@ -873,7 +877,7 @@ let is_map = m => is(type_map.Map, m);
 
 let is_set = s => is(type_map.Set, s);
 
-export let predicates = {is, is_string, is_number, is_int, is_boolean, is_symbol, is_object, is_array, is_map, is_set};
+export let predicates = {is, is_string, is_number, is_int, is_boolean, is_bool, is_symbol, is_object, is_array, is_map, is_set};
 
 ///// combinators
 let spec_tag = Symbol('ludus/spec')
@@ -909,7 +913,7 @@ let not = spec_ => spec(
   [spec_]
 );
 
-let maybe = (spec_) => spec(`maybe<${spec_.name}>`, or(spec_, is_null));
+let maybe = (spec_) => spec(`maybe<${spec_.name}>`, or(spec_, is_undef));
 
 let property = (key, spec_) => spec(
   `property<${key}: ${spec_.name}>`,
@@ -954,7 +958,7 @@ let assert = (spec, value) => spec(value)
 // explain should be a recursive multimethod that accumulates failures
 let explain = multi('explain', get('ludus/spec'), 
   (predicate, value) => predicate(value)
-    ? null
+    ? undefined
     : `${value} : ${type(value).description} failed predicate ${predicate.name || predicate.toString()}`);
 
 //////////////////// Exports
