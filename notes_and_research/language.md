@@ -6,10 +6,10 @@ Ludus is an environment, but it's also a language. It's a subset of JS, so my fi
 * The whole object-oriented mess: `new`, `this`, `class`, etc. This is easy, but shows up as a penubra of various "reserved" words.
 * The `function` keyword. Who needs more than one way of making a function? Just use lambdas (arrow functions) everywhere.
 * Imperative iteration constructs: `for`, `for..in`, `for..of`, `while`, etc. This is very easy, and also shows up as "reserved" words. Of course, the stdlib has to provide for equivalents; especially with `loop` & `recur`, the stdlib already does this.
-* JS's global namespace. This is crucial for preventing access to mutation. This _won't_ matter re: keywords.
+* JS's global namespace. This is crucial for preventing access to mutation. This _won't_ matter re: keywords, although it will affect what can be globalized--shadowing `Object` is fine; replacing it in the global namespace is not.
 * Mutation. This means a few different things:
-  - The core functions never mutate values. This is not always easy to do with good (i.e. constant rather than linear) performance (e.g. `conj`), but I've gotten to a point where I think we're good to go.
-  - No rebinding variables. This is a language restriction. The only place the assignment operator is allowed is in a `let` statement. Except, of course, in the REPL, where you should be able to rebind a variable.
+  - The core functions never mutate values. This is not always easy to do with good (i.e. constant rather than linear) performance (e.g. `conj`; see `conj.md`), but I've gotten to a point where I think we're good to go.
+  - No rebinding variables. This is a language restriction. The only place the assignment operator is allowed is in a `let` statement. Except, of course, in the REPL, where you should be able to rebind a variable. But restricting the syntax restricts the the semantics, here.
   - No direct manipulation of properties. This follows from the previous restriction: the left-hand side of an assignment operation cannot be the property of an object.
 
 ### Things I know I want to delete, and aren't easy
