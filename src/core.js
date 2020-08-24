@@ -1,6 +1,4 @@
 // our library dependencies
-// these are not exposed to the user
-
 // record and tuple for value-equal compound data structures
 import {Record} from './record-tuple/record.js';
 import {Tuple} from './record-tuple/tuple.js';
@@ -377,13 +375,15 @@ export let functions = {loop, recur, call, apply, ap, partial, n_ary, id, no_op,
 //////////////////// Working with values
 ///// undefined
 // returns true of something is undefined or null
-let is_undef = x => x == undefined;
+let is_undefined = x => x == undefined;
+let is_undef = is_undefined;
 
 // determines what to do when a value is nullish
-let when_undef = n_ary('when_undef',
-  (if_undef) => partial(when_undef, if_undef),
+let when_undefined = n_ary('when_undefined',
+  (if_undef) => partial(when_undefined, if_undef),
   (if_undef, value) => value == undefined ? if_undef : value
 );
+let when_undef = when_undefined;
 
 ///// Objects & records
 // At least to start, Ludus has no notion of values other than
@@ -432,7 +432,7 @@ let get_in = n_ary('get_in',
   (obj, if_absent, keys) => keys.reduce((o, k) => get(k, o, if_absent), obj)
 );
 
-export let values = {boolean, is_undef, when_undef, get, has, get_in}
+export let values = {boolean, is_undefined, when_undefined, is_undef, when_undef, get, has, get_in}
 
 //////////////////// Types
 // Ludus's type system is orthogonal to Javascript's
@@ -977,4 +977,3 @@ let add = (x, y) => x + y;
 let neg = (x) => x * -1;
 
 let is_even = x => x % 2 === 0;
-
