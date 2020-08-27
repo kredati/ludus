@@ -9,6 +9,8 @@
 // [-] first/rest semantics
 // [-] last/but_last semantics
 // [?] binarize the math to make it more performant
+// [ ] do perf testing
+// [ ] do unit testing
 
 let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
 
