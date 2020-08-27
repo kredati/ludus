@@ -1,4 +1,4 @@
-import {List, Map} from 'immutable';
+import {List} from './immutable.js';
 
 // lessons from the below
 // 1. Using generators is fast--nearly instant, and lets you build arbitrariliy large data structures--but then you get a stack overflow when you try to access them.
@@ -46,6 +46,8 @@ let conj = (list, el) => cons(el, list);
 let list = (...args) => args.reduceRight(conj, {});
 [...list(1, 2, 3)]; //=
 
+let conj_l = (list, el) => list.conj(el);
+
 let time_n = () => time(() => {
   let reduced = big.reduce(naive, []);
   return [...reduced];
@@ -58,3 +60,11 @@ let time_m = () => time(() => {
   let reduced = big.reduce(mut, []);
   return [...reduced];
 });
+let time_i = () => time(() => {
+  let reduced = big.reduce(conj_l, List.empty());
+  return [...reduced];
+});
+
+time_l();//=
+time_m();//=
+time_i();//=
