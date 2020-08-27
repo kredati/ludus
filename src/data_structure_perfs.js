@@ -13,7 +13,7 @@ let time = (fn) => {
   return end - start;
 };
 
-let big = Array.from(Array(10000), (_, i) => i);
+let big = Array.from(Array(100000), (_, i) => i);
 
 let naive = (arr, el) => [...arr, el];
 let mut = (arr, el) => {
