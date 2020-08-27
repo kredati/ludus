@@ -1,4 +1,5 @@
-import {List} from './immutable.js';
+import {List as L} from './immutable.js';
+import {List} from 'immutable';
 
 // lessons from the below
 // 1. Using generators is fast--nearly instant, and lets you build arbitrariliy large data structures--but then you get a stack overflow when you try to access them.
@@ -13,7 +14,7 @@ let time = (fn) => {
   return end - start;
 };
 
-let big = Array.from(Array(100000), (_, i) => i);
+let big = Array.from(Array(10000), (_, i) => i);
 
 let naive = (arr, el) => [...arr, el];
 let mut = (arr, el) => {
@@ -48,6 +49,8 @@ let list = (...args) => args.reduceRight(conj, {});
 
 let conj_l = (list, el) => list.conj(el);
 
+let push = (list, el) => list.push(el);
+
 let time_n = () => time(() => {
   let reduced = big.reduce(naive, []);
   return [...reduced];
@@ -61,10 +64,18 @@ let time_m = () => time(() => {
   return [...reduced];
 });
 let time_i = () => time(() => {
-  let reduced = big.reduce(conj_l, List.empty());
+  let reduced = big.reduce(conj_l, L.empty());
   return [...reduced];
 });
+let time_f = () => time(() => {
+  let reduced = big.reduce(push, List.of());
+  return [...reduced];
+})
 
+/*
 time_l();//=
 time_m();//=
 time_i();//=
+time_f();//=
+time_n();//=
+*/
