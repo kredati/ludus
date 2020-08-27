@@ -33,7 +33,7 @@ let update_arr = (arr, index, value) => arr[index] === value
   ? arr
   : [...arr.slice(0, index), value, ...arr.slice(index + 1)];
 
-let node_factor = 3; // NB: clj has this at 5 // node_size at 32
+let node_factor = 5; // NB: clj has this at 5 // node_size at 32
 let node_size = 2 ** node_factor;
 
 let Leaf = {
