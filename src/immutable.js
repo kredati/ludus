@@ -33,71 +33,81 @@ let update_arr = (arr, index, value) => arr[index] === value
   ? arr
   : [...arr.slice(0, index), value, ...arr.slice(index + 1)];
 
-let node_factor = 5; // NB: clj has this at 5 // node_size at 32
-let node_size = 2 ** node_factor;
+let node_factor = 2; // NB: clj has this at 5 // node_size at 32
+let node_size = 1 << node_factor; // = 2 ** node_factor
+let mask = node_size - 1; // = bitwise mask for bitflipping
 
 let Leaf = {
-  create: (values) => create(Leaf, {values}),
+  create: (nodes) => create(Leaf, {nodes, capacity: node_size, level: 0}),
   empty: () => Leaf.create([]),
   get (index) {
-    return this.values[index] 
+    return this.nodes[index] 
   },
   update (index, value) {
-    let new_values = update_arr(this.values, index, value);
-    return new_values === this.values
+    let new_nodes = update_arr(this.nodes, index, value);
+    return new_nodes === this.nodes
       ? this
-      : Leaf.create(new_values);
+      : Leaf.create(new_nodes);
   },
   conj (value) { 
-    return Leaf.create([...this.values, value]) 
+    return Leaf.create([...this.nodes, value]) 
   },
   get size () {
-    return this.values.length;
+    return this.nodes.length;
   },
   show () {
-    return `[${this.values.join(', ')}]`
-  },
-  get capacity () {
-    return node_size;
+    return `[${this.nodes.join(', ')}]`
   }
 };
 
+node_size
+node_size ** 1
+node_size ** 2
+node_size ** 3
+
+node_size << node_factor;
+(node_size << node_factor) << node_factor
+
+
+node_size ** 1
+node_size ** 2
+
 let Node = {
-  create: (nodes, level) => create(Node, 
-    {level, nodes, 
-      size: nodes.reduce((x, node) => x + node.size, 0),
-      capacity: node_size ** level
+  create: (nodes, level, size /* = nodes.reduce((x, node) => x + node.size, 0) */) =>
+    create(Node, {level, nodes, size,
+      capacity: nodes[0].capacity << node_factor // = node_size ** level
     }),
-  empty: (level) => level === 2
-    ? Node.create([Leaf.empty()], level)
-    : Node.create([Node.empty(level - 1)], level),
+  empty: (level) => level === 1
+    ? Node.create([Leaf.empty()], level, 0)
+    : Node.create([Node.empty(level - 1)], level, 0),
   get (index) {
-    let next_capacity = node_size ** (this.level - 1);
-    let which_node = Math.floor(index / next_capacity);
-    let next_index = index % next_capacity;
-    return this.nodes[which_node].get(next_index);
+    let next_capacity = this.nodes[0].capacity;
+    // let which_node = Math.floor(index / next_capacity);
+    let which_bit = (index >>> this.level + 1) & (next_capacity - 2);
+    // let next_index = index % next_capacity;
+    let bit_index = index & (next_capacity - 1); 
+    return this.nodes[which_bit].get(bit_index);
   },
   update (index, value) {
-    let next_capacity = node_size ** (this.level - 1);
+    let next_capacity = this.nodes[0].capacity;
     let which_node = Math.floor(index / next_capacity);
     let next_index = index % next_capacity;
     let new_node = this.nodes[which_node].update(next_index, value);
-    return new_node === this.nodes[which_node]
-      ? this
-      : Node.create(update_arr(this.nodes, which_node, new_node), this.level);
+    return Node.create(update_arr(this.nodes, which_node, new_node), this.level);
   },
   conj (value) {
     // if there's room in the current node
     if (this.size < this.capacity) {
+      let last_node = last(this.nodes);
       // there's room in the last leaf
-      if (last(this.nodes).size < (node_size ** (this.level - 1))) {
-        return Node.create([...but_last(this.nodes), last(this.nodes).conj(value)], this.level);
+      if (last_node.size < last_node.capacity) {
+        return Node.create([...but_last(this.nodes),last_node.conj(value)], this.level, this.size + 1);
       } else { // or there isn't room, and we need a new leaf
-        return Node.create([...this.nodes, Leaf.empty().conj(value)], this.level)
+        return Node.create([...this.nodes, Leaf.empty().conj(value)], this.level, this.size + 1)
       }
     } else { 
       // if the current node is full, create a new node above this one
-      return Node.create([this, Node.empty(this.level).conj(value)], this.level + 1)
+      return Node.create([this, Node.empty(this.level).conj(value)], this.level + 1, 1)
     }
   },
   // TODO: write these so that they delete the (ir)relevant parts of the tree
@@ -133,7 +143,7 @@ let List = {
   update (index, value) {
     if (index < 0 || index >= this.size || eq(this.get(index), value)) 
       return this;
-    return List.create(new_root, this.size, this.offset);
+    return List.create(this.root.update(index + this.offset, value), this.size, this.offset);
   },
   conj (value) {
     return List.create(this.root.conj(value), this.size + 1);
@@ -166,3 +176,7 @@ let List = {
 };
 
 export {List};
+
+let foo = List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+foo.show(); //=
+foo.get(1) //=
