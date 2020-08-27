@@ -13,8 +13,13 @@
 //    [*] last
 //    [ ] but_last
 // [ ] write equality algorithm
-// [?] binarize the math to make it more performant
-// [ ] do perf testing
+// [ ] binarize the math to make it more performant'
+//    [ ] adapt scheme to do so from https://hypirion.com/musings/understanding-persistent-vector-pt-2
+// [?] loopify get/update operations to make them more performant
+//    [ ] again, adapt from https://hypirion.com/musings/understanding-persistent-vector-pt-2
+// [-] do perf testing
+//    [ ] very naive perf results: this slows down as it gets bigger
+//        ^ this suggests doing the binary math above
 // [ ] do unit testing
 
 let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
@@ -159,3 +164,5 @@ let List = {
     }
   }
 };
+
+export {List};
