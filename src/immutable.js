@@ -7,7 +7,12 @@
 // [*] an iterator
 // [*] a proxy over the list that will allow index addressing
 // [-] first/rest semantics
+//    [*] first
+//    [ ] non-naïve rest
 // [-] last/but_last semantics
+//    [*] last
+//    [ ] but_last
+// [ ] write equality algorithm
 // [?] binarize the math to make it more performant
 // [ ] do perf testing
 // [ ] do unit testing
