@@ -13,7 +13,7 @@
 //    [*] last
 //    [ ] but_last
 // [ ] write equality algorithm
-// [ ] binarize the math to make it more performant'
+// [ ] binarize the math to make it more performant
 //    [ ] adapt scheme to do so from https://hypirion.com/musings/understanding-persistent-vector-pt-2
 // [?] loopify get/update operations to make them more performant
 //    [ ] again, adapt from https://hypirion.com/musings/understanding-persistent-vector-pt-2
@@ -33,7 +33,7 @@ let update_arr = (arr, index, value) => arr[index] === value
   ? arr
   : [...arr.slice(0, index), value, ...arr.slice(index + 1)];
 
-let node_factor = 1; // NB: clj has this at 5 // node_size at 32
+let node_factor = 5; // NB: clj has this at 5 // node_size at 32
 let node_size = 1 << node_factor; // = 2 ** node_factor
 let mask = node_size - 1; // = bitwise mask for bitflipping
 
@@ -158,10 +158,44 @@ let List = {
     return this.root.show();
   },
   *[Symbol.iterator]() {
-    for (let i = 0; i < this.size; i++) {
-      yield this.get(i);
+    let lower = this.offset;
+    let upper = this.size + this.offset;
+    for (let i = lower; i < upper; i++) {
+      yield this.root.get(i);
     }
   }
 };
 
 export {List};
+
+let range = n => Array.from(Array(n)).map((_, i) => i);
+
+let assert = (message, fn) => {
+  let truth = fn();
+  if (!truth) {
+    throw Error(message);
+  }
+};
+
+let size = (iter) => iter.size != null 
+  ? iter.size 
+  : iter.length != null
+    ? iter.length
+    : undefined
+
+let iter_eq = (iter1, iter2) => {
+  if (size(iter1) !== size(iter2)) return false;
+
+  for (let i = 0; i < size(iter1); i++) {
+    if (iter1[i] !== iter2[i]) return false;
+  }
+
+  return true;
+};
+
+let runtest = (tests) => {
+  for (let i = 0; i < tests * 100; i++) {
+    assert(`array vector eq with ${i} elements`, () => iter_eq(range(i), List.from(range(i))));
+  }
+  return `successful array vector eq between 0 and ${tests}`
+};
