@@ -259,8 +259,19 @@ let List = {
     return this.root.show();
   },
   eq (list) {
-    return this.root.eq(list.root);
+    if (this === list) return true;
+    if (list == null) return false;
+    if (List.is_list(list) && this.root.eq(list.root)) return true;
+    let size = list.size || list.length;
+    if (size == null || size != this.size) return false;
+    for (let i = 0; i < size; i++) {
+      if (!eq(this.get(i), list[i])) return false;
+    }
+    return true;
   },
+  is_list: (list) => list == null || typeof list !== 'object'
+      ? false
+      : Reflect.getPrototypeOf(list) === List,
   is_empty () {
     return this.size < 1;
   },
@@ -279,22 +290,3 @@ let assert = (message, fn) => {
     throw Error(message);
   }
 };
-
-let size = (iter) => iter.size != null 
-  ? iter.size 
-  : iter.length != null
-    ? iter.length
-    : undefined
-
-let iter_eq = (iter1, iter2) => {
-  if (size(iter1) !== size(iter2)) return false;
-
-  for (let i = 0; i < size(iter1); i++) {
-    if (iter1[i] !== iter2[i]) return false;
-  }
-
-  return true;
-};
-
-let foo = List.from(range(5));
-let bar = foo.but_last().conj(foo.last());
