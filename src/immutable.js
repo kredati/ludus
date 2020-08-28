@@ -124,6 +124,16 @@ let Node = {
       return Node.create([this, Node.empty(this.level).conj(value)], this.level + 1, this.size + 1, this.offset)
     }
   },
+  conj_node (node) {
+    // if there's room in the current node
+    if (this.size < this.capacity - node_size) {
+      
+    }
+    return Node.create([this, Node.empty(this.level).conj_node(node)], this.level + 1, this.size + 1, this.offset);
+  },
+  unconj_node () {
+
+  },
   but_last () {
     if (this.size <= 1) return undefined;
     let last_node = last(this.nodes);
