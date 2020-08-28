@@ -124,15 +124,48 @@ let Node = {
       return Node.create([this, Node.empty(this.level).conj(value)], this.level + 1, this.size + 1, this.offset)
     }
   },
-  conj_node (node) {
+  conj_leaf (leaf) {
     // if there's room in the current node
+    // I think this needs to be special cased more closely
+    // the leaf might not be the same size as the node
+    // this only happens if somebody unconjes a tail before filling it
+    // OY: but just always only send a complete leaf
     if (this.size < this.capacity - node_size) {
+      // if this is a bottom `Node` (i.e. that holds leaves, level 2)
+      // add the leaf
+      if (this.level === 2) return Node.create(
+        [...this.nodes, leaf], 2, this.size + node_size, this.offset);
       
+      // if this is an internal `Node` (does not hold leaves)
+      // add the leaf to the node below
+      let last_node = last(this.nodes).conj_leaf(leaf);
+      return Node.create(
+        [...update_arr(this.nodes, this.nodes.length - 1, last_node)],
+        this.level, this.size + node_size, this.offset);
     }
-    return Node.create([this, Node.empty(this.level).conj_node(node)], this.level + 1, this.size + 1, this.offset);
+    // if there isn't room, create a new root
+    return Node.create([this, Node.empty(this.level).conj_node(node)], 
+      this.level + 1, this.size + node_size, this.offset);
   },
-  unconj_node () {
-
+  last_leaf () {
+    let last_node = last(this.nodes);
+    if (this.level === 2) return last_node;
+    return last_node.last_leaf();
+  },
+  unconj_leaf () {
+    // if this node is not yet empty // is there a special case here?
+    if (this.size <= node_size) return undefined;
+    let last_node = last(this.nodes);
+    if (this.level === 2) return Node.create(
+      [...but_last(this.nodes)], 
+      this.level, this.size - last_node.size, this.offset);
+    
+    let new_last = last(this.nodes).unconj_leaf;
+    let new_nodes = new_last
+      ? [...but_last(this.nodes), new_last]
+      : [...but_last(this.nodes)];
+    // fix this: the size calculation will be off when the last node isn't full
+    return Node.create(new_nodes, this.level, this.size - last_node.size, this.offset)
   },
   but_last () {
     if (this.size <= 1) return undefined;
