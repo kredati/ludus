@@ -6,21 +6,26 @@
 // [*] an update function: update(list, index, value)
 // [*] an iterator
 // [*] a proxy over the list that will allow index addressing
-// [-] first/rest semantics
+// [*] first/rest semantics
 //    [*] first
-//    [ ] non-naïve rest
-// [-] last/but_last semantics
+//    [*] non-naïve rest
+// [*] last/but_last semantics
 //    [*] last
-//    [ ] but_last
+//    [*] but_last
 // [ ] write equality algorithm
-// [ ] binarize the math to make it more performant
-//    [ ] adapt scheme to do so from https://hypirion.com/musings/understanding-persistent-vector-pt-2
-// [?] loopify get/update operations to make them more performant
+// [?] add unshift equivalent (prepend)
+//     ^ this involves rather more complex bean-counting
+//     ^ do not add this until we feel like we need it
+// [*] binarize the math to make it more performant
+//    [*] adapt scheme to do so from https://hypirion.com/musings/understanding-persistent-vector-pt-2
+// [x] loopify get/update operations to make them more performant
 //    [ ] again, adapt from https://hypirion.com/musings/understanding-persistent-vector-pt-2
-// [-] do perf testing
-//    [ ] very naive perf results: this slows down as it gets bigger
+// [*] do perf testing
+//    [*] very naive perf results: this slows down as it gets bigger
 //        ^ this suggests doing the binary math above
-// [ ] do unit testing
+//        ^ did the binary math, indeed it got much faster
+// [ ] develop testing harness
+// [ ] add `tail` optimization: https://hypirion.com/musings/understanding-persistent-vector-pt-3
 
 let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
 
@@ -29,59 +34,72 @@ let eq = (x, y) => x === y;
 let last = (arr) => arr[arr.length - 1];
 let but_last = (arr) => arr.slice(0, arr.length - 1);
 
-let update_arr = (arr, index, value) => arr[index] === value
-  ? arr
-  : [...arr.slice(0, index), value, ...arr.slice(index + 1)];
+let update_arr = (arr, index, value) => [...arr.slice(0, index), value, ...arr.slice(index + 1)];
 
 let node_factor = 5; // NB: clj has this at 5 // node_size at 32
 let node_size = 1 << node_factor; // = 2 ** node_factor
-let mask = node_size - 1; // = bitwise mask for bitflipping
+
+let empty = {show: () => 'empty', eq: (x) => x === empty};
 
 let Leaf = {
-  create: (nodes) => create(Leaf, {nodes, capacity: node_size, level: 1}),
+  create: (nodes, size = nodes.length) => create(Leaf, {nodes, capacity: node_size - (nodes.length - size), level: 1, size}),
   empty: () => Leaf.create([]),
   get (index) {
-    return this.nodes[index] 
+    return this.nodes[index];
   },
   update (index, value) {
     let new_nodes = update_arr(this.nodes, index, value);
-    return new_nodes === this.nodes
-      ? this
-      : Leaf.create(new_nodes);
+    return Leaf.create(new_nodes);
   },
   conj (value) { 
-    return Leaf.create([...this.nodes, value]) 
+    return Leaf.create([...this.nodes, value]);
   },
-  get size () {
-    return this.nodes.length;
+  but_last () {
+    if (this.size === 1) return undefined;
+    return Leaf.create(this.nodes.slice(0, this.nodes.length - 1));
+  },
+  but_first () {
+    if (this.size <= 1) return empty;
+    let new_nodes = update_arr(this.nodes, this.nodes.length - this.size, empty);
+    return Leaf.create(new_nodes, this.size - 1);
   },
   show () {
-    return `[${this.nodes.join(', ')}]`
+    return `[${this.nodes.join(', ')}]`;
+  },
+  eq (leaf) {
+    if (this === leaf) return true;
+    if (this.size !== leaf.size) return false;
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (!eq(this.nodes[i], leaf.nodes[i])) return false;
+    }
+    return true;
   }
 };
 
 let Node = {
-  create: (nodes, level, size) =>
-    create(Node, {level, nodes, size,
-      capacity: nodes[0].capacity << node_factor // = node_size ** level
+  create: (nodes, level, size, offset = 0) =>
+    create(Node, {level, nodes, size, offset,
+      capacity: (1 << (node_factor * level)) - offset
     }),
   empty: (level) => level === 1
     ? Leaf.empty()
     : Node.create([Node.empty(level - 1)], level, 0),
   get (index) {
-    let next_capacity = this.nodes[0].capacity;
-    // let which_node = Math.floor(index / next_capacity);
-    let which_bit = index >>> (node_factor * (this.level - 1));
-    // let next_index = index % next_capacity;
-    let bit_index = index & (next_capacity - 1);
-    return this.nodes[which_bit].get(bit_index);
+    // the following is equivalent to node_size ** (this.level - 1)
+    let next_capacity = 1 << (node_factor * (this.level - 1));
+    // the following is equivalent to Math.floor(index / next_capacity);
+    let which_node = index >>> (node_factor * (this.level - 1));
+    // the following is equivalent to index % next_capacity;
+    let next_index = index & (next_capacity - 1);
+    return this.nodes[which_node].get(next_index);
   },
   update (index, value) {
-    let next_capacity = this.nodes[0].capacity;
-    let which_node = Math.floor(index / next_capacity);
-    let next_index = index % next_capacity;
+    let next_capacity = 1 << (node_factor * (this.level - 1));
+    let which_node = index >>> (node_factor * (this.level - 1));
+    let next_index = index & (next_capacity - 1);
     let new_node = this.nodes[which_node].update(next_index, value);
-    return Node.create(update_arr(this.nodes, which_node, new_node), this.level);
+    return Node.create(
+      update_arr(this.nodes, which_node, new_node), this.level, this.size, this.offset);
   },
   conj (value) {
     // if there's room in the current node
@@ -89,22 +107,48 @@ let Node = {
       let last_node = last(this.nodes);
       // there's room in the last leaf
       if (last_node.size < last_node.capacity) {
-        return Node.create([...but_last(this.nodes), last_node.conj(value)], this.level, this.size + 1);
+        return Node.create([...but_last(this.nodes), last_node.conj(value)], this.level, this.size + 1, this.offset);
       } else { 
         // or there isn't room, and we need a new sub-node
-        return Node.create([...this.nodes, Node.empty(this.level - 1).conj(value)], this.level, this.size + 1)
+        return Node.create([...this.nodes, Node.empty(this.level - 1).conj(value)], this.level, this.size + 1, this.offset)
       }
     } else {
       // if the current node is full, create a new node above this one
-      return Node.create([this, Node.empty(this.level).conj(value)], this.level + 1, this.size + 1)
+      return Node.create([this, Node.empty(this.level).conj(value)], this.level + 1, this.size + 1, this.offset)
     }
   },
-  // TODO: write these so that they delete the (ir)relevant parts of the tree
-  but_last () {},
-  but_first () {},
+  but_last () {
+    if (this.size <= 1) return undefined;
+    let last_node = last(this.nodes);
+    let next_but_last = last_node.but_last();
+    let new_nodes = next_but_last 
+      ? [...but_last(this.nodes), next_but_last]
+      : [...but_last(this.nodes)];
+    return Node.create(new_nodes, this.level, this.size - 1, this.offset);
+  },
+  first_non_empty () {
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i] !== empty) return i;
+    }
+    return -1;
+  },
+  but_first () {
+    if (this.size <= 1) return empty;
+    let first_non_empty = this.first_non_empty();
+    let new_nodes = update_arr(this.nodes, first_non_empty, this.nodes[first_non_empty].but_first());
+    return Node.create(new_nodes, this.level, this.size - 1, this.offset + 1);
+  },
+  eq (node) {
+    if (this === node) return true;
+    if (this.size !== node.size) return false;
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (!this.nodes[i].eq(node.nodes[i])) return false;
+    }
+    return true;
+  },
   show () {
     return `[${this.nodes.map(node => node.show()).join(', ')}]`;
-  }
+  },
 };
 
 let list_handler = {
@@ -115,10 +159,11 @@ let list_handler = {
   },
   get (target, prop) {
     if (typeof prop === 'symbol' || prop in target) return target[prop];
+    prop
     let index = parseInt(prop, 10);
+    if (isNaN(index)) return undefined;
     return target.get(index);
   },
-
 };
 
 let List = {
@@ -135,7 +180,7 @@ let List = {
     return List.create(this.root.update(index + this.offset, value), this.size, this.offset);
   },
   conj (value) {
-    return List.create(this.root.conj(value), this.size + 1);
+    return List.create(this.root.conj(value), this.size + 1, this.offset);
   },
   last () {
     return this.get(this.size - 1);
@@ -145,11 +190,12 @@ let List = {
     return List.create(this.root.but_last(), this.size - 1, this.offset);
   },
   first () {
-    return this.get(0);
+    return this.get(this.offset);
   },
   // TODO: fix this naive version for memory leaks
   rest () {
-    return List.create(this.root, this.size - 1, this.offset + 1);
+    if (this.size <= 1) return List.empty();
+    return List.create(this.root.but_first(), this.size - 1, this.offset + 1);
   },
   of: (...values) => 
     values.reduce((list, value) => list.conj(value), List.empty()),
@@ -157,10 +203,18 @@ let List = {
   show () {
     return this.root.show();
   },
+  eq (list) {
+    return this.root.eq(list.root);
+  },
+  is_empty () {
+    return this.size < 1;
+  },
   *[Symbol.iterator]() {
     let lower = this.offset;
+    lower
     let upper = this.size + this.offset;
     for (let i = lower; i < upper; i++) {
+      i
       yield this.root.get(i);
     }
   }
@@ -193,9 +247,7 @@ let iter_eq = (iter1, iter2) => {
   return true;
 };
 
-let runtest = (tests) => {
-  for (let i = 0; i < tests * 100; i++) {
-    assert(`array vector eq with ${i} elements`, () => iter_eq(range(i), List.from(range(i))));
-  }
-  return `successful array vector eq between 0 and ${tests}`
-};
+let foo = List.from(range(1025));
+let bar = foo.but_last().conj(foo.last());
+
+foo.eq(bar) //=
