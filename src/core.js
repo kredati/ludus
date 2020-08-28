@@ -722,9 +722,10 @@ let range = n_ary('range',
   (start, max, step) => generate(start, x => x + step, x => x >= max));
 
 let cycle = (seqable) => make_seq((function*() {
+  while(true) {
     yield* seq(seqable);
-    yield* cycle(seqable);
-  })());
+  }
+})());
 
 // interleaves seqs
 // given a list of seqs, produce a seq that's the first element
