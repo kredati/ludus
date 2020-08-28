@@ -1,5 +1,9 @@
 # Ludus project management
 
+## Meta
+[ ] Develop this further
+[ ] Write new thoughts about standalone vs. using libraries
+
 ## Milestone: MVP
 
 ### Milestone: Prelude
