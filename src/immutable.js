@@ -12,20 +12,22 @@
 // [*] last/but_last semantics
 //    [*] last
 //    [*] but_last
-// [ ] write equality algorithm
+// [*] write equality algorithm
 // [?] add unshift equivalent (prepend)
 //     ^ this involves rather more complex bean-counting
 //     ^ do not add this until we feel like we need it
 // [*] binarize the math to make it more performant
 //    [*] adapt scheme to do so from https://hypirion.com/musings/understanding-persistent-vector-pt-2
-// [x] loopify get/update operations to make them more performant
+// [?] loopify get/update operations to make them more performant
 //    [ ] again, adapt from https://hypirion.com/musings/understanding-persistent-vector-pt-2
-// [*] do perf testing
+// [-] do perf testing
 //    [*] very naive perf results: this slows down as it gets bigger
 //        ^ this suggests doing the binary math above
 //        ^ did the binary math, indeed it got much faster
+//    [ ] do more rigorous perf testing
 // [ ] develop testing harness
 // [ ] add `tail` optimization: https://hypirion.com/musings/understanding-persistent-vector-pt-3
+// [*] add iteration optimization visiting nodes in place of calling `get`
 
 let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
 
@@ -73,6 +75,11 @@ let Leaf = {
       if (!eq(this.nodes[i], leaf.nodes[i])) return false;
     }
     return true;
+  },
+  *[Symbol.iterator] () {
+    for (let value of this.nodes) {
+      if (value !== empty) yield value;
+    }
   }
 };
 
@@ -149,6 +156,11 @@ let Node = {
   show () {
     return `[${this.nodes.map(node => node.show()).join(', ')}]`;
   },
+  *[Symbol.iterator] () {
+    for (let node of this.nodes) {
+      yield* node[Symbol.iterator]();
+    }
+  }
 };
 
 let list_handler = {
@@ -210,13 +222,7 @@ let List = {
     return this.size < 1;
   },
   *[Symbol.iterator]() {
-    let lower = this.offset;
-    lower
-    let upper = this.size + this.offset;
-    for (let i = lower; i < upper; i++) {
-      i
-      yield this.root.get(i);
-    }
+    yield* this.root[Symbol.iterator]();
   }
 };
 
@@ -247,7 +253,5 @@ let iter_eq = (iter1, iter2) => {
   return true;
 };
 
-let foo = List.from(range(1025));
+let foo = List.from(range(5));
 let bar = foo.but_last().conj(foo.last());
-
-foo.eq(bar) //=
