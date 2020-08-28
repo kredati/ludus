@@ -27,6 +27,7 @@
 //    [ ] do more rigorous perf testing
 // [ ] develop testing harness
 // [ ] add `tail` optimization: https://hypirion.com/musings/understanding-persistent-vector-pt-3
+// [ ] add `head` optimization
 // [*] add iteration optimization visiting nodes in place of calling `get`
 
 let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
