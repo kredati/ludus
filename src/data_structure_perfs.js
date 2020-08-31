@@ -72,10 +72,66 @@ let time_f = () => time(() => {
   return [...reduced];
 })
 
+
+
 /*
 time_l();//=
 time_m();//=
 time_i();//=
 time_f();//=
-time_n();//=
+time_n();//?
 */
+
+//////////////// Record vs. object creation
+import {Record} from './record-tuple/record.js';
+
+Record({foo: 42}) === Record({foo: 42}) //?
+
+let random_int = (lower, upper) => Math.floor(Math.random() * (upper - lower)) + lower;
+
+let random_string = (length) => {
+  let str = '';
+  for (let i = 0; i < length; i++) {
+    let char = random_int(0, 2)
+      ? random_int(97, 123)
+      : random_int(65, 91);
+    
+    str += String.fromCharCode(char);
+  }
+  return str;
+};
+
+let random_value = () => random_string(random_int(3, 15));
+
+let random_obj = () => {
+  let num_elements = random_int(1, 5);
+  let obj = {};
+  for (let i = 0; i < num_elements; i++) {
+    obj[random_value()] = random_value();
+  }
+  return obj;
+};
+
+
+let create_records = () => {
+  big.map(() => Record(random_obj()));
+};
+
+let create_object_literals = () => {
+  big.map(random_obj);
+}
+
+
+
+time(create_records) //?
+time(create_object_literals) //?
+
+
+//////// tuple perf
+import {Tuple} from './record-tuple/tuple.js'; //?
+
+/*time(() => {
+  let reduced = big.reduce((tup, el) => tup.pushed(el), Tuple.from([]));
+  return reduced;
+}) //?
+time(() => [...big, 'foo']) //? */
