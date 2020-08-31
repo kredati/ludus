@@ -13,7 +13,7 @@ let primes = {
 let hash = (str) => {
   let hash = 0;
   for (let char of str) {
-      let code = char.charCodeAt(0);
+      let code = char.codePointAt(0);
       hash = (hash << 5) - hash + code | 0;
   }
   return BigInt(hash);
@@ -60,7 +60,6 @@ let hash_object = (obj) => {
 };
 
 hash_fns.object = hash_object;
-
 
 let map = new Map();
 
@@ -125,6 +124,6 @@ h
 h.get({a: 1, b: [1, 2, 'foo']}); //?
 h.get({b: [1, 2, 'foo'], a: 1, c}) //?
 
-h.set([1, 2, 3], 12)
-h.get([1, 2, 3]) //?
-h
+h.set([1, 2, 3], 12);
+h.get([1, 2, 3]); //?
+h;
