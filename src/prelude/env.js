@@ -10,6 +10,7 @@ let Ludus = {
   inspect: (x) => {
     if (typeof x === 'symbol') return x.toString();
     if (typeof x === 'string') return `'${x}'`;
+    if (typeof x === 'function') return `[λ${x.name ? ': ' + x.name : ''}]`;
     if (x == null) return undefined;
     if (x[Ludus.custom]) return x[Ludus.custom]();
     return x;
