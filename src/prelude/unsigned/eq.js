@@ -1,5 +1,5 @@
 import {defn, partial} from './functions.js';
-import {is_sequence, is_assoc, is_some} from './predicates.js';
+import {is_sequence, is_assoc, is_some} from './preds.js';
 
 let is_identical = defn({
   name: 'is_identical',
