@@ -5,7 +5,7 @@
 
 // TODO: design metadata and pre/post scheme for multimethods
 
-import * as env from './environment.js';
+import Ludus from './env.js';
 import {HashMap, HashError} from './hash.js';
 import {raise} from './errors.js';
 import {rename, pre_post, fn} from './functions.js';
