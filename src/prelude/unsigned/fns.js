@@ -50,7 +50,6 @@ class ArgumentError extends Error {};
 // We need the `z` to distinguish the two clauses, because `(x, y, ...rest)` 
 // has an arity of 2.
 let n_ary = (name, ...clauses) => {
-  clauses
   let arity_map = clauses.reduce(
     (map, fn) => !(fn.length in map)
       ? Object.assign(map, {[fn.length]: fn})
@@ -191,25 +190,27 @@ let fn = n_ary('fn',
 // TODO: reconsider short-circuiting: accumulate all failures?
 // TODO: conditional instrumentation based on environment, as `fn`, above
 let pre_post = (pre, post, body) => rename(body.name, (...args) => {
-    let pass_pre = true;
-    for (let pred of pre) {
-      let result = pred(...args);
-      let pass = result !== false && result != undefined;
-      pass_pre = pass_pre && pass;
-      if (!pass_pre) throw ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
-    }
+  if (typeof pre === 'function') pre = [pre];
+  if (typeof post === 'function') post = [post];
+  let pass_pre = true;
+  for (let pred of pre) {
+    let result = pred(...args);
+    let pass = result !== false && result != undefined;
+    pass_pre = pass_pre && pass;
+    if (!pass_pre) throw ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
+  }
 
-    let result = body(...args);
+  let result = body(...args);
 
-    let pass_post = true;
-    for (let pred of post) {
-      let result = pred(result);
-      let pass = result !== false && result != undefined;
-      pass_post = pass_post && pass;
-      if (!pass_post) throw Error(`Returns from ${body.name} did not conform to spec.\n${explain(pred, result)}`);
-    }
+  let pass_post = true;
+  for (let pred of post) {
+    let result = pred(result);
+    let pass = result !== false && result != undefined;
+    pass_post = pass_post && pass;
+    if (!pass_post) throw Error(`Returns from ${body.name} did not conform to spec.\n${explain(pred, result)}`);
+  }
 
-    return result;
+  return result;
   });
 
 
@@ -313,8 +314,8 @@ let dispatch_on = (multimethod) => multimethod[multi_tag].on;
 // to work, it requires:
 // - name :: string
 // - body :: fn | [fn]
-// - pre :: [fn]?
-// - post :: [fn]?
+// - pre :: fn | [fn]?
+// - post :: fn | [fn]?
 // Other attribute restrictions are not required for `defn` to work, but
 // will be applied later (e.g., `doc` must be a string). Metadata is not
 // held directly on the function but on a non-enumerable `attrs` property.
@@ -330,7 +331,7 @@ let defn = ({name, body, pre = [], post = [], ...attrs}) => {
     {value: {clauses, ...attrs}});
 };
 
-// defmulti :: ({name: string, on: fn, pre: [fn]?, post: [fn]?, not_found: fn?}) -> fn(multi)
+// defmulti :: ({name: string, on: fn, pre: fn | [fn]?, post: fn | [fn]?, not_found: fn?}) -> fn(multi)
 // Defines a multimethod. Multimethods are ways of doing runtime dispatch.
 // They are Ludus's idiomatic way of runtime dispatch. (Very Lisp!)
 // They dispatch based on the result of `on`, which gets all the arguments to
