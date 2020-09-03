@@ -4,7 +4,7 @@
 
 import Ludus from './env.js';
 import {raise, handle, report} from './errors.js';
-import {multi} from './methods.js';
+import {HashMap, HashError} from './hash.js';
 
 // rename :: (fn) -> fn
 // `rename`s a function
@@ -26,8 +26,11 @@ let partial = (fn, ...args) => {
       : raise(Error, `Not enough arguments to \`${partial_name}\`: Partially applied functions must be called with at least 1 argument; you passed 0.`));
   };
 
-
 ///// Function dispatch
+
+// ArgumentError
+// An error for telling users: the arguments just aren't right
+class ArgumentError extends Error {};
 
 // n_ary :: (name, ...fn) -> fn
 // `n_ary` creates a function that dispatches on the number of arguments.
@@ -61,85 +64,11 @@ let n_ary = (name, ...clauses) => {
 
     return match 
       ? match(...args) 
-      : raise(Error, `Wrong number of arguments to ${name}. It takes ${Object.keys(arity_map).join(' or ')} argument(s), but received ${args.length}.`) 
+      : raise(ArgumentError, `Wrong number of arguments to ${name}. It takes ${Object.keys(arity_map).join(' or ')} argument(s), but received ${args.length}: (${args.map(Ludus.inspect).join(', ')}).`) 
   };
 
   return rename(name, match_arity);
 };
-
-// thread :: (value, ...fn) -> value
-// `thread`s a value through a series of functions, i.e. the value is passed
-// to the first function, the return value is then passed ot the second,
-// then the third, etc. Each fn must have an arity of 1.
-let thread = (value, ...fns) => {
-  let init = value;
-  for (let fn of fns) {
-    try {
-      value = fn(value);
-    } catch (e) {
-      report(`Error threading ${init}.`);
-      report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}`);
-      throw (e);
-    }
-  }
-  return value;
-};
-
-// thread_some :: (value, ...fn) -> value
-// As `thread`, but short-circuits the thread on the first undefined return
-// value.
-let thread_some = (value, ...fns) => {
-  let init = value;
-  for (let fn of fns) {
-    try {
-      value = fn(value);
-      if (value == null) return undefined;
-    } catch (e) {
-      report(`Error threading ${init}.`);
-      report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}`);
-      throw e;
-    }
-  }
-  return value;
-};
-
-// pipe :: (...fn) -> (value -> value)
-// Creates a pipeline of unary functions, returning a unary function.
-// Passes the argument to the first function, and then passes the return
-// value of the first to the second function, and so on.
-// Handles errors semi-gracefully.
-let pipe = (...fns) => rename('pipeline', (value) => {
-  let init = value;
-  for (let fn of fns) {
-    try {
-      value = fn(value);
-      if (value == undefined) return undefined;
-    } catch (e) {
-      report(`Error in function pipeline called with ${init}.`)
-      report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}.`);
-      throw e;
-    }
-  }
-  return value;
-});
-
-// pipe_some :: (...fn) -> (value -> value)
-// Builds a function pipeline, as `pipe`, that short circuits on the first
-// undefined return value.
-let pipe_some = (...fns) => rename('pipeline/some', (value) => {
-  let init = value;
-  for (let fn of fns) {
-    try {
-      value = fn(value);
-      if (value == undefined) return undefined;
-    } catch (e) {
-      report(`Error in function pipeline called with ${init}.`)
-      report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}.`);
-      throw e;
-    }
-  }
-  return value;
-});
 
 ///// loop & recur
 // Ludus is trying very hard to be Lispish. That means avoiding
@@ -163,10 +92,10 @@ let recur_args = Symbol('ludus/recur/args'); // not exported
 let recur_handler = { // not exported
   get (target, prop) { // will throw if anything but symbol tags are accessed
     if (prop === recur_tag || prop === recur_args) return target[prop];
-    throw Error('recur must only be used in the tail position inside of loop.');
+    throw SyntaxError('recur must only be used in the tail position inside of loop.');
   },
   apply () { // will throw if something `recurred` is called as a function
-    throw Error('recur must only be used in the tail position inside of loop.');
+    throw SyntaxError('recur must only be used in the tail position inside of loop.');
   }
 };
 
@@ -177,10 +106,10 @@ let recur = (...args) => new Proxy(Object.assign(() => {},
   {
     [recur_tag]: true, [recur_args]: args,
     [Symbol.toPrimitive] () { // will throw on coercion to an atomic value
-      throw Error('recur must only be used in the tail position inside of loop.');
+      throw SyntaxError('recur must only be used in the tail position inside of loop.');
     },
     [Symbol.toString] () { // will throw on coercion to a string
-      throw Error('recur must only be used in the tail position inside of loop.');
+      throw SyntaxError('recur must only be used in the tail position inside of loop.');
   }
 }), recur_handler);
 
@@ -246,18 +175,10 @@ let fn = n_ary('fn',
       case 'object':
         return body[Symbol.iterator]
           ? rename(name, loop(handle(name, n_ary(name, ...body))))
-          : raise(Error, `Body clauses must be contained in an iterable.`)
+          : raise(TypeError, `Body clauses must be contained in an iterable.`)
     }
   }
 );
-
-// explain :: (fn, [some], string?) -> string
-// a quick and dirty early-on multimethod to explain the failures in
-// pre/post conditions for functions.
-let expl_tag = Symbol.for('ludus/explain')
-let explain = multi('explain', x => x[expl_tag],
-  (pred, value, message = '') => `Spec failure: ${message}
-  ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`);
 
 // pre_post :: ([fn], [fn], fn) -> fn
 // `pre_post` wraps a function with predicates that evaluate
@@ -275,7 +196,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
       let result = pred(...args);
       let pass = result !== false && result != undefined;
       pass_pre = pass_pre && pass;
-      if (!pass_pre) throw Error(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
+      if (!pass_pre) throw ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
     }
 
     let result = body(...args);
@@ -291,59 +212,11 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
     return result;
   });
 
-///// defn, finally
-
-// defn :: (object) -> fn
-// `defn` fully instruments a function with everything Ludus has to offer.
-// To `fn`, it adds `pre_post`, as well as arbitrary metadata (including
-// `doc` and `eg`.)
-// to work, it requires:
-// - name :: string
-// - body :: fn | [fn]
-// - pre :: [fn]?
-// - post :: [fn]?
-// Other attribute restrictions are not required for `defn` to work, but
-// will be applied later (e.g., `doc` must be a string). Metadata is not
-// held directly on the function but on a non-enumerable `attrs` property.
-// `attrs` also includes a `clauses` field that contains an array of the
-// function literals passed to `defn`.
-let defn = ({name, body, pre = [], post = [], ...attrs}) => {
-  let clauses = typeof body === 'function' ? [body] : body;
-  let out = pre_post(pre, post, fn(name, clauses));
-
-  return Object.defineProperty(
-    rename(name, out), 
-    'attrs', 
-    {value: {clauses, ...attrs}});
-};
-
-///// other useful functional manipulations
-
-// once :: (fn) -> fn
-// A function wrapped in `once` is run once, caches its result, and returns
-// that result forever. It's useful for managing stateful constructs in a
-// purely functional environment. (E.g., it is used in a crucial place
-// in './seqs.js' to make iterators "stateless.")
-let never = Symbol('ludus/never');
-let once = (fn) => {
-  let result = never;
-  return rename(fn.name, (...args) => {
-    if (result === never) result = fn(...args);
-    return result;
-  });
-};
 
 //////////////////// Multimethods
 // Multimethods are how Ludus deals with dispatch more complex than
 // arity. They allow for arbitrary function dispatch, including 
-// multiple dispatch. 
-
-// TODO: design metadata and pre/post scheme for multimethods
-
-import Ludus from './env.js';
-import {HashMap, HashError} from './hash.js';
-import {raise} from './errors.js';
-import {rename, pre_post, fn} from './fns.js';
+// multiple dispatch.
 
 // MethodError
 // Give ourselves a special error so we can avoid swallowing any
@@ -424,10 +297,59 @@ let methods = (multimethod) => multimethod[multi_tag].methods();
 // tells if a multimethod has a method defined for a particular value
 let has_method = (multimethod, value) => multimethod[multi_tag].has(value);
 
+// retrieves the function for a particular value, returning undefined if no method exists
 let get_method = (multimethod, value) => multimethod[multi_tag].get(value);
 
+// retrieves the dispatching function for a multimethod
 let dispatch_on = (multimethod) => multimethod[multi_tag].on;
 
+// explain :: (fn, [some], string?) -> string
+// a quick and dirty early-on multimethod to explain the failures in
+// pre/post conditions for functions.
+let explain = multi('explain', x => x.explain,
+  (pred, value, message = '') => `Spec failure: ${message}
+  ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`);
+
+//////////////////// Defs: the three big functions!
+// defn, defmulti, defmethod
+
+// defn :: (object) -> fn
+// `defn` fully instruments a function with everything Ludus has to offer.
+// To `fn`, it adds `pre_post`, as well as arbitrary metadata (including
+// `doc` and `eg`.)
+// to work, it requires:
+// - name :: string
+// - body :: fn | [fn]
+// - pre :: [fn]?
+// - post :: [fn]?
+// Other attribute restrictions are not required for `defn` to work, but
+// will be applied later (e.g., `doc` must be a string). Metadata is not
+// held directly on the function but on a non-enumerable `attrs` property.
+// `attrs` also includes a `clauses` field that contains an array of the
+// function literals passed to `defn`.
+let defn = ({name, body, pre = [], post = [], ...attrs}) => {
+  let clauses = typeof body === 'function' ? [body] : body;
+  let out = pre_post(pre, post, fn(name, clauses));
+
+  return Object.defineProperty(
+    rename(name, out), 
+    'attrs', 
+    {value: {clauses, ...attrs}});
+};
+
+// defmulti :: ({name: string, on: fn, pre: [fn]?, post: [fn]?, not_found: fn?}) -> fn(multi)
+// Defines a multimethod. Multimethods are ways of doing runtime dispatch.
+// They are Ludus's idiomatic way of runtime dispatch. (Very Lisp!)
+// They dispatch based on the result of `on`, which gets all the arguments to
+// the multimethod, allowing for multiple dispatch. The return value from `on`
+// is the basis for method lookup, using `eq` (not JS ===).
+// Optionally, you may specify a fallback function if no method is found.
+// The default behavior is in `method_not_found` (not exported), which simply
+// throws a MethodError.
+// Like regular functions, you can assign `pre` and `post` conditions. You can
+// also assign per-method `pre` and `post` conditions.
+// Any fields not listed above will be stashed in the (non-enumerable) `attrs`
+// field on the multimethod, as with regular functions (e.g., `doc`).
 let defmulti = ({
   name, 
   on, 
@@ -447,6 +369,10 @@ let defmulti = ({
     });
 };
 
+// defmethod :: ({multi: fn(multi), on: value, body: fn, pre: [fn]?, post: [fn]?}) -> fn(multi)
+// Adds a method to a multimethod. Takes a multimethod, a value to match, 
+// a function, pre and post conditions, and any optional attributes.
+// As explained above, multimethods use `eq` as the algorithm for matching.
 let defmethod = ({
   multi,
   on,
@@ -462,7 +388,9 @@ let defmethod = ({
     return multi;
   };
 
-export {method, multi, methods, has_method, get_method, dispatch_on, defmulti, defmethod, MethodError};
-
-
-export {rename, partial, n_ary, pipe, pipe_some, loop, recur, fn, defn, once, pre_post, explain};
+export {rename, partial, 
+  n_ary, loop, recur, fn, pre_post, 
+  multi, method, methods, has_method, get_method, dispatch_on,
+  ArgumentError, MethodError, explain,
+  defn, defmulti, defmethod
+};
