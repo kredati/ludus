@@ -29,6 +29,12 @@
 // [ ] add `tail` optimization: https://hypirion.com/musings/understanding-persistent-vector-pt-3
 // [ ] add `head` optimization
 // [*] add iteration optimization visiting nodes in place of calling `get`
+// [ ] refactor so everything is functions in objects instead of methods
+// [*] add ownKeys handler to List proxy to allow key-based looping of List
+//     ^ this will allow hashing of vectors in HashedMap
+// [ ] consider factoring out first/rest modification semantics and only adding
+//      and removing at the end; this will simplify matters, since seqs should
+//      take care of first/rest iteration semantics
 
 let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
 
@@ -220,6 +226,9 @@ let list_handler = {
     if (isNaN(index)) return undefined;
     return target.get(index);
   },
+  ownKeys (target) {
+    return Array.from(Array(target.size), (_, i) => String(i));
+  }
 };
 
 let List = {
@@ -278,16 +287,13 @@ let List = {
   },
   *[Symbol.iterator]() {
     yield* this.root[Symbol.iterator]();
+  },
+  [Symbol.isConcatSpreadable]: true,
+  [Symbol.for('nodejs.util.inspect.custom')] () {
+    return `[${[...this].join(', ')}]`;
   }
 };
 
 export {List};
 
-let range = n => Array.from(Array(n)).map((_, i) => i);
-
-let assert = (message, fn) => {
-  let truth = fn();
-  if (!truth) {
-    throw Error(message);
-  }
-};
+List.of(1, 2, 3) //?
