@@ -389,7 +389,7 @@ let explain = defmulti({
   name: 'explain',
   doc: 'A multimethod for explaining spec failures. Checks against the value of the `explain` field held on the predicate.',
   on: (pred) => pred.explain,
-  not_found:   (pred, value, message = '') => `Spec failure: ${message}
+  not_found: (_, pred, value, message = '') => `Spec failure: ${message}
   ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`
 });
 
@@ -399,3 +399,7 @@ export {rename, partial,
   ArgumentError, MethodError, explain,
   defn, defmulti, defmethod
 };
+
+///// repl playground
+
+explain('') //?
