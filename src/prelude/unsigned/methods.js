@@ -8,7 +8,7 @@
 import Ludus from './env.js';
 import {HashMap, HashError} from './hash.js';
 import {raise} from './errors.js';
-import {rename, pre_post, fn} from './functions.js';
+import {rename, pre_post, fn} from './fns.js';
 
 // MethodError
 // Give ourselves a special error so we can avoid swallowing any
