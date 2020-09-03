@@ -303,13 +303,6 @@ let get_method = (multimethod, value) => multimethod[multi_tag].get(value);
 // retrieves the dispatching function for a multimethod
 let dispatch_on = (multimethod) => multimethod[multi_tag].on;
 
-// explain :: (fn, [some], string?) -> string
-// a quick and dirty early-on multimethod to explain the failures in
-// pre/post conditions for functions.
-let explain = multi('explain', x => x.explain,
-  (pred, value, message = '') => `Spec failure: ${message}
-  ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`);
-
 //////////////////// Defs: the three big functions!
 // defn, defmulti, defmethod
 
@@ -387,6 +380,17 @@ let defmethod = ({
       {attrs: {value: {...attrs, on}}})
     return multi;
   };
+
+// explain :: (fn, [some], string?) -> string
+// a quick and dirty early-on multimethod to explain the failures in
+// pre/post conditions for functions.
+let explain = defmulti({
+  name: 'explain',
+  doc: 'A multimethod for explaining spec failures. Checks against the value of the `explain` field held on the predicate.',
+  on: (pred) => pred.explain,
+  not_found:   (pred, value, message = '') => `Spec failure: ${message}
+  ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`
+});
 
 export {rename, partial, 
   n_ary, loop, recur, fn, pre_post, 
