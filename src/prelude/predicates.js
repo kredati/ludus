@@ -3,9 +3,19 @@
 // information about JS values to functions.
 // Equality, however, is handled in './eq.js'.
 
-import {defn, partial} from './functions.js';
+import {defn} from './functions.js';
 
+let bool = defn({
+  name: 'bool',
+  doc: 'Coerces a value to boolean `true` or `false`: returns false if a value is `false` or `undefined`. Otherwise returns true.',
+  body: (x) => x !== false && x != undefined
+});
 
+let is_any = defn({
+  name: 'is_any',
+  doc: 'Always returns true: could be anything.',
+  body: (_) => true
+});
 
 let is_undef = defn({
   name: 'is_undef',
@@ -89,7 +99,7 @@ let is_sequence = defn({
 });
 
 export {
-  is_undef, is_some, 
+  bool, is_any, is_undef, is_some, 
   is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
   is_fn, is_obj, is_assoc, is_iter, is_sequence,
 };
