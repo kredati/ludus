@@ -4,6 +4,14 @@
 [ ] Develop this further
 [ ] Write new thoughts about standalone vs. using libraries
 
+### Project key
+* `[ ]`: To do
+* `[*]`: Done
+* `[-]`: In progress
+* `[.]`: Deferred
+* `[x]`: Declined
+* `[?]`: Under deliberation, or needs research
+
 ## Milestone: MVP
 
 ### Milestone: Prelude
@@ -12,63 +20,84 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 * Relies on JS internals that will not be available in Ludus.
 * Is a bedrock dependency for other parts of `prelude`.
 
-[ ] Clean up `core.js`
-  [ ] Rename to `prelude.js`
-  [ ] Design: what must be in a truly minimal `prelude` (vs. `core`)?
-  [ ] Move core fns to new `core.js`
+[-] Clean up `core.js`
+  [x] Rename to `prelude.js`
+  [-] Move to `prelude` directory of modules
+    [-] Environments
+    [*] Errors
+    [-] Namespaces
+    [-] Refs
+    [*] Functions
+    [*] HashMap
+    [*] Methods
+    [*] Predicates
+    [*] Equality
+    [-] List
+    [-] Vector
+    [ ] Seqs
+    [ ] Ducers
+    [ ] Values
+        ^ `prelude` value functions are the things that require operations not available in Ludus, i.e. infix operations (dot property access, addition, boolean and, etc.)
+  [*] Design: what must be in a truly minimal `prelude` (vs. `core`)?
+  [ ] Develop testing harness for `prelude`
+  [ ] Move core fns to new `core`
 [-] Errors
   [-] `raise`: functional rather than statement-based error throwing
     [*] base implementation
-    [ ] add reporting
+    [*] add `report`ing
   [*] `bound`: return errors instead of throwing
   [-] `handle`: wraps a function with a `try`/`catch`
     [*] basic implementation
-    [ ] improve this
+    [.] improve messaging
   [*] `report`: helper function which sends messages to `console.error`
 [-] Functions
   [-] Function improvements
-    [-] `n_ary`: dispatch on arity
+    [*] `n_ary`: dispatch on arity
       [*] base implementation
-      [ ] design problem: rest args, default args
+      [*] design problem: rest args, default args
     [*] `loop`/`recur`: better recursion
     [-] `fn`: basic decorated fns
       [*] base implementation
-      [ ] optimize for looping
+      [.] optimize for looping
     [-] `pre_post`
       [*] base implementation: bare predicates
       [-] optimize for good errors: `explain` framework
         [*] implement `explain` multimethod
     [-] `defn`
       [*] base implementation: pass an object
-      [ ] allow for environment-based optimizations (REPL vs. production)
-      [?] n_ary implementation: vary on arity
-      [ ] ensure `loop`/`recur` optimizations
+      [.] allow for environment-based optimizations (REPL vs. production)
+      [x] n-ary implementation: vary `defn` on arity :: named fields only
+      [.] ensure `loop`/`recur` optimizations
   [-] Function manipulations
     [*] `once`: runs a function only once and then caches the result
     [*] `partial`: partial function application
     [*] `rename`: renames functions; we can't do that without relying on JS
-    [ ]
     [-] function combinators
-      [ ] investigate: do function combinators belong in `prelude` or `core`?
-          [ ] performance considerations: `reduce` vs. `for..of`
-          [ ] error handling
-      [ ] `pipe`
-      [ ] `pipe_some`
+      [*] investigate: do function combinators belong in `prelude` or `core`?
+          [x] performance considerations: `reduce` vs. `for..of`
+          [*] error handling
+      [*] `pipe`
+      [*] `pipe_some`
+      [*] `thread`
+      [*] `thread_some`
+      [ ] `comp`
+      [ ] `comp_some`
 [-] Polymorphic dispatch
-  [-] Multimethods
+  [*] Multimethods
     [*] base implementation
-    [ ] design metadata
-    [ ] pre & post condition testing
-    [?] switch on `eq` instead of `===`
+    [*] design metadata
+    [*] pre & post condition testing
+    [*] switch on `eq` instead of `===`
         ^ avoid leaky abstractions
-        [ ] research `Record` performance
-        [ ] research use of HAMTs
-  [?] Prototype-based dispatch
+        [x] research `Record` performance
+        [x] research use of HAMTs
+        [*] custom `HashMap` implementation
+  [.] Prototype-based dispatch
     [ ] design research
     [ ] base implementation
 [-] Datatypes & type system
   [*] design & implement basic scheme
-  [ ] design research: does the basic scheme work?
+  [.] design research: does the basic scheme work?
     [ ] consider `new`/object construction
     [ ] consider `extends` and class hierarchies, incl. `instanceof`
     [ ] condiser prototype-based construction
@@ -79,10 +108,12 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [ ] test harness
   [-] optimization
     [-] `tail`
-    [ ] `head`
-[ ] Linked lists
-  [ ] basic functionality
-  [ ] performance optimization: pointers or arrays?
+    [x] `head`
+  [ ] remove `shift`/`rest`-like functionality
+      ^ `first`/`rest` will be provided by the `seq` abstraction
+[*] Linked lists
+  [*] basic functionality
+  [*] performance optimization: pointers or arrays?
 [-] Seqs
   ^ combines JS iteration protocol with a `first`/`rest` protocol
   [*] basic functionality
@@ -104,9 +135,9 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [*] base implementation
   [ ] testing
   [ ] improvement
-[ ] References
-  [ ] study Clojure references
-  [ ] base implementation
+[*] References
+  [*] study Clojure references
+  [*] base implementation
 [ ] Investigate: reaching the outside world
   [ ] Do we build in IO?
     [ ] `console`
@@ -119,8 +150,14 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [ ] EFI: how to handle calling out to regular JS?
     [ ] Consider `js`: simply skip Ludus parsing and hand it to the host
         ^ How do we make this safe? Maybe we don't.
-[ ] Namespaces
-  [ ] Basic design
+[-] Environment
+  [*] Namespaces
+    [*] Basic design
+    [*] `def`
+  [*] Custom repl printing
+  [*] Runtime detection
+  [ ] Abstraction for IO
+    [ ] 
 [ ] Comprehensive testing of `prelude` functions
 
 ### Milestone: Core
