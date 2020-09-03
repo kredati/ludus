@@ -2,7 +2,9 @@
 // Basic function manipulations. Many obvious things aren't here because
 // they are easily expressible in Ludus and aren't necessary for Prelude.
 
+import Ludus from './env.js';
 import {raise, handle, report} from './errors.js';
+import {multi} from './methods.js';
 
 // rename :: (fn) -> fn
 // `rename`s a function
@@ -17,12 +19,13 @@ let rename = (name, fn) => Object.defineProperty(fn, 'name', {value: name});
 // one argument.
 let partial = (fn, ...args) => {
   let partial_name = 
-    `${fn.name}<partial (${args.map(x => x.toString()).join(', ')})>`;
+    `${fn.name}<partial (${args.map(Ludus.inspect).join(', ')})>`;
   return rename(partial_name, 
     (...args2) => args2.length > 0
       ? fn(...args, ...args2) 
       : raise(Error, `Not enough arguments to \`${partial_name}\`: Partially applied functions must be called with at least 1 argument; you passed 0.`));
   };
+
 
 ///// Function dispatch
 
@@ -248,6 +251,14 @@ let fn = n_ary('fn',
   }
 );
 
+// explain :: (fn, [some], string?) -> string
+// a quick and dirty early-on multimethod to explain the failures in
+// pre/post conditions for functions.
+let expl_tag = Symbol.for('ludus/explain')
+let explain = multi('explain', x => x[expl_tag],
+  (pred, value, message = '') => `Spec failure: ${message}
+  ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`);
+
 // pre_post :: ([fn], [fn], fn) -> fn
 // `pre_post` wraps a function with predicates that evaluate
 // the arguments and return values. The first two arguments (`pre` and
@@ -322,4 +333,4 @@ let once = (fn) => {
   });
 };
 
-export {rename, partial, n_ary, pipe, pipe_some, loop, recur, fn, defn, once, pre_post, handle};
+export {rename, partial, n_ary, pipe, pipe_some, loop, recur, fn, defn, once, pre_post, explain};
