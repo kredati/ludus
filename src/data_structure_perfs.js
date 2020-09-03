@@ -22,25 +22,31 @@ let mut = (arr, el) => {
   return arr;
 };
 
-let cons = (el, list = {}) => {
-  return {
-    [Symbol.iterator] () {
-      let first = el;
-      let rest = list;
-      return {
-        next () {
-          let out = first;
-          if (out === undefined) return {done: true};
-          first = rest.first;
-          rest = rest.rest;
-          return {value: out};
-        },
+let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
+
+let list_proto = {
+  *[Symbol.iterator] () {
+    let first = this.el;
+    let rest = this.rest;
+    return {
+      next: () => {
+        let out = this.first;
+        if (out === undefined) return {done: true};
+        first = rest.first;
+        rest = first.rest;
+        return {value: out};
       }
-    },
-    first: el,
-    rest: list
+    }
   }
-};
+}
+
+let cons = (first, rest = {}) => create(list_proto, {first, rest});
+
+let cons_ = (el, list = []) => [el, list];
+
+let first = ([el]) => el;
+
+let rest = ([_, rest]) => rest;
 
 let conj = (list, el) => cons(el, list);
 
