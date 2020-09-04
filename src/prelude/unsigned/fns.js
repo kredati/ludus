@@ -91,10 +91,10 @@ let recur_args = Symbol('ludus/recur/args'); // not exported
 let recur_handler = { // not exported
   get (target, prop) { // will throw if anything but symbol tags are accessed
     if (prop === recur_tag || prop === recur_args) return target[prop];
-    throw SyntaxError('recur must only be used in the tail position inside of loop.');
+    throw new SyntaxError('recur must only be used in the tail position inside of loop.');
   },
   apply () { // will throw if something `recurred` is called as a function
-    throw SyntaxError('recur must only be used in the tail position inside of loop.');
+    throw new SyntaxError('recur must only be used in the tail position inside of loop.');
   }
 };
 
@@ -105,10 +105,10 @@ let recur = (...args) => new Proxy(Object.assign(() => {},
   {
     [recur_tag]: true, [recur_args]: args,
     [Symbol.toPrimitive] () { // will throw on coercion to an atomic value
-      throw SyntaxError('recur must only be used in the tail position inside of loop.');
+      throw new SyntaxError('recur must only be used in the tail position inside of loop.');
     },
     [Symbol.toString] () { // will throw on coercion to a string
-      throw SyntaxError('recur must only be used in the tail position inside of loop.');
+      throw new SyntaxError('recur must only be used in the tail position inside of loop.');
   }
 }), recur_handler);
 
@@ -131,7 +131,7 @@ let loop = (fn, max_iter = 1000000) => {
     }
 
     if (iter >= max_iter) 
-      throw Error(`Too much recursion in ${name}.`)
+      throw new Error(`Too much recursion in ${name}.`)
     
     return result;
   };
@@ -197,7 +197,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
     let result = pred(...args);
     let pass = result !== false && result != undefined;
     pass_pre = pass_pre && pass;
-    if (!pass_pre) throw ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
+    if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
   }
 
   let result = body(...args);
@@ -286,7 +286,7 @@ let method = (multimethod, value, fn) => {
     multimethod[multi_tag].set(value, fn);
   } catch (e) {
     if (e instanceof HashError)
-      throw MethodError(`Multimethods may only contain a single method per value. Method ${multimethod.name} already has a method for ${value}.`);
+      throw new MethodError(`Multimethods may only contain a single method per value. Method ${multimethod.name} already has a method for ${value}.`);
     throw e;
   }
   return multimethod;
@@ -307,6 +307,22 @@ let dispatch_on = (multimethod) => multimethod[multi_tag].on;
 //////////////////// Defs: the three big functions!
 // defn, defmulti, defmethod
 
+// but first, a helper
+// copy attributes onto an object
+// they will be non-enumerable and non-configurable
+let copy_attrs = (obj, attrs) => {
+  attrs
+  let keys = [...Object.getOwnPropertyNames(attrs), ...Object.getOwnPropertySymbols(attrs)];
+  keys
+  
+  keys.forEach(key => Object.defineProperty(obj, key, {
+    value: attrs[key],
+    enumerable: false,
+    configurable: false
+  }));
+  return obj;
+};
+
 // defn :: (object) -> fn
 // `defn` fully instruments a function with everything Ludus has to offer.
 // To `fn`, it adds `pre_post`, as well as arbitrary metadata (including
@@ -325,10 +341,14 @@ let defn = ({name, body, pre = [], post = [], ...attrs}) => {
   let clauses = typeof body === 'function' ? [body] : body;
   let out = pre_post(pre, post, fn(name, clauses));
 
+  /*
   return Object.defineProperty(
     rename(name, out), 
     'attrs', 
     {value: {clauses, ...attrs}});
+    */
+
+  return copy_attrs(out, {name, clauses, ...attrs});
 };
 
 // defmulti :: ({name: string, on: fn, pre: fn | [fn]?, post: fn | [fn]?, not_found: fn?}) -> fn(multi)
@@ -352,16 +372,22 @@ let defmulti = ({
   not_found,
   ...attrs}) => {
     let the_multi = multi(name, on, not_found);
-    let instrumented = pre_post(pre, post, the_multi);
+    let out = pre_post(pre, post, the_multi);
 
-    return Object.defineProperties(instrumented, {
+    /*
+    return Object.defineProperties(out, {
       name: {value: name},
       [globalThis[Symbol.for('ludus/inspect/custom')]]: 
         {value: () => `[fn(multi): ${name}]`},
       [multi_tag]: {value: the_multi[multi_tag]},
       attrs: {value: attrs}
     });
-};
+    */
+
+    return copy_attrs(out, {
+      name, [multi_tag]: the_multi[multi_tag], ...attrs
+    });
+  };
 
 // defmethod :: ({multi: fn(multi), on: value, body: fn, pre: [fn]?, post: [fn]?}) -> fn(multi)
 // Adds a method to a multimethod. Takes a multimethod, a value to match, 
@@ -377,8 +403,8 @@ let defmethod = ({
   }) => {
     let the_method = pre_post(pre, post, fn(multi.name, body));
     multi[multi_tag].set(on, the_method);
-    Object.defineProperties(the_method, 
-      {attrs: {value: {...attrs, on}}})
+    copy_attrs(the_method, {on, ...attrs});
+    //Object.defineProperties(the_method, {attrs: {value: {...attrs, on}}})
     return multi;
   };
 
@@ -399,7 +425,3 @@ export {rename, partial,
   ArgumentError, MethodError, explain,
   defn, defmulti, defmethod
 };
-
-///// repl playground
-
-explain('') //?
