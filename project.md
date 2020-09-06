@@ -20,6 +20,8 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 * Relies on JS internals that will not be available in Ludus.
 * Is a bedrock dependency for other parts of `prelude`.
 
+`prelude` is itself broken into two stages: unsigned and signed. The unsigned portion of `prelude` involves only what we need to get to signing of function arguments. The `signed` portion is everything else, and uses `defn` and `sign` (&c.) to sign all its functions.
+
 [-] Clean up `core.js`
   [x] Rename to `prelude.js`
   [-] Move to `prelude` directory of modules
@@ -40,7 +42,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
         ^ `prelude` value functions are the things that require operations not available in Ludus, i.e. infix operations (dot property access, addition, boolean and, etc.)
   [*] Design: what must be in a truly minimal `prelude` (vs. `core`)?
   [ ] Develop testing harness for `prelude`
-  [ ] Move core fns to new `core`
+  [*] Move core fns to new `core`
 [-] Errors
   [-] `raise`: functional rather than statement-based error throwing
     [*] base implementation
@@ -117,20 +119,23 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 [-] Seqs
   ^ combines JS iteration protocol with a `first`/`rest` protocol
   [*] basic functionality
-  [ ] design size/infinity info
-  [ ] research: better abstraction over generator functions
+  [*] design size/infinity info
+  [*] improve abstraction over generator functions
 [-] Reduce & Transduce
   [*] `reduce` over seqs
     [*] with short-circuiting
   [-] `transduce`
     [*] core functionality
     [ ] ensure completeness
-    [ ] devise scheme for mutating `conj`
+    [ ] devise scheme for mutating `conj_`
   [-] prelude transducers
     [ ] identify which tranducers belong in `prelude`
 [-] Foundational value operations
   [*] safe `get`
   [*] better booleans
+  [ ] all infix operators -> fns
+    [ ] boolean operators
+    [ ] number operators
 [-] equality testing
   [*] base implementation
   [ ] testing
@@ -138,18 +143,20 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 [*] References
   [*] study Clojure references
   [*] base implementation
-[ ] Investigate: reaching the outside world
-  [ ] Do we build in IO?
-    [ ] `console`
-      [ ] `.log`
-      [ ] `.error`
-      [ ] `.warn`
-      [ ] Tied to specific affordances (e.g. node vs. Chrome vs. Firefox)
-    [ ] `stdin`, `stdout`, `stderr`
-  [ ] Using JS libraries
-    [ ] EFI: how to handle calling out to regular JS?
-    [ ] Consider `js`: simply skip Ludus parsing and hand it to the host
-        ^ How do we make this safe? Maybe we don't.
+[-] Investigate: reaching the outside world
+  [*] Do we build in IO?
+    [*] `console`
+      [*] `.log`
+      [*] `.error`
+      [*] `.warn`
+      [-] Tied to specific affordances (e.g. node vs. Chrome vs. Firefox)
+          ^ runtime detection, etc.
+    [?] `stdin`
+    [?] file access 
+  [*] Using JS libraries
+    [*] EFI: how to handle calling out to regular JS?
+    [ ] Consider `js`: simply skip Ludus parsing and hand it to the host.
+        ^ this, but we don't need it/can't muster it until we have a parser/interpreter
 [-] Environment
   [*] Namespaces
     [*] Basic design
@@ -157,8 +164,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [*] Custom repl printing
   [*] Runtime detection
   [ ] Abstraction for IO
-    [ ] 
-[ ] Comprehensive testing of `prelude` functions
+[ ] Comprehensive testing of `prelude` functions TODO: THIS
 
 ### Milestone: Core
 Core is a relatively complete standard library whose constituents are the building blocks of a fuller environment. Also, each of these will be defined with `defn`, including documentation.
