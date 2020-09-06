@@ -3,15 +3,16 @@
 // they are easily expressible in Ludus and aren't necessary for Prelude.
 
 import Ludus from './env.js';
-import {raise, handle, report} from './errors.js';
+import {raise, handle} from './errors.js';
 import {HashMap, HashError} from './hash.js';
+import {copy_attrs} from './util.js';
 
 // rename :: (fn) -> fn
 // `rename`s a function
 // JS functions cannot be renamed using ordinary property access, since
 // `name` is not a configurable property. We have to use Object.defineProperty
-// instead.
-let rename = (name, fn) => Object.defineProperty(fn, 'name', {value: name});
+// instead, which is what `copy_attrs` does.
+let rename = (name, fn) => copy_attrs(fn, {name});
 
 // partial :: (fn, ...any) -> fn
 // Partially applies a function. Returns a function that can takes the
@@ -19,7 +20,7 @@ let rename = (name, fn) => Object.defineProperty(fn, 'name', {value: name});
 // one argument.
 let partial = (fn, ...args) => {
   let partial_name = 
-    `${fn.name}<partial (${args.map(Ludus.inspect).join(', ')})>`;
+    `${fn.name}<partial (${args.map(Ludus.show).join(', ')})>`;
   return rename(partial_name, 
     (...args2) => args2.length > 0
       ? fn(...args, ...args2) 
@@ -63,7 +64,7 @@ let n_ary = (name, ...clauses) => {
 
     return match 
       ? match(...args) 
-      : raise(ArgumentError, `Wrong number of arguments to ${name}. It takes ${Object.keys(arity_map).join(' or ')} argument(s), but received ${args.length}: (${args.map(Ludus.inspect).join(', ')}).`) 
+      : raise(ArgumentError, `Wrong number of arguments to ${name}. It takes ${Object.keys(arity_map).join(' or ')} argument(s), but received ${args.length}: (${args.map(Ludus.show).join(', ')}).`) 
   };
 
   return rename(name, match_arity);
@@ -307,22 +308,6 @@ let dispatch_on = (multimethod) => multimethod[multi_tag].on;
 //////////////////// Defs: the three big functions!
 // defn, defmulti, defmethod
 
-// but first, a helper
-// copy attributes onto an object
-// they will be non-enumerable and non-configurable
-let copy_attrs = (obj, attrs) => {
-  attrs
-  let keys = [...Object.getOwnPropertyNames(attrs), ...Object.getOwnPropertySymbols(attrs)];
-  keys
-  
-  keys.forEach(key => Object.defineProperty(obj, key, {
-    value: attrs[key],
-    enumerable: false,
-    configurable: false
-  }));
-  return obj;
-};
-
 // defn :: (object) -> fn
 // `defn` fully instruments a function with everything Ludus has to offer.
 // To `fn`, it adds `pre_post`, as well as arbitrary metadata (including
@@ -374,16 +359,6 @@ let defmulti = ({
     let the_multi = multi(name, on, not_found);
     let out = pre_post(pre, post, the_multi);
 
-    /*
-    return Object.defineProperties(out, {
-      name: {value: name},
-      [globalThis[Symbol.for('ludus/inspect/custom')]]: 
-        {value: () => `[fn(multi): ${name}]`},
-      [multi_tag]: {value: the_multi[multi_tag]},
-      attrs: {value: attrs}
-    });
-    */
-
     return copy_attrs(out, {
       name, [multi_tag]: the_multi[multi_tag], ...attrs
     });
@@ -416,7 +391,7 @@ let explain = defmulti({
   doc: 'A multimethod for explaining spec failures. Checks against the value of the `explain` field held on the predicate.',
   on: (pred) => pred.explain,
   not_found: (_, pred, value, message = '') => `Spec failure: ${message}
-  ${Ludus.inspect(value)} did not pass predicate ${Ludus.inspect(pred)}.`
+  ${Ludus.show(value)} did not pass predicate ${Ludus.show(pred)}.`
 });
 
 export {rename, partial, 

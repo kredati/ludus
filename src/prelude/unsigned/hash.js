@@ -24,6 +24,7 @@ let primes = {
   bigint: 2083n
 };
 
+// hash :: (string) -> bigint
 // Hashes a string; a variant of Java's algorithm.
 let hash = (str) => {
   let hash = 0;
@@ -97,7 +98,7 @@ let get_key = (key) => typeof key === 'object'
   : key;
 
 ///// HashedMap
-// Forgive the class; it was the easiest way.
+// Forgive the `class`; it was the easiest way.
 // HashedMap is a Map which intervenes Map's methods to achieve value-equality
 // for its keys.
 // HashedMap does *not* allow for reassigment of identical keys: it is an
@@ -108,24 +109,30 @@ class HashMap extends Map {
     super();
   }
 
+  // returns true if the HM contains the key
+  // dispatches to `get` so I don't have to recreate the
+  // logic.
   has (key) {
     if (this.get(key) === undefined) return false;
     return true;
   }
 
+  // sets a value/key pair
+  // it does this by storing an array at a bigint hash value,
+  // which contains the key/value pairs directly
+  // this lets us manage collisions
+  // also, while HashMaps will happily store a value at `undefined` 
+  // as a key, they will not allow `undefined` to be stored as
+  // a value.
   set (key, value) {
+    if (value == undefined)
+      throw Error('HashMaps cannot store `undefined` as a value.');
     let hashed = get_key(key);
     if (super.has(hashed)) {
       let entries = super.get(hashed);
       for (let i = 0; i < entries.length; i++) {
         let [key_, value_] = entries[i];
         if (eq(key, key_)) {
-          /*
-          in fact, do not update the key
-          entries[i] = [key, value];
-          return this;
-          */
-          // throw an error trying to reassign a value
           throw Error(`HashedMap already contains an entry for ${key}: ${value_.toString()}.`)
         }
       }
@@ -137,12 +144,12 @@ class HashMap extends Map {
     return super.set(hashed, [[key, value]]);
   }
 
+  // gets a value: first, it gets a hash, then it extracts
+  // the corresponding value from the array, or `undefined`
   get (key) {
-    key
     let hashed = get_key(key);
     let entries = super.get(hashed);
     if (entries == null) return undefined;
-    entries
     for (let [key_, value] of entries) {
       if (eq(key, key_)) return value;
     }
@@ -160,6 +167,3 @@ class HashMap extends Map {
 };
 
 export {HashMap, HashError};
-
-let map = new HashMap();
-map

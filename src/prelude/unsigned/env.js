@@ -1,13 +1,15 @@
 //////////////////// The Ludus environment, for bootstrapping even `prelude`
 // This is the absolute core of Ludus.
 
+import {create} from './util.js';
+
 //////////////////// Detecting our runtime
 // TODO: add IO operations
 //  [ ] read file
 //  [ ] read from stdin
 //  [ ] devise browser equivalents (CodeMirror, for much later)
 let Ludus = {
-  inspect: (x) => {
+  show: (x) => {
     if (typeof x === 'symbol') return x.toString();
     if (typeof x === 'string') return `'${x}'`;
     if (typeof x === 'function') return `[λ${x.name ? ': ' + x.name : ''}]`;
@@ -15,7 +17,7 @@ let Ludus = {
     if (x[Ludus.custom]) return x[Ludus.custom]();
     return x;
   },
-  custom: Symbol.for('ludus/inspect/custom'),
+  custom: Symbol.for('ludus/show/custom'),
   print: (...msgs) => { msgs.forEach(x => console.log(x)); },
   report: (...msgs) => { msgs.forEach(msg => console.error(msg)); },
   warn: (...msgs) => { msgs.forEach(msg => console.warn(msg)); }
@@ -24,7 +26,7 @@ let Ludus = {
 // if we are running in Deno
 if (typeof Deno !== 'undefined') {
   Ludus.runtime = 'deno';
-  Ludus.inspect = x => {
+  Ludus.show = x => {
     x = x === null ? 'undefined' : x;
     return Deno.inspect(x);
   }
@@ -64,21 +66,25 @@ let ns_handler = {
     return key in target.space;
   },
   get (target, key) {
+    if (key in target[ns_space_tag]) return target[ns_space_tag][key];
+    if (typeof key === 'symbol') return target[key];
+    /*
     if (key === 'name') return target.name;
 
     let target_proto = Reflect.getPrototypeOf(target);
 
     if (key in target_proto) return target_proto[key];
-    if (key in target.attrs) return target.attrs[key];
+    if (key in target) return target[key];
     if (key in target.space) return target.space[key];
     if (key === space_tag) return target.space;
-    throw ReferenceError(`${key.toString()} is not defined in namespace ${target.name}.`);
+    */
+    throw ReferenceError(`${key.toString()} is not defined in namespace ${target[ns_name_tag]}.`);
   },
   set () {
     throw NamespaceError('You may only add to namespaces by using `def`.')
   },
   ownKeys (target) {
-    return Reflect.ownKeys(target.space);
+    return Reflect.ownKeys(target[ns_space_tag]);
   }
 };
 
@@ -87,28 +93,42 @@ let Namespace = {
   name: 'Namespace',
   get constructor () { return Namespace; },
   [Ludus.custom] () {
-    return `Namespace { ${this.name} }`;
+    return `Namespace { ${this[ns_name_tag]} }`;
   },
   [def_tag] (key, value) {
-    this[space_tag][key] = value;
+    this[ns_space_tag][key] = value;
   }
 };
 
 // ns :: ({name: string, space: object, ...attrs}) -> ns
 // Creates a namespace.
-Ludus.ns = ({name, space, ...attrs}) => {
-  let the_ns = Object.assign(Object.create(Namespace), {name, space, attrs});
-  let proxy = new Proxy(the_ns, ns_handler);
-  return proxy;
+let ns_name_tag = Symbol.for('ludus/ns/name');
+let ns_space_tag = Symbol.for('ludus/ns/space');
+let ns_attr_tag = Symbol.for('ludus/ns/attr');
+
+let ns = ({name, space, ...attrs}) => {
+  let the_ns = create(Namespace, {
+    [ns_name_tag]: name,
+    [ns_space_tag]: space,
+    [ns_attr_tag]: attrs
+  });
+  let proxied = new Proxy(the_ns, ns_handler);
+  return proxied;
 };
 
-Ludus.def = (namespace, key, value) => {
+let def = (namespace, key, value) => {
   namespace[def_tag](key, value);
   return value;
 };
 
-Ludus.is_ns = (x) => x != undefined && Reflect.getPrototypeOf(x) === Namespace;
+let is_ns = (x) => x != undefined && Object.getPrototypeOf(x) === Namespace;
 
-globalThis.Ludus = Ludus.ns({name: 'Ludus', space: Ludus});
+Object.assign(Ludus, {ns, def, is_ns});
 
-export default Ludus;
+Ludus.NamespaceError = NamespaceError;
+
+let Ludus_ns = Ludus.ns({name: 'Ludus', space: Ludus});
+
+globalThis.Ludus = Ludus_ns;
+
+export default Ludus_ns;

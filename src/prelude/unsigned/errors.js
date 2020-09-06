@@ -2,15 +2,13 @@
 // helpers for better functional error handling
 // TODO: also consider standard error types for Ludus
 
-// report :: (strings) -> undefined
-// sends errors to the error console
-let report = (...msgs) => { msgs.forEach(msg => console.error(msg)); };
+import Ludus from './env.js';
 
 // raise :: (Error, string, ...strings) -> undefined
 // functional error throwing
 // throws `err` with `msg`, but first, it reports `msgs` to the error console
 let raise = (err, msg, ...msgs) => {
-  report(msgs);
+  Ludus.report(msgs);
   throw new err(msg);
 };
 
@@ -34,7 +32,7 @@ let handle = (name, fn) => Object.defineProperty(
     try {
       return fn(...args);
     } catch (e) {
-      console.error(`${e.name} thrown while calling ${fn.name || 'anon. fn'} with arguments (${args.map(arg => arg.toString()).join(', ')})`);
+      Ludus.report(`${e.name} thrown while calling ${fn.name || 'anon. fn'} with arguments (${args.map(arg => arg.toString()).join(', ')})`);
       throw e;
     }
   },
@@ -42,4 +40,4 @@ let handle = (name, fn) => Object.defineProperty(
   {value: name || fn.name || 'anon. fn'}
 );
 
-export {report, raise, bound, handle};
+export {raise, bound, handle};

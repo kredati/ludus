@@ -41,8 +41,12 @@ let eq_iter = (xs, ys) => {
 
 // `eq_assoc` tests for equality between associative collections.
 // Runs in O(1) best case, and O(😱) in worst case
+// Returns false if two objects do not have the same constructor
+// or prototype.
 // TODO: are there more clever optimizations?
 let eq_assoc = (x, y) => {
+  if (x.constructor !== y.constructor) return false;
+  if (Reflect.getPrototypeOf(x) !== y.getPrototypeOf(y)) return false;
   for (let key in x) {
     if (!eq(x[key], y[key])) return false;
   }
