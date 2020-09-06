@@ -27,6 +27,8 @@ let obj_gen = function* (obj) {
 };
 
 // iterate: creates an iterator over a seq
+// uses a closure to get JS iterator behavior on something that
+// implements first/rest semantics.
 // not exported, but used to implement the iterator protocol
 // in a seq
 let iterate = (seq) => {
@@ -104,7 +106,8 @@ let seq = defn({
     // if it's undefined, return an empty seq
     if (seqable == undefined) return seq([]);
     // if it's iterable, return a seq over a new iterator over it
-    // strings, arrays, Maps, and Sets are iterable
+    // js: strings, arrays, Maps, and Sets are iterable
+    // ld: vectors and lists are iterable
     if (is_iter(seqable)) 
       return create_seq(seqable[Symbol.iterator](), size(seqable));
     // if it's a record (object literal) return a seq over an object generator
