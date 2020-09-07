@@ -10,10 +10,14 @@
 // Seqs are immutable and stateless, and are an abstraction over
 // any number of things.
 
-import Ludus from './env.js';
-import {is_iter, is_assoc, is_some} from './predicates.js';
-import {create} from './types.js';
-import {defn, once} from './functions.js';
+import L from './deps.js';
+import F from './fns.js';
+import P from './preds.js';
+import { sign, splat } from '../unsigned/spec.js';
+
+let {defn, once} = F;
+let {create} = L;
+let {is_iter, is_assoc, is_some, has} = P;
 
 // obj_gen: creates a generator that iterates through the keys of an object
 // only covers string keys
@@ -22,7 +26,7 @@ import {defn, once} from './functions.js';
 // not exported
 let obj_gen = function* (obj) {
   for (let key in obj) {
-    if (obj.hasOwnProperty(key)) yield [key, obj[key]];
+    if (has(key, obj)) yield [key, obj[key]];
   }
 };
 
@@ -46,7 +50,8 @@ let iterate = (seq) => {
   }
 };
 
-let Seq = {
+// Seq prototype
+let Seq_proto = {
   [Symbol.iterator] () {
     return iterate(this);
   },
@@ -61,7 +66,7 @@ let Seq = {
 let is_seq = defn({
   name: 'is_seq',
   doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, see `is_seqable`.',
-  body: (x) => is_some(x) && Object.getPrototypeOf(x) === Seq
+  body: (x) => is_some(x) && Object.getPrototypeOf(x) === Seq_proto
 });
 
 let is_seqable = defn({
@@ -73,7 +78,7 @@ let is_seqable = defn({
 let size = defn({
   name: 'size',
   doc: 'Determines the size of a collection.',
-  pre: [is_seqable],
+  pre: sign([is_seqable]),
   body: (x) => {
     if (x.length != undefined) return x.length;
     if (x.size != undefined) return x.size;
@@ -92,14 +97,14 @@ let create_seq = (iterator, size) => {
   let current = iterator.next();
   let rest = once(() => current.done ? undefined : create_seq(iterator));
   let first = () => current.done ? undefined : current.value;
-  let out = create(Seq, {rest, first, size});
+  let out = create(Seq_proto, {rest, first, size});
   return out;
 };
 
 let seq = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
-  pre: [is_seqable],
+  pre: sign([is_seqable]),
   body: (seqable) => {
     // if it's already a seq, just return it
     if (is_seq(seqable)) return seqable;
@@ -123,7 +128,7 @@ let empty_seq = seq([]);
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates `seq`s, placing one after the other.',
-  pre: [(...seqables) => seqables.every(is_seqable)],
+  pre: splat(is_seqable),
   body: (...seqables) => {
     let generator = (function*(){
       for (let seqable of seqables) {
@@ -139,22 +144,30 @@ let concat = defn({
 let first = defn({
   name: 'first',
   doc: 'Gets the first element of any `seq`able.',
+  pre: sign([is_seqable]),
   body: (seqable) => seq(seqable).first()
 });
 
 let rest = defn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
+  pre: sign([is_seqable]),
   body: (seqable) => seq(seqable).rest() || empty_seq
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
-  pre: [is_seqable],
+  pre: sign([is_seqable]),
   body: (seqable) => rest(seq(seqable)) === empty_seq
 });
 
-export {seq, empty_seq, 
-  is_seq, is_seqable, is_empty, 
-  first, rest, concat, size};
+let Seq = L.ns({
+  name: 'Seq',
+  space: {seq, empty_seq, 
+    is_seq, is_seqable, is_empty, 
+    first, rest, concat, size
+  }
+});
+
+export default Seq;
