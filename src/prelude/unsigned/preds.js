@@ -25,7 +25,7 @@ let is_string = (x) => typeof x === 'string';
 let is_number = (x) => typeof x === 'number';
 
 // tells if a value is a number that is also an integer
-let is_int = (x) => is_number(x) && x % 1 === 0;
+let is_int = (x) => is_number(x) && (x | 0) === x;
 
 let is_bigint = (x) => typeof x === 'bigint';
 
