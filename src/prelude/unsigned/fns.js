@@ -293,6 +293,9 @@ let method = (multimethod, value, fn) => {
   return multimethod;
 };
 
+// tells if a function is a multimethod
+let is_multi = (x) => typeof x === 'function' && multi_tag in x;
+
 // lists the methods of a multimethod
 let methods = (multimethod) => multimethod[multi_tag].methods();
 
@@ -396,7 +399,8 @@ let explain = defmulti({
 
 export {rename, partial, 
   n_ary, loop, recur, fn, pre_post, 
-  multi, method, methods, has_method, get_method, dispatch_on,
+  multi, method, 
+  is_multi, methods, has_method, get_method, dispatch_on,
   ArgumentError, MethodError, explain,
-  defn, defmulti, defmethod
+  defn, defmulti, defmethod,
 };
