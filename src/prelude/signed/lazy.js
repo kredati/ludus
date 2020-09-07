@@ -9,15 +9,21 @@
 //        the function called `repeatedly` below in early stages of learning,
 //        that's dangerous.
 
-import './env.js';
-import {defn} from './functions.js';
-import {is_some} from './predicates.js';
-import {seq, is_empty, size} from './seqs.js';
+import L from './deps.js';
+import F from './fns.js';
+import P from './preds.js';
+import S from './seqs.js';
+
+let {defn} = F;
+let {sign} = L;
+let {seq, is_empty, size}= S;
+let {is_int, is_any, is_fn} = P;
 
 let lazy = defn({
   name: 'lazy',
   doc: 'Creates a lazy, possibly infinite, sequence. It takes an `init`ial value, two or three unary functions: `step`, `done`, and, optionally, `map`. `step` should return the series of values, first by taking the `init` value, and then, the previous value. `done` should return `true` once the sequence should terminate.\n\n`map` is optionally applied to the value before it is yielded into the sequence. It is useful if your lazy sequence needs to keep track of state that is more complex than the values you wish to appear in the sequence.',
-  pre: [/*...*/],
+  pre: sign([is_any, is_fn, is_fn],
+    [is_any, is_fn, is_fn, is_fn]),
   body: [
     (init, step, done) => lazy(init, step, done, (x) => x),
     (init, step, done, map) => seq((function*() {
@@ -34,7 +40,7 @@ let lazy = defn({
 let range = defn({
   name: 'range',
   doc: 'Creates a sequence of numbers, in order. With one argument, it counts up from 0 to the maximum (exclusive) in steps of +1. With two arguments, it counts up from the start to the max in steps of +1. With three, it counts up to max from start, in steps of whatever you give it.',
-  pre: [/*...*/],
+  pre: sign([is_int]),
   body: [
     (max) => range(0, max, 1),
     (start, max) => range(start, max, 1),
