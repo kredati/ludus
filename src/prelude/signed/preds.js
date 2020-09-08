@@ -164,13 +164,36 @@ let maybe = defn({
   body: (fn) => L.fn(`maybe<${fn.name || 'anon.'}>`, or(is_undef, fn))
 });
 
+let is_key = defn({
+  name: 'is_key',
+  doc: 'Tells if a value is a valid key for a property on an object.',
+  body: or(is_number, is_string)
+});
+
 let has = defn({
   name: 'has',
-  doc: 'Tells if an object has some value set at a particular key. Note that it will return `true` if a particular object has had a key explicitly set to `undefined`.',
-  pre: sign([is_string], [is_string, is_any]),
+  doc: 'Tells if an object has some value set at a particular key. Note that it will return `true` if a particular object has had a key explicitly set to `undefined`. Only tests own properties.',
+  pre: sign([is_key], [is_key, is_any]),
   body: [
     (key) => L.fn(`has<${key}>`, (obj) => has(key, obj)),
-    (key, obj) => or(is_fn, is_obj)(obj) && key in obj
+    (key, obj) => obj != undefined && obj.hasOwnProperty(key)
+  ]
+});
+
+let has_proto = defn({
+  name: 'has_proto',
+  doc: 'Tells if an object has some value set at a particular key, in the objec itself, or somewhere in its prototype chain. Note that it will return `true` if the key has been explicitly set to `undefined`.',
+  pre: sign([is_key], [is_key, is_any]),
+  body: [
+    (key) => L.fn(`has_proto<${key}>`, (obj) => has(key, obj)),
+    (key, obj) => {
+      if (obj == undefined) return false;
+      if (obj.hasOwnProperty(key)) return true;
+      if (is_fn(obj) || is_obj(obj)) {
+        if (key in obj) return true;
+      }
+      return false;
+    }
   ]
 });
 
@@ -233,7 +256,7 @@ let Pred = L.ns({
     is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
     is_fn, is_obj, is_assoc, is_iter, is_sequence,
     is_sequence_of: L.is_sequence_of, is_multi,
-    not, and, or, maybe, at, has, dict, struct
+    not, and, or, maybe, at, is_key, has, has_proto, dict, struct
   }
 });
 
