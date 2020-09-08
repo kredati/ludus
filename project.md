@@ -36,9 +36,9 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] Equality
     [-] List
     [-] Vector
-    [ ] Seqs
+    [*] Seqs
     [ ] Ducers
-    [ ] Values
+    [*] Values
         ^ `prelude` value functions are the things that require operations not available in Ludus, i.e. infix operations (dot property access, addition, boolean and, etc.)
   [*] Design: what must be in a truly minimal `prelude` (vs. `core`)?
   [ ] Develop testing harness for `prelude`
@@ -82,8 +82,8 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
       [*] `pipe_some`
       [*] `thread`
       [*] `thread_some`
-      [ ] `comp`
-      [ ] `comp_some`
+      [*] `comp`
+      [*] `comp_some`
 [-] Polymorphic dispatch
   [*] Multimethods
     [*] base implementation
@@ -133,9 +133,9 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 [-] Foundational value operations
   [*] safe `get`
   [*] better booleans
-  [ ] all infix operators -> fns
-    [ ] boolean operators
-    [ ] number operators
+  [*] all infix operators -> fns
+    [*] boolean operators
+    [*] number operators
 [-] equality testing
   [*] base implementation
   [ ] testing
@@ -172,22 +172,22 @@ Core is a relatively complete standard library whose constituents are the buildi
 [ ] parser combinators
 [ ] full set of transducers
   [ ] identify core transducers
-[ ] value operations
-  [ ] atoms
-    [ ] booleans
-    [ ] numbers (math)
-  [ ] strings
-  [ ] collections
-    [ ] design collection abstractions
-      [ ] any collection
-      [ ] seqs / ordered collections 
-    [ ] objects
-    [ ] arrays/vectors
+[*] value operations
+  [*] atoms
+    [*] booleans
+    [*] numbers (math)
+  [*] strings
+  [*] collections
+    [*] design collection abstractions
+      [*] any collection
+      [*] seqs / ordered collections 
+    [*] objects
+    [-] arrays/vectors
     [?] sets
     [?] maps
-[ ] Seq elaboration
-  [ ] seq combinators
-  [ ] useful infinite seqs
+[*] Seq elaboration
+  [*] seq combinators
+  [*] useful infinite seqs
 [ ] Complete set of transducers
 [ ] `show`
 [ ] `doc`
@@ -197,8 +197,8 @@ Core is a relatively complete standard library whose constituents are the buildi
 See [./nodes_and_research/language.md].
 
 Special forms:
-[ ] `when` + ternary operator
-[ ] `cond` + compilation
+[*] `when` + ternary operator
+[-] `cond` + compilation
 [ ] `js` + no parsing
 
 ### Milestone: Ludus Parser
