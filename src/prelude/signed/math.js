@@ -466,7 +466,7 @@ let Math_ = ns({
     lt, lte, mod, mult, number, pow, pow_by, precise, random, random_int, round,
     sqrt, sub, sub_by, sum_of_squares, trunc,
     clamp, lerp, norm, rad_to_deg, deg_to_rad,
-    cos, sin, tan, acos, asin, atan, atan2, ln, log2, log10,
+    cos, sin, tan, acos, asin, atan, ln, log2, log10,
     pi, e, sqrt2, sqrt1_2, ln2, ln10, log2e, log10e
   }
 });
