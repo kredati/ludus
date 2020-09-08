@@ -331,16 +331,12 @@ let asin = defn({
 
 let atan = defn({
   name: 'atan',
-  doc: 'The arctangent of a slope, returning the angle in radians. To avoid division by zero or Infinity, use `atan2`.',
+  doc: 'The arctangent of a slope, returning the angle in radians. With one argument, returns the arctangent of the slope expressed in a ratio. To avoid division by zero at vertical lines, the two-argument versiion takes the numerator and denominator.',
   pre: sign([is_number]),
-  body: Math.atan
-})
-
-let atan2 = defn({
-  name: 'atan2',
-  doc: 'The arctangent of two numbers, representing the slope, returning the angle in radians. We use two arguments instead of their ratio to avoid division by zero.',
-  pre: sign([is_number, is_number]),
-  body: Math.atan2
+  body: [
+    (x) => Math.atan(x),
+    (x, y) => Math.atan2(x, y)
+  ]
 });
 
 let cos = defn({
