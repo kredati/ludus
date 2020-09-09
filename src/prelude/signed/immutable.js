@@ -36,18 +36,30 @@
 //      and removing at the end; this will simplify matters, since seqs should
 //      take care of first/rest iteration semantics
 
-let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
+// first, some utility functions
 
+// create an object
+let create = (proto, attrs) => Object.freeze(Object.assign(Object.create(proto), attrs));
+
+// strict equality as a function
 let eq = (x, y) => x === y;
 
+// get the last element of an array
 let last = (arr) => arr[arr.length - 1];
+
+// get all but the last element of an array in a new array
 let but_last = (arr) => arr.slice(0, arr.length - 1);
 
+// update a particular element of an array, returning a new array
 let update_arr = (arr, index, value) => [...arr.slice(0, index), value, ...arr.slice(index + 1)];
 
+///// Defaults
+// node_factor is the power of two that expresses node size
 let node_factor = 5; // NB: clj has this at 5 // node_size at 32
+// calculate node size
 let node_size = 1 << node_factor; // = 2 ** node_factor
 
+// a special empty element
 let empty = {show: () => 'empty', eq: (x) => x === empty};
 
 let Leaf = {
@@ -221,7 +233,6 @@ let list_handler = {
   },
   get (target, prop) {
     if (typeof prop === 'symbol' || prop in target) return target[prop];
-    prop
     let index = parseInt(prop, 10);
     if (isNaN(index)) return undefined;
     return target.get(index);
@@ -257,7 +268,6 @@ let List = {
   first () {
     return this.get(this.offset);
   },
-  // TODO: fix this naive version for memory leaks
   rest () {
     if (this.size <= 1) return List.empty();
     return List.create(this.root.but_first(), this.size - 1, this.offset + 1);
@@ -295,5 +305,3 @@ let List = {
 };
 
 export {List};
-
-List.of(1, 2, 3) //?
