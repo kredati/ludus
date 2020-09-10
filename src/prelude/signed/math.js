@@ -1,12 +1,16 @@
-///// Math
+//////////////////// Math
+// All the mathematical functions
+// TODO: add explicit function clauses for outsourced functions
+// TODO: add "nil punning" for undefined
+//        [ ] Change is_number to maybe(is_number) everywhere
+//        [ ] Figure out how to coerce undefined to 0 gracefully
 
 import L from './deps.js';
 import F from './fns.js';
 import P from './preds.js';
-import { partial } from '../unsigned/fns.js';
 
 let {splat, sign, ns} = L;
-let {defn} = F;
+let {defn, partial} = F;
 let {is_number, is_int} = P;
 
 let add = defn({
