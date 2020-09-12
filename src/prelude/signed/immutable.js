@@ -27,9 +27,9 @@
 //    [ ] do more rigorous perf testing
 // [ ] develop testing harness
 // [ ] add `tail` optimization: https://hypirion.com/musings/understanding-persistent-vector-pt-3
-// [ ] add `head` optimization
+// [?] add `head` optimization
 // [*] add iteration optimization visiting nodes in place of calling `get`
-// [ ] refactor so everything is functions in objects instead of methods
+// [?] refactor so everything is functions in objects instead of methods
 // [*] add ownKeys handler to List proxy to allow key-based looping of List
 //     ^ this will allow hashing of vectors in HashedMap
 // [ ] consider factoring out first/rest modification semantics and only adding
