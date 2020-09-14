@@ -36,13 +36,21 @@
 //      and removing at the end; this will simplify matters, since seqs should
 //      take care of first/rest iteration semantics
 
+import E from './eq.js';
+let {eq} = E;
+
 // first, some utility functions
 
 // create an object
-let create = (proto, attrs) => Object.freeze(Object.assign(Object.create(proto), attrs));
+let create_ = (proto, attrs) => Object.freeze(Object.assign(Object.create(proto), attrs));
 
-// strict equality as a function
-let eq = (x, y) => x === y;
+let create = (proto, attrs) => {
+  let obj = Object.create(proto);
+  for (let key in attrs) {
+    Object.defineProperty(obj, key, {value: attrs[key]})
+  }
+  return Object.freeze(obj);
+};
 
 // get the last element of an array
 let last = (arr) => arr[arr.length - 1];
@@ -63,16 +71,13 @@ let chunk = (arr, by) => {
     chunks += 1;
   }
   return chunked;
-}
+};
 
 ///// Defaults
 // node_factor is the power of two that expresses node size
 let node_factor = 2; // NB: clj has this at 5 // node_size at 32
 // calculate node size
 let node_size = 1 << node_factor; // = 2 ** node_factor
-
-// a special empty element
-let empty = {show: () => 'empty', eq: (x) => x === empty};
 
 let Leaf = {
   create: (nodes) => create(Leaf, {nodes, capacity: node_size, level: 1, size: nodes.length}),
@@ -97,8 +102,14 @@ let Leaf = {
     return Leaf.create([...this.nodes, value]);
   },
   unconj () {
-    if (this.size === 1) return undefined;
+    if (this.size === 1) return Leaf.empty();
     return Leaf.create(but_last(this.nodes));
+  },
+  includes (value) {
+    for (let node of this.nodes) {
+      if (eq(value, node)) return true;
+    }
+    return false;
   },
   show () {
     return `Leaf [ ${this.nodes.join(', ')} ]`;
@@ -116,7 +127,7 @@ let Leaf = {
   },
   *[Symbol.iterator] () {
     for (let value of this.nodes) {
-      if (value !== empty) yield value;
+      yield value;
     }
   }
 };
@@ -136,6 +147,7 @@ let Node = {
     return this.size >= this.capacity;
   },
   get (index) {
+    this.nodes //?
     // the following is equivalent to node_size ** (this.level - 1)
     let next_capacity = 1 << (node_factor * (this.level - 1));
     // the following is equivalent to Math.floor(index / next_capacity);
@@ -152,23 +164,40 @@ let Node = {
     return Node.create(
       update_arr(this.nodes, which_node, new_node), this.level, this.size);
   },
+  conj_ (leaf) {
+    if (this.size < this.capacity) {}
+
+  },
   conj (leaf) {
     if (this.size < this.capacity) {
       // if this is a bottom `Node` (i.e. that holds leaves, level 2)
       // add the leaf
-      if (this.level === 2) return Node.create(
-        [...this.nodes, leaf], 2, this.size + node_size);
-      
-      // if this is an internal `Node` (does not hold leaves)
-      // add the leaf to the node below
-      let new_last_node = last(this.nodes).conj(leaf);
-      return Node.create(
-        update_arr(this.nodes, this.nodes.length - 1, new_last_node),
+      if (this.level === 2) {
+        leaf
+        this
+        let new_node = Node.create([...this.nodes, leaf], 2, this.size + node_size)
+        return new_node;
+      }
+
+      let last_node = last(this.nodes);
+      let last_node_full = last_node.size < last_node.capacity;
+
+      if (last_node.size < last_node.capacity) {
+        let new_last_node = last_node.conj(leaf);
+        return Node.create([...but_last(this.nodes), new_last_node],
+          this.level, this.size + node_size);
+      }
+
+      return Node.create([...this.nodes, Node.empty(this.level - 1).conj(leaf)],
         this.level, this.size + node_size);
     }
+    this.size //?
+    this //?
+    leaf //?
+    let new_node = Node.create([this, Node.empty(this.level).conj(leaf)], 
+      this.level + 1, this.size + node_size)
     // if there isn't room, create a new root
-    return Node.create([this, Node.empty(this.level).conj(leaf)], 
-      this.level + 1, this.size + node_size);
+    return new_node;
   },
   last () {
     let last_node = last(this.nodes);
@@ -199,6 +228,12 @@ let Node = {
     }
     return true;
   },
+  includes (value) {
+    for (let node of nodes) {
+      if (node.includes(value)) return true;
+    }
+    return false;
+  },
   show () {
     return `Node [ ${this.nodes.map(node => node.show()).join(', ')} ]`;
   },
@@ -214,7 +249,7 @@ let Node = {
 
 let list_handler = {
   has (target, prop) {
-    if (prop in target) return true;
+    //if (prop in target) return true;
     let index = parseInt(prop, 10);
     return index >= 0 || index < target.size;
   },
@@ -223,9 +258,6 @@ let list_handler = {
     let index = parseInt(prop, 10);
     if (isNaN(index)) return undefined;
     return target.get(index);
-  },
-  ownKeys (target) {
-    return Array.from(Array(target.size), (_, i) => String(i));
   }
 };
 
@@ -241,7 +273,7 @@ let Arr = {
   },
   update (index, value) {
     if (index < 0 || index >= this.size || eq(this.get(index), value)) 
-      return this; // is this the behavior we want?
+      return this; // is this the behavior we want? Clj throws
     if (index > this.root.size) {
       let tail_index = index - this.root.size
       return Arr.create(this.root, this.tail.update(tail_index, value), this.size)
@@ -265,6 +297,39 @@ let Arr = {
     }
     return Arr.create(this.root, this.tail.unconj(), this.size - 1);
   },
+  slice (start, stop = this.size) {
+    let out = [];
+    stop = Math.min(this.size, stop);
+    for (let i = start; i < stop; i++) {
+      out.push(this[i]);
+    }
+    return Arr.from(out);
+  },
+  concat (arr) {
+    let tail_capacity = node_size - this.tail.size;
+    let tail_fill = arr.slice(0, tail_capacity);
+    let filled_tail = Leaf.create([...this.tail.nodes, ...tail_fill]);
+    
+    if (filled_tail.size < node_size) {
+      return Arr.create(this.root, filled_tail, this.size + arr.size);
+    }
+
+    let new_root = this.root.conj(filled_tail);
+    let new_leaves = [];
+    let new_leaf_nodes = [];
+    for (let i = tail_capacity; i < arr.size; i++) {
+      if (new_leaf_nodes.length < node_size) {
+        new_leaf_nodes.push(arr.get(i));
+      } else {
+        new_leaves.push(Leaf.create(new_leaf_nodes));
+        new_leaf_nodes = [];
+      }
+    }
+    for (let i = 0; i < new_leaves.length; i++) {
+      new_root = new_root.conj(new_leaves[i]);
+    }
+    return Arr.create(new_root, Leaf.create(new_leaf_nodes), this.size + arr.size);
+  },
   of: (...values) => 
     values.reduce((list, value) => list.conj(value), Arr.empty()),
   from: (iterable) => {
@@ -280,20 +345,26 @@ let Arr = {
     }
     return Arr.of(...iterable);
   },
+  includes (value) {
+    return this.tail.includes(value) || this.root.includes(value);
+  },
   show () {
     return this.root.show();
   },
   inspect () {
     return this.show();
   },
-  eq (list) {
-    if (this === list) return true;
-    if (list == null) return false;
-    if (Arr.is_list(list) && this.root.eq(list.root)) return true;
-    let size = list.size || list.length;
-    if (size == null || size != this.size) return false;
+  eq (arr) {
+    if (this === arr) return true;
+    if (arr == null) return false;
+    if (Arr.is_list(arr) && this.root.eq(arr.root) && this.tail.eq(arr.tail)) 
+      return true;
+
+    let size = arr.size || arr.length;
+    if (size != this.size) return false;
+
     for (let i = 0; i < size; i++) {
-      if (!eq(this.get(i), list[i])) return false;
+      if (!eq(this.get(i), arr[i])) return false;
     }
     return true;
   },
@@ -312,8 +383,5 @@ let Arr = {
     return `[${[...this].join(', ')}]`;
   }
 };
-Arr.empty().conj('foo').conj('bar') //?
-Arr.of(1, 2, 3, 4, 5, 6, 7, 8).conj(9); //?
-Arr.from([]).conj(1).conj(2) //?
 
-export {Arr};
+export default Arr;
