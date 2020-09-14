@@ -1,4 +1,6 @@
 //////////////////// Objects
+// Functions for working with objects
+// TODO: decide if I want all objs to become hamts
 
 import L from './deps.js';
 import F from './fns.js';
