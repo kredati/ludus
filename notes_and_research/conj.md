@@ -54,3 +54,6 @@ One of the things to note is that the Node & plugin REPL will `print` these wron
 
 ### On memory vs. computation
 I assume that the prototype chains here will get long & windy; it's very possible this particular scheme will be a source of memory leaks. I'm sure figuring out how to fix that is above my paygrade. Of course, every new object literal will break the chain, as will every algorithmic transformation.
+
+## This doesn't work.
+The problem here is that arbitrarily-long prototype chains really don't work. So this sort of thing doesn't really work. Whoops.
