@@ -200,7 +200,7 @@ let has_proto = defn({
 let at = defn({
   name: 'at',
   doc: 'Returns a predicate function that tests if particular property of an object passes a predicate. Takes a key and a predicate, and returns a predicate function that will return true if the value passed in has a value that passes the predicate at the specified key. `at` tests properties on anything that may hold properties, including `string`s and `sequence`s.',
-  pre: sign([is_string, is_fn]),
+  pre: sign([is_key, is_fn]),
   body: (key, pred) => {
     let name = `at<${key}: ${pred.name}>`;
     let body = (obj) => obj != undefined && bool(pred(obj[key]));
