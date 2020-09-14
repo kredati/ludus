@@ -1,4 +1,4 @@
-import {List as L} from './immutable.js';
+import {Arr} from './prelude/signed/immutable_arr.js';
 import {List} from 'immutable';
 
 // lessons from the below
@@ -16,128 +16,31 @@ let time = (fn) => {
 
 let big = Array.from(Array(10000), (_, i) => i);
 
-let naive = (arr, el) => [...arr, el];
-let mut = (arr, el) => {
-  arr.push(el);
-  return arr;
-};
 
-let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
+let mut = (arr, el) => (arr.push(el), arr);
 
-let list_proto = {
-  *[Symbol.iterator] () {
-    let first = this.el;
-    let rest = this.rest;
-    return {
-      next: () => {
-        let out = this.first;
-        if (out === undefined) return {done: true};
-        first = rest.first;
-        rest = first.rest;
-        return {value: out};
-      }
-    }
-  }
-}
+let conj = (arr, el) => arr.conj(el);
 
-let cons = (first, rest = {}) => create(list_proto, {first, rest});
+let push = (arr, el) => arr.push(el);
 
-let cons_ = (el, list = []) => [el, list];
 
-let first = ([el]) => el;
-
-let rest = ([_, rest]) => rest;
-
-let conj = (list, el) => cons(el, list);
-
-let list = (...args) => args.reduceRight(conj, {});
-[...list(1, 2, 3)]; //=
-
-let conj_l = (list, el) => list.conj(el);
-
-let push = (list, el) => list.push(el);
-
-let time_n = () => time(() => {
-  let reduced = big.reduce(naive, []);
-  return [...reduced];
-});
-let time_l = () => time(() => {
-  let reduced = big.reduce(conj, {});
-  return [...reduced];
-});
 let time_m = () => time(() => {
   let reduced = big.reduce(mut, []);
   return [...reduced];
 });
 let time_i = () => time(() => {
-  let reduced = big.reduce(conj_l, L.empty());
+  let reduced = big.reduce(conj, Arr.empty());
   return [...reduced];
 });
 let time_f = () => time(() => {
   let reduced = big.reduce(push, List.of());
   return [...reduced];
-})
+});
 
 
 
-/*
-time_l();//=
-time_m();//=
-time_i();//=
-time_f();//=
-time_n();//?
-*/
 
-//////////////// Record vs. object creation
-import {Record} from './record-tuple/record.js';
+time_m();//?
+time_i();//?
+time_f();//?
 
-Record({foo: 42}) === Record({foo: 42}) //?
-
-let random_int = (lower, upper) => Math.floor(Math.random() * (upper - lower)) + lower;
-
-let random_string = (length) => {
-  let str = '';
-  for (let i = 0; i < length; i++) {
-    let char = random_int(0, 2)
-      ? random_int(97, 123)
-      : random_int(65, 91);
-    
-    str += String.fromCharCode(char);
-  }
-  return str;
-};
-
-let random_value = () => random_string(random_int(3, 15));
-
-let random_obj = () => {
-  let num_elements = random_int(1, 5);
-  let obj = {};
-  for (let i = 0; i < num_elements; i++) {
-    obj[random_value()] = random_value();
-  }
-  return obj;
-};
-
-
-let create_records = () => {
-  big.map(() => Record(random_obj()));
-};
-
-let create_object_literals = () => {
-  big.map(random_obj);
-}
-
-
-
-time(create_records) //?
-time(create_object_literals) //?
-
-
-//////// tuple perf
-import {Tuple} from './record-tuple/tuple.js'; //?
-
-/*time(() => {
-  let reduced = big.reduce((tup, el) => tup.pushed(el), Tuple.from([]));
-  return reduced;
-}) //?
-time(() => [...big, 'foo']) //? */
