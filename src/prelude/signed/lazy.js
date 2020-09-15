@@ -13,12 +13,11 @@ import L from './deps.js';
 import F from './fns.js';
 import P from './preds.js';
 import S from './seqs.js';
-import { splat } from '../unsigned/spec.js';
 
 let {defn} = F;
-let {sign} = L;
-let {seq, is_empty, size}= S;
-let {is_int, is_any, is_fn} = P;
+let {sign, splat} = L;
+let {seq, is_empty, size, is_seqable}= S;
+let {is_int, is_any, is_fn, is_number} = P;
 
 let lazy = defn({
   name: 'lazy',
