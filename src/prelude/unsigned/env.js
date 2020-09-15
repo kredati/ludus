@@ -63,7 +63,7 @@ let space_tag = Symbol('ludus/ns/space');
 // manipulates access to namespaces
 let ns_handler = {
   has (target, key) {
-    return key in target.space;
+    return key in target[ns_space_tag];
   },
   get (target, key) {
     if (key in target[ns_space_tag]) return target[ns_space_tag][key];
