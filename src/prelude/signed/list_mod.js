@@ -17,41 +17,38 @@
 import L from './deps.js';
 import P from './preds.js';
 import F from './fns.js';
+import {lazy} from './lazy.js';
 
 let {defn} = F;
 let {create, sign} = L;
 let {is_any, maybe} = P;
 
 let List = {
-  name: 'List',
-  get constructor () { return List },
   [Symbol.iterator] () {
-    let first = this.first;
-    let rest = this.rest;
-    return {
-      next () {
-        let out = first;
-        if (out === undefined) return {done: true};
-        first = rest.first;
-        rest = rest.rest;
-        return {value: out};
-      }
-    }
+    return this.ns.iterate(this)[Symbol.iterator]();
   },
   [L.custom] () {
-    if (this === empty) return `()`;
-    return `( ${[...this].map(L.show).join(', ')} )`;
-  }
+    return this.ns.show(this);
+  },
+  get ["ludus/type"] () { return List }
 };
+
+let iterate = (list) => lazy(list, rest, is_empty, first);
+
+let show = (list) => is_empty(list)
+  ? '()'
+  : `( ${[...list].map(L.show).join(', ')} )`;
 
 let is_list = defn({
   name: 'is_list',
   doc: 'Tells if something is a list.',
-  body: (x) => x != undefined && Object.getPrototypeOf(x) === List
+  body: (x) => x != undefined && x['ludus/type'] === List
 });
 
 let empty = create(List, {size: 0});
 empty.rest = empty;
+
+let is_empty = (list) => list.size === 0;
 
 let cons = defn({
   name: 'cons',
@@ -106,4 +103,15 @@ let cdr = defn({
   body: (list) => list.rest
 });
 
-export {list, cons, car, cdr, conj, empty, first, rest, is_list};
+let list_ns = L.ns({
+  name: 'List',
+  space: {
+    list, is_list, cons, car, cdr,
+    conj, empty, first, rest, is_list,
+    iterate, show
+  }
+});
+
+List.ns = list_ns;
+
+export default list_ns;
