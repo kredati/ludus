@@ -66,8 +66,24 @@ Ludus is an environment, but it's also a language. It's a subset of JS, so my fi
 #### Statements
 There are five kinds of statements:
 * `import` and `export`. Because of course.
-  - These need to be simplified; they're far too complex.
+  - These need to be simplified; they're far too complex in JS:
+    * `import`s can take two forms:
+      - `import {foo, bar} from 'module';` -- if the module exports specific identifiers
+      - `import foo from 'module';` -- if the module exports a default
+      - Can we allow `import 'module'`? This would allow for modules to effectively `export` by globalizing certain members; this seems intriguing and dangerous--but also perhaps necessary for early stages of learning, where `import L from 'ludus'; let {foo, bar, baz} = L;` seems a bit steep, even if only as a ritual invocation.
+        * This suggests a special form for globalizing things in a `.ld` file, e.g. `exposing`, which would allow a parser to trace global members. (Consider even restricting where `exposing` might live, for example, in a `defns` call, which could make this particular parsing job much easier.)
+      - We can fall back on JS to get these correct; we need only to parse the two forms. JS throws helpful errors if there aren't default exports or if there aren't particular named exports.
+      - This may cause difficulty for wrapping external libraries; the idea will be simply to create a JS bridge between Ludus and the library, whose exports conform to our needs (if the library's exports do not.)
+    * `export`s can take two forms:
+      - `export {foo, bar};` -- exporting specific identifiers
+      - `export default defns({/*...*/});` -- exporting a namespace
+      - No inline `export let foo...`
+      - `default` `export`s must be namespaces
+      - modules can combine the two types of exports
+  - `import`s must be at the top; `export`s must be at the bottom
+  - At least for the time being, no dynamic `import`s.
 * `let` bindings: `let`, identifier | destructuring, `=`, expression.
+  - destructuring assignments are kind of complicated
 * `return` statements: `return`, expression.
 * a bare expression.
   - The repl should always print out the result of a bare expression.
@@ -76,11 +92,25 @@ All statements _must_ end with a semicolon. (No ASI.) The REPL thinks you're in 
 
 #### Expressions
 Expressions may consist of:
-* Literals: numbers, strings, booleans, symbols, arrays, objects.
+* Literals: numbers, strings, booleans, symbols, arrays, objects. Perhaps bignums.
 * Bare identifiers. They evaluate to the value the identifier is bound to.
+* Namespace access. A namespace, `.`, and then a member of that namespace. This will require the parser to know what is and is not a namespace.
+  - Can we enforce capitalization of namespaces at the parsing level?
+  - Top-level namespaces can be easily identified by `import Foo from 'bar'`. But any sub-namespaces in `Foo`, e.g., `Foo.Bar.Baz`, will then not be indicated syntactically.
+  - Also, if that's how we do it, that means we'll have to identify different conventions for types, which I have been capitalizing.
+  - Is it possible to only allow dot-access for the top-level namespace directly imported?, e.g. `import L from 'ludus'; import Str from 'ludus/string';`. Therefore `L.Str.concat` doesn't work. I don't love this idea; better to try to enforce capitalization or other parsing-level mechanisms.
 * Function invocations: identifier, `(`, args (separated by `,`), `)`.
-* Lambdas.
+  - args are each simply expressions
+* Lambdas, which include:
+  - `(`, parameters (separated by `,`), `)`. Note that, unlike JS, single arguments must also be wrapped in parentheses.
+    * This is a bit complicated, given default arguments and destructuring. Parameters have the same complexitied as destructuring assignment.
+  - An arrow, `=>`
+  - A function body, which is either:
+    * An expression, following the rules above, whose evaluation is returned;
+    * Or a block, which is a set of statements, wrapped in `{` and `}`, whose last statement must always be a `return` statement. (No implicit returns.)
 * `when` conditional expressions: `when($expr) ? $expr : $expr`.
+
+Any expression, when wrapped in parentheses, is unchanged; but this allows for certain syntactic manipulations, e.g. IIFES: `(() => 'foo')(); //=> 'foo'`. But also: a lambda whose expression is an object literal must be wrapped in parentheses to evaluate to an object, rather than being mistaken for a block.
 
 And I think... that's it?
 
