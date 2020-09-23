@@ -72,6 +72,7 @@ There are five kinds of statements:
       - `import foo from 'module';` -- if the module exports a default
       - Can we allow `import 'module'`? This would allow for modules to effectively `export` by globalizing certain members; this seems intriguing and dangerous--but also perhaps necessary for early stages of learning, where `import L from 'ludus'; let {foo, bar, baz} = L;` seems a bit steep, even if only as a ritual invocation.
         * This suggests a special form for globalizing things in a `.ld` file, e.g. `exposing`, which would allow a parser to trace global members. (Consider even restricting where `exposing` might live, for example, in a `defns` call, which could make this particular parsing job much easier.)
+        * Alternately, there might be no concept of globalizing things _except_ for `core`, which does not need to be imported if you're in a `Ludus` environment. That makes `world`s difficult to manage; but perhaps we can also special-case worlds, since I can only imagine them being used for beginners of the language.
       - We can fall back on JS to get these correct; we need only to parse the two forms. JS throws helpful errors if there aren't default exports or if there aren't particular named exports.
       - This may cause difficulty for wrapping external libraries; the idea will be simply to create a JS bridge between Ludus and the library, whose exports conform to our needs (if the library's exports do not.)
     * `export`s can take two forms:
