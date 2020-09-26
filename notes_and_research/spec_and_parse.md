@@ -29,3 +29,17 @@ The only issue for me so far, and one that will end up only getting worked out i
 
 ## Common errors
 A paper I read (Nienaltowski et al, "Compiler Error Messages," _SIGCSE_ 2008) suggests that the two most common error messages are unbound variables and wrong number of arguments. Wrong number/kind of arguments can be handled pretty gracefully in Ludus. Unbound variables are a different kind of problem: typos, or thinking something's in scope when it's not. That is a parsing problem par excellence, but also a parsing plus knowing about your environment problem. Ludus can't hand this problem off to JavaScript, since JS's errors are awful. (If not as bad as some languages'.) It will be worth considering how especially good compilers handle this, e.g. Elm's.
+
+## On Spec & Predicates
+#### Added Sept 25
+One important thing to note, after watching a few talks about Spec in Clojure, is that Specs are *not* functions (although they are built on functions), they are data structures. This seems to me to be a crucial factor in thinking about them. `valid?` in `clojure.core.spec` makes a predicate out of a spec. This is, of course, totally intuitive, but you need something more explicit than a funciton to get anything like `explain` or `expound`.
+
+What that means is that you can't `spec/and` or `spec/or` or whatever without turning a predicate into a `spec`.
+
+A few other notes:
+* `spec`s in clj are not actually used at runtime; you can effectively set an environment flag to enforce them. I think that's probably not right for Ludus; `spec`s should certainly be enforced by default at the repl.
+* Function `spec`s have three different fields: `args`, `ret`, and `fn`. `ret` and `fn` are *only* used for testing. `args` is enforced at runtime with a flag, as above.
+* I think generative testing, which `spec` enables, is probably too advanced for Ludus; but actually using `spec` to enforce a contract may be a *very* helpful pedagogical tool. That said, there ought to be some testing built into Ludus, and that will want to play nice with `spec`.
+
+### Types of `spec`s
+I do wonder whether ADTs and pattern matching have melted my brain. I wonder whether `spec`s are actually usefully modeled by ML datatypes: `data Spec = Simple predicate | Struct record | Seq list` (or some such). And then `explain` ends up working through pattern matching. I think that may be an eventuality? Or at least a possibility. For now we can use a `switch` statement--especially since `spec` will for now be written in JS, not Ludus. But I have very explicitly designed the Ludus type system not to have subclassing or inheritance, and so also do not have a way of obviously dispatching. That said, because the first iteration of `spec` will be JS, I can just dispatch to a method with no overhead. I cannot let pattern matching become another chew toy; this can be added to the language later if it feels like particular problems would be usefully solved by it. (And by particular problems, I mean, things *users* will want to do with it--not to make my life easer as a language designer.)
