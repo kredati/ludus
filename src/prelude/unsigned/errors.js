@@ -2,7 +2,7 @@
 // helpers for better functional error handling
 // TODO: also consider standard error types for Ludus
 
-import Ludus from './env.js';
+import Ludus from './base.js';
 
 // raise :: (Error, string, ...strings) -> undefined
 // functional error throwing
@@ -40,4 +40,6 @@ let handle = (name, fn) => Object.defineProperty(
   {value: name || fn.name || 'anon. fn'}
 );
 
-export {raise, bound, handle};
+export default Ludus.defns({name: 'Errors', members: {
+  raise, bound, handle
+}});
