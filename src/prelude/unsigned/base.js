@@ -59,6 +59,10 @@ let meta = (x) => x == undefined ? undefined : x[Symbol.for('ludus/meta')];
 // We use a null prototype so there's *nothing* on this object
 let ludus_proto = Object.create(null);
 
+Ludus.meta = meta;
+Ludus.meta_tag = meta_tag;
+Ludus.proto = ludus_proto;
+
 ///// Base methods
 // JS needs for the the iterator to be an nullary function
 // To fake this, we dispatch to the `iterate` function in the object's namespace. If the iterator is not defined in that namespace, you'll get a ReferenceError. (More on this below.)
@@ -280,5 +284,17 @@ let Fn = deftype({name: 'Function'});
 defns({name: 'Function', type: Fn, members: {}});
 Function.prototype[meta_tag] = Fn;
 
+defmembers(Type_ns, {
+  Boolean: Bool,
+  Number: Num,
+  String: Str,
+  Symbol: Sym,
+  Object: Obj,
+  Array: Arr,
+  Function: Fn,
+  Undefined
+})
+
 //////////////////// 5. Exports
 export {NS, Type_ns as Type};
+export default defns({name: 'Ludus', members: {...Ludus, NS, Type: Type_ns}});
