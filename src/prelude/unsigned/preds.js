@@ -3,6 +3,9 @@
 // information about JS values to functions.
 // Equality, however, is handled in './eq.js'.
 
+import {NS} from './base.js';
+import {copy_attrs} from './util.js';
+
 // All predicates have the signature (value) -> boolean
 
 // bool :: (value) -> boolean
@@ -11,6 +14,26 @@
 // the only falsy values are `false` and `undefined`
 // (or `null`, but Ludus has no concept of `null`)
 let bool = (x) => x !== false && x != undefined;
+
+// basic predicate combinators
+// this may not land in core but will be useful in prelude
+let or = (...preds) => copy_attrs((x) => {
+  for (let pred of preds) {
+    if (bool(pred(x))) return true;
+  }
+  return false;
+}, {name: `or<${preds.map((p) => p.name).join(', ')}>`});
+
+let and = (...preds) => copy_attrs((x) => {
+  for (let pred of preds) {
+    if (!bool(pred(x))) return false;
+  }
+  return true;
+}, {name: `and<${preds.map((p) => p.name)}>`});
+
+let not = (pred) => copy_attrs(
+  (x) => !bool(pred(x)), 
+  {name: `not<${pred.name}>`});
 
 // everything passes this predicate
 let is_any = (_) => true;
@@ -66,8 +89,8 @@ let is_sequence = (x) =>
 // tells if a value is a "collection": a sequence or an assoc.
 let is_coll = (x) => is_assoc(x) || is_sequence(x);
 
-export {
-  bool, is_any, is_undef, is_some, 
+export default NS.defns({name: 'Preds', members: {
+  bool, and, or, not, is_any, is_undef, is_some, 
   is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
   is_fn, is_obj, is_assoc, is_iter, is_sequence, is_coll
-};
+}});
