@@ -1,13 +1,14 @@
 {
   "name": "ludus",
   "version": "0.1.0",
-  "description": "",
+  "description": "A functional language for learning, in but not of JS.",
   "main": "src/main.js",
   "type": "module",
   "keywords": [],
   "author": "Scott Richmond",
   "license": "MIT",
-  "dependencies": {
-    "immutable": "^4.0.0-rc.12"
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.10.0"
   }
 }
