@@ -80,8 +80,6 @@ ludus_proto[Ludus.custom] = function () {
   return meta(this)?.ns?.show(this) ?? this;
 };
 
-let empty_ludus_object = Object.create(ludus_proto);
-
 ///// Types
 // Types are the prototypes for the metadata on any given object. Types hold hold four properties: a `name`; `type`, which is a circular reference; `ns`, which is a namespace associated with that type; and `methods`, which holds any methods that get added outside the core namespace.
 
