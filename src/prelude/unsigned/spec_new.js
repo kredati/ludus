@@ -7,6 +7,8 @@ let Spec = Type.deftype({name: 'Spec'});
 
 let def = (attrs) => Type.create(Spec, {spec: def, ...attrs});
 
+let rename = (name, spec) => Object.defineProperty(spec, 'name', {value: name});
+
 let show = (spec) => `Spec: ${spec.name}`;
 
 let is_valid = (spec, value) => P.bool(spec.pred(value));
@@ -23,13 +25,38 @@ let and = (...specs) => {
   return def({name, pred, spec: and, members: specs});
 };
 
-let tup = (...specs) => {};
+let tup = (...specs) => {
+  let name = `tup<${specs.map((s) => s.name)}>`;
+  let pred = (tup) => {
+    if (specs.length !== tup.length) return false;
+    for (let i = 0; i < specs.length; i++) {
+      if (!is_valid(specs[i], tup[i])) return false;
+    }
+    return true;
+  };
+  return def({name, pred, spec: tup, members: specs});
+};
 
 let seq = (spec) => {};
 
-let key = (descriptor) => {};
+let key = (descriptor) => {
+  let [the_key] = Object.keys(descriptor);
+  let name = `key<${the_key}>`;
+  let pred = (obj) => is_valid(descriptor[the_key], obj[the_key]);
+  return def({name, pred, spec: key, members: descriptor});
+};
 
-let record = (map) => {};
+let record = (descriptor) => {
+  let [name] = Object.keys(descriptor);
+  let d_map = descriptor[name];
+  let map = Object.keys(d_map).reduce(
+    (m, k) => { m[k] = key({[k]: d_map[k]}); return m; },
+    {}
+  );
+  let keys = Object.values(map);
+  let spec = and(...keys);
+  return rename(name, spec);
+};
 
 export default NS.defns({type: Spec, members: {defspec: def, show}});
 
@@ -37,3 +64,12 @@ let str = def({name: 'str', pred: P.is_string});
 let num = def({name: 'num', pred: P.is_number});
 
 let str_or_num = or(str, num); //?
+is_valid(str_or_num, '42'); //?
+
+let foo = tup(str, num); //?
+
+is_valid(foo, ['foo', 42]); //?
+
+let bar = record({bar: {foo, quux: str}}); //?
+is_valid(bar, {foo: ['a', 1], quux: true}) //?
+bar.members //?
