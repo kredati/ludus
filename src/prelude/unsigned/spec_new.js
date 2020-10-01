@@ -37,7 +37,16 @@ let tup = (...specs) => {
   return def({name, pred, spec: tup, members: specs});
 };
 
-let seq = (spec) => {};
+let seq = (spec) => {
+  let name = `seq<${spec.name}>`;
+  let pred = (seq) => {
+    for (let el of seq) {
+      if (!is_valid(spec, el)) return false;
+    }
+    return true;
+  }
+  return def({name, pred, spec: seq, members: spec});
+};
 
 let key = (descriptor) => {
   let [the_key] = Object.keys(descriptor);
