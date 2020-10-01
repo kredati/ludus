@@ -69,16 +69,3 @@ let record = (descriptor) => {
 
 export default NS.defns({type: Spec, members: {defspec: def, show}});
 
-let str = def({name: 'str', pred: P.is_string});
-let num = def({name: 'num', pred: P.is_number});
-
-let str_or_num = or(str, num); //?
-is_valid(str_or_num, '42'); //?
-
-let foo = tup(str, num); //?
-
-is_valid(foo, ['foo', 42]); //?
-
-let bar = record({bar: {foo, quux: str}}); //?
-is_valid(bar, {foo: ['a', 1], quux: true}) //?
-bar.members //?
