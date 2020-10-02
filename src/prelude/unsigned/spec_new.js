@@ -69,4 +69,3 @@ let record = (descriptor) => {
 
 export default NS.defns({type: Spec, members: {defspec: def, show}});
 
-
