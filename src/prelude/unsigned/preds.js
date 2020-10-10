@@ -3,13 +3,15 @@
 // information about JS values to functions.
 // Equality, however, is handled in './eq.js'.
 
-import {NS} from './base.js';
+import {NS, Type} from './base.js';
 import {copy_attrs} from './util.js';
+
+let {is, t} = Type;
 
 // All predicates have the signature (value) -> boolean
 
 // bool :: (value) -> boolean
-// it's a predicat! could be called `is_truthy`
+// it's a predicate! could be called `is_truthy`
 // converts a value to Ludus-boolean:
 // the only falsy values are `false` and `undefined`
 // (or `null`, but Ludus has no concept of `null`)
@@ -38,29 +40,31 @@ let not = (pred) => copy_attrs(
 // everything passes this predicate
 let is_any = (_) => true;
 
-let is_undef = (x) => x == undefined;
+let is_undef = (x) => is(t.Undefined, x);
 
 // tells if a value is `not` undefined
-let is_some = (x) => x != undefined;
+let is_some = (x) => !is(t.Undefined, x);
 
-let is_string = (x) => typeof x === 'string';
+let is_string = (x) => is(t.String, x);
 
-let is_number = (x) => typeof x === 'number';
+let is_number = (x) => is(t.Number, x);
 
 // tells if a value is a number that is also an integer
 let is_int = (x) => is_number(x) && (x | 0) === x;
 
 let is_bigint = (x) => typeof x === 'bigint';
 
-let is_bool = (x) => typeof x === 'boolean';
+let is_bool = (x) => is(t.Boolean, x);
 
-let is_symbol = (x) => typeof x === 'symbol';
+let is_symbol = (x) => is(t.Symbol, x);
 
-let is_fn = (x) => typeof x === 'function';
+let is_fn = (x) => is(t.Function, x);
+
+let is_array = (x) => is(t.Array, x);
 
 // tells if a value is a js object
 // this is almost always not interesting in Ludus
-let is_obj = (x) => x !== null && typeof x === 'object';
+let is_obj = (x) => is(t.Object, x);
 
 // tells if a value is an "associative data structure" in Ludus
 // for the most part, this means Object literals
@@ -69,7 +73,7 @@ let is_obj = (x) => x !== null && typeof x === 'object';
 // Ludus objects are all `create`d, but also always set a constructor
 // property on the prototype, so this should exclude any Ludus objects
 // TODO: determine if this is the right definition for an `assoc`
-let is_assoc = (x) => x != undefined && x.constructor === Object;
+let is_assoc = (x) => is_obj(x) && x.constructor === Object;
 
 // tells if a value is iterable, according to the JS protocol
 // it does a lot of trusting: it doesn't check if the implementation of
@@ -77,6 +81,9 @@ let is_assoc = (x) => x != undefined && x.constructor === Object;
 // at Symbol.iterator
 // iterable: strings, arrays, Maps, Sets, vectors, HashMaps, lists, etc.
 // not iterable: assoc, or objects
+// TODO: determine if this is the right definition for is_iter:
+// it's entirely possible we want instead meta(x).ns.iterate
+// although strings won't satsify that?
 let is_iter = (x) => x != undefined && typeof x[Symbol.iterator] === 'function';
 
 // tells if a value is a sequence: an iterable that is not a string
@@ -92,5 +99,5 @@ let is_coll = (x) => is_assoc(x) || is_sequence(x);
 export default NS.defns({name: 'Preds', members: {
   bool, and, or, not, is_any, is_undef, is_some, 
   is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
-  is_fn, is_obj, is_assoc, is_iter, is_sequence, is_coll
+  is_fn, is_array, is_obj, is_assoc, is_iter, is_sequence, is_coll
 }});
