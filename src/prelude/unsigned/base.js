@@ -73,12 +73,23 @@ ludus_proto[Symbol.iterator] = function () {
   });
   return iterate(this);
 };
+Object.defineProperty(ludus_proto, Symbol.iterator, {get: function iterator () {
+  let ns = meta(this)?.ns;
+  if (ns == undefined) return undefined;
+  if ('iterate' in ns) return ns.iterate(this);
+  return undefined;
+}});
 
 // Likewise, JS expects repl-display objects to have a nullary method
 // This dispatches to `show` in the object's namespace. If `show` isn't defined, just return the object and let the repl environment deal with it.
 ludus_proto[Ludus.custom] = function () {
-  return meta(this)?.ns?.show(this) ?? this;
+  let ns = meta(this)?.ns;
+  if (ns == undefined) return undefined;
+  if ('show' in ns) return ns.show(this);
+  return this;
 };
+
+Object.defineProperty(ludus_proto, 'toString', {value: ludus_proto[Ludus.custom]});
 
 ///// Types
 // Types are the prototypes for the metadata on any given object. Types hold hold four properties: a `name`; `type`, which is a circular reference; `ns`, which is a namespace associated with that type; and `methods`, which holds any methods that get added outside the core namespace.
@@ -98,9 +109,9 @@ let create = (
   type, 
   // pull out the metadata from other attributes
   // NB: passing metadata should be a rare case in the early stages of boostrapping Ludus, since symbol tags aren't allowed in Ludus
-  attrs
+  attrs = {}
   ) => {
-  let meta = attrs.hasOwnProperty(meta_tag) 
+  let meta = Object.prototype.hasOwnProperty.call(attrs, meta_tag)
     ? attrs[meta_tag]
     : Object.create(ludus_proto);
   delete attrs[meta_tag];
@@ -133,7 +144,7 @@ let Undefined = deftype({name: 'Undefined'});
 // a simple type_of function
 // only `undefined` needs a special case;
 // everything else will have 
-let type_of = (x) => x === undefined 
+let type_of = (x) => x == undefined 
   ? Undefined
   : meta(x).type;
 
@@ -282,7 +293,7 @@ let Fn = deftype({name: 'Function'});
 defns({name: 'Function', type: Fn, members: {}});
 Function.prototype[meta_tag] = Fn;
 
-defmembers(Type_ns, {
+let types = {
   Boolean: Bool,
   Number: Num,
   String: Str,
@@ -291,8 +302,17 @@ defmembers(Type_ns, {
   Array: Arr,
   Function: Fn,
   Undefined
-})
+};
+
+defmembers(Type_ns, {t: types, types, ...types});
+
+let show = (x) => {
+  let ns = meta(x)?.ns;
+  if (ns == undefined) return 'undefined';
+  if ('show' in ns) return ns.show(x);
+  return x;
+};
 
 //////////////////// 5. Exports
 export {NS, Type_ns as Type};
-export default defns({name: 'Ludus', members: {...Ludus, NS, Type: Type_ns}});
+export default defns({name: 'Ludus', members: {...Ludus, show, NS, Type: Type_ns}});
