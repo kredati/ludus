@@ -2,10 +2,13 @@
 // Basic function manipulations. Many obvious things aren't here because
 // they are easily expressible in Ludus and aren't necessary for Prelude.
 
-import Ludus from './env.js';
-import {raise, handle} from './errors.js';
-import {HashMap, HashError} from './hash.js';
+import Ludus from './base.js';
+import Err from './errors.js';
+import spec_new from './spec_new.js';
+import Spec from './spec_new.js';
 import {copy_attrs} from './util.js';
+
+let {raise, handle} = Err;
 
 // rename :: (fn) -> fn
 // `rename`s a function
@@ -180,6 +183,15 @@ let fn = n_ary('fn',
   }
 );
 
+// explain :: (spec | pred, [any]) => string
+// `explain` attempts to explain why something that didn't pass
+// pre or post didn't pass. Right now it's pretty bare-bones.
+// TODO: improve this: here, or in `spec`
+let explain = (pred, args) => {
+  if (Spec.is_spec(pred)) return Spec.explain(pred, args);
+  return ``
+};
+
 // pre_post :: ([fn], [fn], fn) -> fn
 // `pre_post` wraps a function with predicates that evaluate
 // the arguments and return values. The first two arguments (`pre` and
@@ -194,11 +206,11 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
   if (typeof pre === 'function') pre = [pre];
   if (typeof post === 'function') post = [post];
   let pass_pre = true;
-  for (let pred of pre) {
-    let result = pred(...args);
+  for (let spec of pre) {
+    let result = Spec.is_valid(spec, args);
     let pass = result !== false && result != undefined;
     pass_pre = pass_pre && pass;
-    if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(pred, args)}`);
+    if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(spec, args)}`);
   }
 
   let result = body(...args);
@@ -214,102 +226,8 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
   return result;
   });
 
-
-//////////////////// Multimethods
-// Multimethods are how Ludus deals with dispatch more complex than
-// arity. They allow for arbitrary function dispatch, including 
-// multiple dispatch.
-
-// MethodError
-// Give ourselves a special error so we can avoid swallowing any
-// errors that arise in multimethods. It's a thin wrapper over the
-// Error class.
-class MethodError extends Error {}
-
-// A default default method for multimethods
-// It just raises a MethodError: no method found.
-// Not exported.
-let method_not_found = (name) => (value, ...args) =>
-  raise(MethodError, 
-    `No method found in multimethod ${name} with arguments (${args.map(a => a.toString()).join(', ')}) and a dispatch value of ${value.toString()}.`)
-
-// A tag for multimethods.
-// Not exported.
-let multi_tag = Symbol('ludus/multimethod');
-
-// multi :: (string, fn, fn) -> multimethod
-// Make a multimethod.
-// A multimethod dispatches on the value returned from the function `on`.
-// The optional third argument is the fallback function, if no method
-// is found for the return value from `on`.
-// If no fallback function is supplied, the default behavior is to raise 
-// an error, by dispatching to `method_not_found`.
-let multi = (name, on, not_found = method_not_found(name)) => {
-  let map = new HashMap();
-
-  let dispatch = (...args) => {
-    let value = on(...args);
-    let fn = map.get(value);
-    return fn != undefined
-      ? fn(...args)
-      : not_found(value, ...args);
-  };
-
-  // some internal methods for a multimethod
-  // add a new method
-  let set = (value, fn) => { map.set(value, fn); };
-  // ask if there's a method already described for a value
-  let has = (value) => map.has(value);
-  // get a particular method
-  let get = (value) => map.get(value);
-  // list the methods we already have
-  // note that the entry keys from a HashedMap are BigInt junk,
-  // so pull out the actual entries
-  let methods = () => {
-    let entries = [];
-    for (let [_, [entry]] of map.entries()) {
-      entries.push(entry);
-    }
-    return entries;
-  };
-
-  return rename(name, 
-    Object.defineProperty(dispatch, multi_tag, 
-      {value: {set, has, methods, get, on}}));
-};
-
-// method :: (multimethod, value, fn) -> multimethod
-// `method` adds a method (function) to a multimethod for a particular value.
-// A multimethod may only contain a single method per key, based on `eq`
-// semantics. If users try to add a repeat method, it throws an error.
-let method = (multimethod, value, fn) => {
-  try {
-    multimethod[multi_tag].set(value, fn);
-  } catch (e) {
-    if (e instanceof HashError)
-      throw new MethodError(`Multimethods may only contain a single method per value. Method ${multimethod.name} already has a method for ${value}.`);
-    throw e;
-  }
-  return multimethod;
-};
-
-// tells if a function is a multimethod
-let is_multi = (x) => typeof x === 'function' && multi_tag in x;
-
-// lists the methods of a multimethod
-let methods = (multimethod) => multimethod[multi_tag].methods();
-
-// tells if a multimethod has a method defined for a particular value
-let has_method = (multimethod, value) => multimethod[multi_tag].has(value);
-
-// retrieves the function for a particular value, returning undefined if no method exists
-let get_method = (multimethod, value) => multimethod[multi_tag].get(value);
-
-// retrieves the dispatching function for a multimethod
-let dispatch_on = (multimethod) => multimethod[multi_tag].on;
-
-//////////////////// Defs: the three big functions!
-// defn, defmulti, defmethod
+//////////////////// Defn
+// finally
 
 // defn :: (object) -> fn
 // `defn` fully instruments a function with everything Ludus has to offer.
@@ -328,79 +246,11 @@ let dispatch_on = (multimethod) => multimethod[multi_tag].on;
 let defn = ({name, body, pre = [], post = [], ...attrs}) => {
   let clauses = typeof body === 'function' ? [body] : body;
   let out = pre_post(pre, post, fn(name, clauses));
-
-  /*
-  return Object.defineProperty(
-    rename(name, out), 
-    'attrs', 
-    {value: {clauses, ...attrs}});
-    */
-
   return copy_attrs(out, {name, clauses, ...attrs});
 };
 
-// defmulti :: ({name: string, on: fn, pre: fn | [fn]?, post: fn | [fn]?, not_found: fn?}) -> fn(multi)
-// Defines a multimethod. Multimethods are ways of doing runtime dispatch.
-// They are Ludus's idiomatic way of runtime dispatch. (Very Lisp!)
-// They dispatch based on the result of `on`, which gets all the arguments to
-// the multimethod, allowing for multiple dispatch. The return value from `on`
-// is the basis for method lookup, using `eq` (not JS ===).
-// Optionally, you may specify a fallback function if no method is found.
-// The default behavior is in `method_not_found` (not exported), which simply
-// throws a MethodError.
-// Like regular functions, you can assign `pre` and `post` conditions. You can
-// also assign per-method `pre` and `post` conditions.
-// Any fields not listed above will be stashed in the (non-enumerable) `attrs`
-// field on the multimethod, as with regular functions (e.g., `doc`).
-let defmulti = ({
-  name, 
-  on, 
-  pre = [], 
-  post = [], 
-  not_found,
-  ...attrs}) => {
-    let the_multi = multi(name, on, not_found);
-    let out = pre_post(pre, post, the_multi);
-
-    return copy_attrs(out, {
-      name, [multi_tag]: the_multi[multi_tag], ...attrs
-    });
-  };
-
-// defmethod :: ({multi: fn(multi), on: value, body: fn, pre: [fn]?, post: [fn]?}) -> fn(multi)
-// Adds a method to a multimethod. Takes a multimethod, a value to match, 
-// a function, pre and post conditions, and any optional attributes.
-// As explained above, multimethods use `eq` as the algorithm for matching.
-let defmethod = ({
-  multi,
-  on,
-  body,
-  pre = [],
-  post = [],
-  ...attrs
-  }) => {
-    let the_method = pre_post(pre, post, fn(multi.name, body));
-    multi[multi_tag].set(on, the_method);
-    copy_attrs(the_method, {on, ...attrs});
-    //Object.defineProperties(the_method, {attrs: {value: {...attrs, on}}})
-    return multi;
-  };
-
-// explain :: (fn, [some], string?) -> string
-// a quick and dirty early-on multimethod to explain the failures in
-// pre/post conditions for functions.
-let explain = defmulti({
-  name: 'explain',
-  doc: 'A multimethod for explaining spec failures. Checks against the value of the `explain` field held on the predicate.',
-  on: (pred) => pred.explain,
-  not_found: (_, pred, value, message = '') => `Spec failure: ${message}
-  ${Ludus.show(value)} did not pass predicate ${Ludus.show(pred)}.`
-});
-
 export {rename, partial, 
   n_ary, loop, recur, fn, pre_post, 
-  multi, method, 
-  is_multi, methods, has_method, get_method, dispatch_on,
-  ArgumentError, MethodError, explain,
-  defn, defmulti, defmethod,
+  ArgumentError,
+  defn 
 };
