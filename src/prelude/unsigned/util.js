@@ -19,8 +19,4 @@ let copy_attrs = (obj, attrs) => {
   return obj;
 };
 
-// creates an object with a given prototype, and then assigns the properties
-// of the passed attributes (as enumerable own properties)
-let create = (proto, attrs) => Object.assign(Object.create(proto), attrs);
-
-export {copy_attrs, create};
+export {copy_attrs};
