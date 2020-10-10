@@ -8,7 +8,7 @@ import Ludus from './base.js';
 // functional error throwing
 // throws `err` with `msg`, but first, it reports `msgs` to the error console
 let raise = (err, msg, ...msgs) => {
-  Ludus.report(msgs);
+  if (msgs) Ludus.report(msgs);
   throw new err(msg);
 };
 
@@ -40,6 +40,6 @@ let handle = (name, fn) => Object.defineProperty(
   {value: name || fn.name || 'anon. fn'}
 );
 
-export default Ludus.defns({name: 'Errors', members: {
+export default Ludus.NS.defns({name: 'Errors', members: {
   raise, bound, handle
 }});
