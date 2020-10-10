@@ -4,8 +4,8 @@
 
 import Ludus from './base.js';
 import Err from './errors.js';
-import spec_new from './spec_new.js';
-import Spec from './spec_new.js';
+import Spec from './spec.js';
+import Pred from './preds.js';
 import {copy_attrs} from './util.js';
 
 let {raise, handle} = Err;
@@ -183,15 +183,6 @@ let fn = n_ary('fn',
   }
 );
 
-// explain :: (spec | pred, [any]) => string
-// `explain` attempts to explain why something that didn't pass
-// pre or post didn't pass. Right now it's pretty bare-bones.
-// TODO: improve this: here, or in `spec`
-let explain = (pred, args) => {
-  if (Spec.is_spec(pred)) return Spec.explain(pred, args);
-  return ``
-};
-
 // pre_post :: ([fn], [fn], fn) -> fn
 // `pre_post` wraps a function with predicates that evaluate
 // the arguments and return values. The first two arguments (`pre` and
@@ -203,14 +194,14 @@ let explain = (pred, args) => {
 // TODO: reconsider short-circuiting: accumulate all failures?
 // TODO: conditional instrumentation based on environment, as `fn`, above
 let pre_post = (pre, post, body) => rename(body.name, (...args) => {
-  if (typeof pre === 'function') pre = [pre];
-  if (typeof post === 'function') post = [post];
+  if (!Pred.is_array(pre)) pre = [pre];
+  if (!Pred.is_array(post)) post = [post];
   let pass_pre = true;
   for (let spec of pre) {
     let result = Spec.is_valid(spec, args);
     let pass = result !== false && result != undefined;
     pass_pre = pass_pre && pass;
-    if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${explain(spec, args)}`);
+    if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${Spec.explain(spec, args)}`);
   }
 
   let result = body(...args);
@@ -244,7 +235,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
 // `attrs` also includes a `clauses` field that contains an array of the
 // function literals passed to `defn`.
 let defn = ({name, body, pre = [], post = [], ...attrs}) => {
-  let clauses = typeof body === 'function' ? [body] : body;
+  let clauses = Pred.is_fn(body) ? [body] : body;
   let out = pre_post(pre, post, fn(name, clauses));
   return copy_attrs(out, {name, clauses, ...attrs});
 };
@@ -254,3 +245,12 @@ export {rename, partial,
   ArgumentError,
   defn 
 };
+
+let foo = defn({
+  name: 'foo',
+  pre: Spec.args([Spec.number], [Spec.number, Spec.string]),
+  body: [
+    (n) => 'foo number',
+    (n, s) => 'foo number string'
+  ]
+});
