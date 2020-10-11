@@ -215,6 +215,8 @@ let defmembers = (ns, members) => {
   return ns;
 };
 
+let members = (ns) => ns[members_tag];
+
 // defns :: ({name: string, type: type?, members: obj}) -> namespace
 // `defns` defines a namespace
 // Takes a name; an optional type to bind the namespace to; an object
@@ -245,7 +247,7 @@ let is_ns = (x) => is(Namespace, x);
 ///// Some namespaces to go with our existing types
 // namespace namespace
 let NS = defns({name: 'Namespace', type: Namespace,
-  members: {is_ns, defns, defmembers, def, show: show_ns}});
+  members: {is_ns, defns, defmembers, members, def, show: show_ns}});
 
 // type namespace
 let Type_ns = defns({name: 'Type', type: Type, 
