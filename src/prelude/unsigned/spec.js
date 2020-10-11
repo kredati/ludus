@@ -85,10 +85,10 @@ let seq = (spec) => {
 // key :: (string, spec) => spec
 // Takes a field and a spec, and returns a spec that describes
 // a the value of an object at that key.
-let key = (the_key, spec) => {
-  let name = `key<${the_key}>`;
-  let pred = (obj) => is_valid(spec, obj[the_key]);
-  return def({name, pred, spec: key, members: spec});
+let at = (key, spec) => {
+  let name = `at<${key}>`;
+  let pred = (obj) => obj != undefined && is_valid(spec, obj[key]);
+  return def({name, pred, spec: at, members: {[key]: spec}});
 };
 
 // record :: (string, dict(specs)) => spec
@@ -106,9 +106,11 @@ let record = (name, map) => {
 };
 
 ///// Useful specs
+let any = def({name: 'any', pred: (_) => true});
 let boolean = def({name: 'boolean', pred: P.is_bool});
 let string = def({name: 'string', pred: P.is_string});
 let number = def({name: 'number', pred: P.is_number});
+let key = def({name: 'key', pred: P.or(P.is_string, P.is_number)});
 let symbol = def({name: 'symbol', pred: P.is_symbol});
 let undef = def({name: 'undefined', pred: P.is_undef});
 let array = def({name: 'array', pred: P.is_array});
@@ -130,13 +132,24 @@ let maybe = (spec) => rename(`maybe<${spec.name}>`, or(undef, spec));
 let args = (...tups) => {
   // validate arg tuples
   let lengths = [];
+  let max_arity = 0;
+  let longest;
   for (let tup of tups) {
     if (lengths.includes(tup.length)) throw Error(`Arguments cannot contain multiple tuples of the same length. Received more than one tuple of length ${tup.length}`);
     lengths.push(tup.length);
+    if (max_arity < tup.length) {
+      max_arity = tup.length;
+      longest = tup;
+    }
   }
   let arg_tuples = tups.map((t) => tup(...t));
   let arg_spec = or(...arg_tuples);
-  let pred = arg_spec.pred;
+  let pred = (args) => {
+    let explicit = args.slice(0, max_arity);
+    let rest = args.slice(max_arity);
+    return arg_spec.pred(explicit)
+      && seq(longest[longest.length - 1]).pred(rest);
+  };
   // TODO: give this a nicer name?--or leave the plumbing exposed?
   return def({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
     pred, members: arg_tuples});
@@ -148,9 +161,7 @@ let explain = (spec, value) => {
 };
 
 export default NS.defns({type: Spec, members: {
-  Spec, defspec: def, show, is_spec, is_valid, and, or, tup, seq, key, record,
-  boolean, string, number, symbol, array, some, function: fn, obj,
+  Spec, defspec: def, show, is_spec, is_valid, and, or, tup, seq, at, record,
+  any, boolean, string, number, key, symbol, array, some, function: fn, obj,
   assoc, iter, sequence, dict, type, maybe, args, explain
 }});
-
-explain(args([number], [number, string]), ['']) //?
