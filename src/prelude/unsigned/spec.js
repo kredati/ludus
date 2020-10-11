@@ -97,7 +97,7 @@ let at = (key, spec) => {
 // with specs corresponding to the keys on the passed dictionary.
 let record = (name, map) => {
   let key_map = Object.keys(map).reduce(
-    (m, k) => { m[k] = key({[k]: map[k]}); return m; },
+    (m, k) => { m[k] = at(k, map[k]); return m; },
     {}
   );
   let keys = Object.values(key_map);
