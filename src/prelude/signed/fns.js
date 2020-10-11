@@ -7,7 +7,7 @@ import Ludus from './deps.js';
 let Fn = Ludus.Fn;
 
 let {record, maybe, string, seq, or, any, some, type, Spec, args} = Ludus.Spec;
-let func = S.fn;
+let func = Ludus.Spec.function;
 
 let test = or(func, type(Spec));
 let pre_post = maybe(or(test, seq(test)));
@@ -25,7 +25,7 @@ let fn_descriptor = record('fn_descriptor', {
 let defn = Fn.defn({
   name: 'defn',
   doc: 'Describes a Ludus function, which is an instrumented bare function. It dispatches on arity; has better and more informative error handling; allows for `pre` and `post` testing of arguments and returns; etc. It takes, minimally, an object with `name` and `body` fields. `name` must be a string; body must be a function or a sequence of functions describing clauses of various arities.',
-  pre: fn_descriptor,
+  pre: args([fn_descriptor]),
   body: Fn.defn
 });
 
@@ -206,4 +206,3 @@ export default Ludus.NS.defmembers(Fn, {
     defn, partial, loop, recur, fn,
     once, thread, thread_some, pipe, pipe_some, comp, comp_some
 });
-
