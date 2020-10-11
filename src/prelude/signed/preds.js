@@ -4,7 +4,7 @@
 
 import Ludus from './deps.js';
 
-let {defn, sign, partial} = Ludus.Fn;
+let {defn, partial} = Ludus.Fn;
 let P = Ludus.Pred;
 let S = Ludus.Spec;
 
