@@ -246,11 +246,5 @@ export {rename, partial,
   defn 
 };
 
-let foo = defn({
-  name: 'foo',
-  pre: Spec.args([Spec.number], [Spec.number, Spec.string]),
-  body: [
-    (n) => 'foo number',
-    (n, s) => 'foo number string'
-  ]
-});
+export default Ludus.NS.defmembers(Ludus.Type.Function.ns,
+  {rename, partial, n_ary, loop, recur, fn, pre_post, defn});
