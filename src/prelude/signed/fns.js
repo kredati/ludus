@@ -6,7 +6,7 @@ import Ludus from './deps.js';
 
 let Fn = Ludus.Fn;
 
-let {record, maybe, string, seq, or, any, some, type, Spec, args} = Ludus.Spec;
+let {record, maybe, string, seq, or, and, any, some, type, Spec, args, not_empty} = Ludus.Spec;
 let func = Ludus.Spec.function;
 
 let test = or(func, type(Spec));
@@ -17,7 +17,7 @@ let fn_descriptor = record('fn_descriptor', {
   doc: maybe(string),
   pre: pre_post,
   post: pre_post,
-  body: or(func, seq(func)) 
+  body: or(func, and(not_empty, seq(func))) 
 });
 
 // finally, a signed (and therefore safe-ish) `defn`
