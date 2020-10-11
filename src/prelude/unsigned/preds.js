@@ -96,8 +96,23 @@ let is_sequence = (x) =>
 // tells if a value is a "collection": a sequence or an assoc.
 let is_coll = (x) => is_assoc(x) || is_sequence(x);
 
+// tells if a collection is not empty
+let is_not_empty = (x) => {
+  if (!is_coll(x)) return false;
+  if (x.length || x.size) return true;
+  if (is_iter(x)) {
+    let is_empty = true;
+    for (let _ of x) {
+      is_empty = false;
+      break;
+    }
+    return !is_empty;
+  }
+  return Object.keys(x).length > 0;
+}
+
 export default NS.defns({name: 'Preds', members: {
   bool, and, or, not, is_any, is_undef, is_some, 
   is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
-  is_fn, is_array, is_obj, is_assoc, is_iter, is_sequence, is_coll
+  is_fn, is_array, is_obj, is_assoc, is_iter, is_sequence, is_coll, is_not_empty
 }});
