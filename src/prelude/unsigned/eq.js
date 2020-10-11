@@ -1,6 +1,4 @@
-import Pred from './preds.js';
-
-let {is_sequence, is_assoc, is_some} = Pred;
+import {is_sequence, is_assoc, is_some} from './preds.js';
 
 let eq = (x, y) => {
   if (x === y) return true;
