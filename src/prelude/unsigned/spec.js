@@ -69,8 +69,8 @@ let tup = (...specs) => {
   return def({name, pred, spec: tup, members: specs});
 };
 
-// seq :: (...specs) => spec
-// Combines specs into a sequence
+// seq :: (spec) => spec
+// Tests if every element of a seq matches a spec.
 let seq = (spec) => {
   let name = `seq<${spec.name}>`;
   let pred = (seq) => {
@@ -125,6 +125,7 @@ let dict = (spec) => def({name: `dict<${spec.name}>`,
   pred: (x) => P.is_assoc(x) && Object.values(x).every((v) => is_valid(spec, v)), 
   spec: dict,
   members: spec});
+let not_empty = def({name: 'not_empty', pred: P.is_not_empty});
 let type = (t) => def({name: t.name, 
   pred: (x) => Type.is(t, x), 
   spec: type,
@@ -265,7 +266,6 @@ let explain = (spec, value, indent = 0) => {
       if (num_args <= max_arity) {
         return `${value} failed ${spec.name}:\n${pad}${explain(arg_tuple, value, indent + 2)}`;
       }
-      let msg = `${value} fails ${arg_tuple.name}`;
       let explicit = value.slice(0, max_arity);
       let rest = value.slice(max_arity);
       let tup_msgs = [];
@@ -297,5 +297,5 @@ let explain = (spec, value, indent = 0) => {
 export default NS.defns({type: Spec, members: {
   Spec, defspec: def, show, is_spec, is_valid, and, or, tup, seq, at, record,
   any, boolean, string, number, key, symbol, array, some, function: fn, obj,
-  assoc, iter, sequence, dict, type, maybe, args, explain
+  assoc, iter, not_empty, sequence, dict, type, maybe, args, explain
 }});
