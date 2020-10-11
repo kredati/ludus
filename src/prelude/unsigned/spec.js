@@ -164,16 +164,16 @@ let explain = (spec, value, indent = 0) => {
   if (is_valid(spec, value)) return `${value} passes ${spec.name}`;
   switch (spec.spec) {
     case and: {
-      let msg = `${value} failed specs in ${spec.name}:\n`;
+      let msg = `${value} failed ${spec.name}:\n`;
       let msgs = [];
       for (let mem of spec.members) {
         if (!is_valid(mem, value))
-          msgs.push(explain(mem, value, indent + 2));
+          msgs.push(pad + explain(mem, value, indent + 2));
       }
-      return msg + msgs.join('\n' + pad);
+      return msg + msgs.join('\n');
     }
     case or: {
-      let msg = `${value} failed all specs in ${spec.name}:\n`;
+      let msg = `${value} failed ${spec.name}:\n`;
       let msgs = [];
       for (let mem of spec.members) { 
         msgs.push(pad + explain(mem, value, indent + 2));
