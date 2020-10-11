@@ -74,6 +74,7 @@ let tup = (...specs) => {
 let seq = (spec) => {
   let name = `seq<${spec.name}>`;
   let pred = (seq) => {
+    if (!P.is_iter(seq)) return false;
     for (let el of seq) {
       if (!is_valid(spec, el)) return false;
     }
@@ -86,9 +87,9 @@ let seq = (spec) => {
 // Takes a field and a spec, and returns a spec that describes
 // a the value of an object at that key.
 let at = (key, spec) => {
-  let name = `at<${key}>`;
+  let name = `at<${key}: ${spec.name}>`;
   let pred = (obj) => obj != undefined && is_valid(spec, obj[key]);
-  return def({name, pred, spec: at, members: {[key]: spec}});
+  return def({name, pred, spec: at, members: {key, spec}});
 };
 
 // record :: (string, dict(specs)) => spec
@@ -122,10 +123,12 @@ let iter = def({name: 'iter', pred: P.is_iter});
 let sequence = def({name: 'sequence', pred: P.is_sequence});
 let dict = (spec) => def({name: `dict<${spec.name}>`,
   pred: (x) => P.is_assoc(x) && Object.values(x).every((v) => is_valid(spec, v)), 
+  spec: dict,
   members: spec});
-let type = (type) => def({name: type.name, 
-  pred: (x) => is(type, x), 
-  members: type});
+let type = (t) => def({name: t.name, 
+  pred: (x) => Type.is(t, x), 
+  spec: type,
+  members: t});
 let maybe = (spec) => rename(`maybe<${spec.name}>`, or(undef, spec));
 
 ///// Function speccing
@@ -152,12 +155,143 @@ let args = (...tups) => {
   };
   // TODO: give this a nicer name?--or leave the plumbing exposed?
   return def({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
-    pred, members: arg_tuples});
+    pred, spec: args, members: arg_tuples});
 };
 
-let explain = (spec, value) => {
-  if (is_valid(spec, value)) return undefined;
-  return `${value} did not conform to ${spec}`;
+let explain = (spec, value, indent = 0) => {
+  let pad = ' '.repeat(indent);
+  if (is_valid(spec, value)) return `${value} passes ${spec.name}`;
+  switch (spec.spec) {
+    case and: {
+      let msg = `${value} failed specs in ${spec.name}:\n`;
+      let msgs = [];
+      for (let mem of spec.members) {
+        if (!is_valid(mem, value))
+          msgs.push(explain(mem, value, indent + 2));
+      }
+      return msg + msgs.join('\n' + pad);
+    }
+    case or: {
+      let msg = `${value} failed all specs in ${spec.name}:\n`;
+      let msgs = [];
+      for (let mem of spec.members) { 
+        msgs.push(pad + explain(mem, value, indent + 2));
+      }
+      return msg + msgs.join('\n');
+    }
+    case tup: {
+      let mems = spec.members;
+      let length = mems.length;
+      let msg = `${value} failed ${spec.name}:\n`;
+      if (!P.is_array(value)) {
+        return msg + pad + `${value} is not an array. Tuples must be arrays.`
+      }
+      if (value.length !== length) {
+        return msg + pad + `Length mismatch. Expected: ${length}; received: ${value.length}.`;
+      }
+      let msgs = [];
+      for (let i = 0; i < length; i++) {
+        let mem = mems[i];
+        let val = value[i];
+        if (is_valid(mem, val)) {
+          msgs.push(pad + `At ${i}: ${val} passes ${mem.name}.`);
+        } else {
+          msgs.push(pad + `At ${i}: ${explain(mem, val, indent + 2)}`);
+        }
+      }
+      return msg + msgs.join('\n');
+    }
+    case seq: {
+      let msg = `${value} fails ${spec.name}: `;
+      if (!P.is_sequence(value)) {
+        return msg + `${value} is not a sequence.`;
+      }
+      let mem = spec.members;
+      let i = 0;
+      for (let x of value) {
+        if (!is_valid(mem, x)) {
+          return msg + '\n' + pad + `At ${i}: ${explain(mem, x, indent + 2)}`;
+        }
+        i++;
+      }
+    }
+    case at: { 
+      let s = spec.members.spec;
+      let key = spec.members.key;
+      let val = value != undefined ? value[key] : undefined;
+      return `${value} fails ${spec.name}\n${pad}At ${key}: ${explain(s, val, indent + 2)}`;
+    }
+    case record: {
+      let msg = `${value} failed ${spec.name}:\n`;
+      let msgs = [];
+      for (let mem of spec.members) {
+        let key = mem.members.key;
+        let val = value == undefined ? undefined : value[key];
+        if (!is_valid(mem, val)) {
+          msgs.push(pad + explain(mem, {[key]: val}, indent + 2));
+        }
+      }
+      return msg + msgs.join('\n');
+    }
+    case dict: {
+      let msg = `${value} failed ${spec.name}:`;
+      if (!P.is_assoc(value)) {
+        return msg + `Dicts must be associative.`;
+      }
+      let s = spec.members;
+      let msgs = [];
+      for (let [k, v] of Object.entries(value)) {
+        if (!is_valid(s, v))
+          msgs.push(pad + `At ${k}: ${explain(s, v, indent + 2)}`);
+      }
+      return msg + '\n' + msgs.join('\n');
+    }
+    case type: {
+      return `${value} failed ${spec.name}: Expected ${spec.members} but received ${Type.type_of(value)}.`;
+    }
+    case args: {
+      let max_arity = 0;
+      let arity_map = {};
+      for (let s of spec.members) {
+        let len = s.members.length;
+        max_arity = Math.max(max_arity, len);
+        arity_map[len] = s;
+      }
+      let num_args = value.length;
+      let arg_tuple = arity_map[Math.min(num_args, max_arity)];
+      if (arg_tuple == undefined) {
+        return `${value} failed ${spec.name}: Wrong number of arguments. Expected ${Object.keys(arity_map).join(' | ')} but received ${num_args}.`
+      }
+      if (num_args <= max_arity) {
+        return `${value} failed ${spec.name}:\n${pad}${explain(arg_tuple, value, indent + 2)}`;
+      }
+      let msg = `${value} fails ${arg_tuple.name}`;
+      let explicit = value.slice(0, max_arity);
+      let rest = value.slice(max_arity);
+      let tup_msgs = [];
+      for (let i = 0; i < max_arity; i++) {
+        let arg = explicit[i];
+        let arg_spec = arg_tuple.members[i];
+        if (is_valid(arg_spec, arg)) {
+          tup_msgs.push(`At ${i}: ${arg} passes ${arg_spec.name}.`);
+        } else {
+          tup_msgs.push(`At ${i}: ${explain(arg_spec, arg, indent + 2)}`);
+        }
+      }
+      let rest_msgs = [];
+      let rest_spec = arg_tuple.members[max_arity - 1];
+      for (let i = 0; i < rest.length; i ++) {
+        if (is_valid(rest_spec, rest[i])) {
+          rest_msgs.push(pad + `At ${i + max_arity}: ${rest[i]} passes ${rest_spec.name}.`)
+        } else {
+          rest_msgs.push(pad + `At ${i + max_arity}: ${explain(rest_spec, rest[i], indent + 2)}`);
+        }
+      }
+      return `${value} failed ${spec.name}\nwith <${arg_tuple.members.map((s) => s.name).join(', ')}>:\n${[...tup_msgs, ...rest_msgs].join('\n')}`;
+    }
+    default:
+      return `${value} fails ${spec.name}.`;
+  }
 };
 
 export default NS.defns({type: Spec, members: {
