@@ -228,7 +228,7 @@ let members = (ns) => ns[members_tag];
 // since the expectation is that types get definied at the tops of
 // modules, and namespaces only on export, at the bottom.
 let defns = ({name, type, members, ...attrs}) => {
-  name = name != undefined || type.name;
+  name = name != undefined ? name : type.name;
   let meta = Object.assign(Object.create(ludus_proto), 
     type === undefined ? {name, ...attrs} : {name, type, ...attrs});
   let ns = create(Namespace, {
