@@ -11,13 +11,13 @@
 // any number of things.
 
 import L from './deps.js';
-import F from './fns.js';
 import P from './preds.js';
-import { sign, splat } from '../unsigned/spec.js';
+import './fns.js';
 
-let {defn, once} = F;
-let {create} = L;
-let {is_iter, is_assoc, is_some, has} = P;
+let {args, seq, iter, assoc, some, sequence, type} = L.Spec;
+let {defn, once} = L.Fn;
+let {create, deftype, is} = L.Type;
+let {has, is_iter, is_assoc} = P;
 
 // obj_gen: creates a generator that iterates through the keys of an object
 // only covers string keys
@@ -30,43 +30,44 @@ let obj_gen = function* (obj) {
   }
 };
 
+let Seq = deftype({name: 'Seq'});
+
 // iterate: creates an iterator over a seq
 // uses a closure to get JS iterator behavior on something that
 // implements first/rest semantics.
 // not exported, but used to implement the iterator protocol
 // in a seq
-let iterate = (seq) => {
-  let first = seq.first();
-  let rest = seq.rest();
+let iterate = defn({
+  name: 'iterate',
+  doc: 'Creates an iterator over a `seq`.',
+  pre: args([type(Seq)]),
+  body: (seq) => () => {
+    let first = seq.first();
+    let rest = seq.rest();
 
-  return {
-    next () {
-      if (rest === undefined) return {done: true}
-      let next = {value: first, done: rest === undefined};
-      first = rest.first();
-      rest = rest.rest();
-      return next;
+    return {
+      next () {
+        if (rest === undefined) return {done: true}
+        let next = {value: first, done: rest === undefined};
+        first = rest.first();
+        rest = rest.rest();
+        return next;
+      }
     }
   }
-};
+});
 
-// Seq prototype
-let Seq_proto = {
-  [Symbol.iterator] () {
-    return iterate(this);
-  },
-  // TODO: make this prettier, show first n items?
-  [Ludus.custom] () {
-    return is_some(this.size) 
-      ? `Seq(${this.size})`
-      : `Seq(...)`;
-  }
-};
+let show = defn({
+  name: 'show',
+  doc: 'Shows a `seq`.',
+  pre: args([type(Seq)]),
+  body: (seq) => seq.size != undefined ? `Seq(${seq.size})` : 'Seq(...)'
+});
 
 let is_seq = defn({
   name: 'is_seq',
   doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, see `is_seqable`.',
-  body: (x) => is_some(x) && Object.getPrototypeOf(x) === Seq_proto
+  body: (x) => is(Seq, x) 
 });
 
 let is_seqable = defn({
@@ -75,10 +76,12 @@ let is_seqable = defn({
   body: (x) => is_iter(x) || is_assoc(x) 
 });
 
+let seqable = L.Spec.defspec({name: 'seqable', pred: is_seqable});
+
 let size = defn({
   name: 'size',
   doc: 'Determines the size of a collection.',
-  pre: sign([is_seqable]),
+  pre: args([seqable]),
   body: (x) => {
     if (x.length != undefined) return x.length;
     if (x.size != undefined) return x.size;
@@ -97,19 +100,19 @@ let create_seq = (iterator, size) => {
   let current = iterator.next();
   let rest = once(() => current.done ? undefined : create_seq(iterator));
   let first = () => current.done ? undefined : current.value;
-  let out = create(Seq_proto, {rest, first, size});
+  let out = create(Seq, {rest, first, size});
   return out;
 };
 
-let seq = defn({
+let seq_ = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
-  pre: sign([is_seqable]),
+  pre: args([seqable]),
   body: (seqable) => {
     // if it's already a seq, just return it
     if (is_seq(seqable)) return seqable;
     // if it's undefined, return an empty seq
-    if (seqable == undefined) return seq([]);
+    if (seqable == undefined) return empty;
     // if it's iterable, return a seq over a new iterator over it
     // js: strings, arrays, Maps, and Sets are iterable
     // ld: vectors and lists are iterable
@@ -123,16 +126,16 @@ let seq = defn({
   }
 });
 
-let empty_seq = seq([]);
+let empty = seq([]);
 
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates `seq`s, placing one after the other.',
-  pre: splat(is_seqable),
+  pre: seq(sequence),
   body: (...seqables) => {
     let generator = (function*(){
       for (let seqable of seqables) {
-        yield* seq(seqable);
+        yield* seq_(seqable);
       }
     })();
     let concat_size = seqables.reduce((acc, seq)=> acc + size(seq), 0);
@@ -144,30 +147,26 @@ let concat = defn({
 let first = defn({
   name: 'first',
   doc: 'Gets the first element of any `seq`able.',
-  pre: sign([is_seqable]),
-  body: (seqable) => seq(seqable).first()
+  pre: args([seqable]),
+  body: (seqable) => seq_(seqable).first()
 });
 
 let rest = defn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
-  pre: sign([is_seqable]),
-  body: (seqable) => seq(seqable).rest() || empty_seq
+  pre: args([seqable]),
+  body: (seqable) => seq_(seqable).rest() || empty
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
-  pre: sign([is_seqable]),
-  body: (seqable) => rest(seq(seqable)) === empty_seq
+  pre: args([seqable]),
+  body: (seqable) => rest(seq_(seqable)) === empty
 });
 
-let Seq = L.ns({
-  name: 'Seq',
-  space: {seq, empty_seq, 
-    is_seq, is_seqable, is_empty, 
-    first, rest, concat, size
-  }
-});
-
-export default Seq;
+export default L.NS.defns({type: Seq,
+  members: {
+    concat, empty, first, is_empty, is_seq, is_seqable, seqable, 
+    iterate, rest, seq: seq_, show, size
+  }});
