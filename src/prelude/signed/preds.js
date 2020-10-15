@@ -100,6 +100,28 @@ let is_sequence = defn({
   body: P.is_sequence
 });
 
+let is_sequence_of = defn({
+  name: 'is_sequence_of',
+  doc: 'Takes a predicate and a value and returns true if the value is a sequence and each member of the sequence passes the preidcate. (Strings are iterable but not sequences.) Otherwise returns false.',
+  pre: S.args([S.function], [S.function, S.any]),
+  body: [
+    (pred) => partial(is_sequence_of, pred),
+    (pred, xs) => {
+      if (!is_sequence(seq)) return false;
+      for (let x of xs) {
+        if (!bool(pred(x))) return false;
+      }
+      return true;
+    }
+  ]
+});
+
+let is_array = defn({
+  name: 'is_array',
+  doc: 'Tells if something is an array.',
+  body: P.is_array
+});
+
 let not = defn({
   name: 'not',
   doc: 'Takes a function, and returns a function that is the negation of its boolean value.',
@@ -182,10 +204,10 @@ let Pred = Ludus.NS.defns({
   name: 'Pred',
   members: {
     bool, is_any, is_undef, is_some, 
-    is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
+    is_string, is_number, is_int, is_bool, is_symbol,
     is_fn, is_obj, is_assoc, is_iter, is_sequence,
-    is_sequence_of, is_multi,
-    not, and, or, maybe, at, is_key, has, has_proto, dict, struct
+    is_sequence_of, is_array,
+    not, and, or, maybe, at, is_key, has, dict, 
   }
 });
 
