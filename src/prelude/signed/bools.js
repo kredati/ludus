@@ -44,9 +44,4 @@ let or = defn({
   ]
 });
 
-let Bool = L.ns({
-  name: 'Bool',
-  space: { not, and, or }
-});
-
-export default Bool;
+export default L.NS.defmembers(L.Bool, {and, or, not});
