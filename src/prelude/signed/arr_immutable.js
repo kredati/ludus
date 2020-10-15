@@ -36,8 +36,10 @@
 //      and removing at the end; this will simplify matters, since seqs should
 //      take care of first/rest iteration semantics
 
-import E from './eq.js';
-let {eq} = E;
+import L from './deps.js';
+import './eq.js';
+
+let {eq} = L;
 
 // first, some utility functions
 
@@ -262,6 +264,7 @@ let list_handler = {
 };
 
 let Arr = {
+  [L.meta_tag]: L.Type.Array,
   create: (root, tail, size) => 
     new Proxy(create(Arr, {root, tail, size}), list_handler),
   empty: () => Arr.create(Node.empty(), Leaf.empty(), 0),
@@ -333,7 +336,7 @@ let Arr = {
   of: (...values) => 
     values.reduce((list, value) => list.conj(value), Arr.empty()),
   from: (iterable) => {
-    if (Arr.is_arr(iterable)) return iterable;
+    if (Arr.is_immutable_array(iterable)) return iterable;
     if (Array.isArray(iterable)) {
       let chunks = chunk(iterable, node_size);
       let tail = Leaf.create(last(chunks) || []);
@@ -357,7 +360,7 @@ let Arr = {
   eq (arr) {
     if (this === arr) return true;
     if (arr == null) return false;
-    if (Arr.is_list(arr) && this.root.eq(arr.root) && this.tail.eq(arr.tail)) 
+    if (Arr.is_immutable_array(arr) && this.root.eq(arr.root) && this.tail.eq(arr.tail)) 
       return true;
 
     let size = arr.size || arr.length;
@@ -368,7 +371,7 @@ let Arr = {
     }
     return true;
   },
-  is_arr: (arr) => arr == null || typeof arr !== 'object'
+  is_immutable_array: (arr) => arr == null || typeof arr !== 'object'
       ? false
       : Reflect.getPrototypeOf(arr) === Arr,
   is_empty () {
