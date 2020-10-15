@@ -246,5 +246,5 @@ export {rename, partial,
   defn 
 };
 
-export default Ludus.NS.defmembers(Ludus.Type.Function.ns,
+export default Ludus.NS.defmembers(Ludus.Fn,
   {rename, partial, n_ary, loop, recur, fn, pre_post, defn});
