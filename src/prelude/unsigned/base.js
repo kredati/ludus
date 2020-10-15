@@ -245,10 +245,16 @@ let defns = ({name, type, members, ...attrs}) => {
 // Tells if something is a namespace
 let is_ns = (x) => is(Namespace, x);
 
+// get_ns :: (any) -> maybe(ns)
+// Gets the namespace associated with a value; returns undefined
+// if there is no such namespace (although there should always be)
+// one, if we get everything right.
+let get_ns = (x) => meta(x)?.ns;
+
 ///// Some namespaces to go with our existing types
 // namespace namespace
 let NS = defns({name: 'Namespace', type: Namespace,
-  members: {is_ns, defns, defmembers, members, def, show: show_ns}});
+  members: {is_ns, defns, defmembers, members, def, get_ns, show: show_ns}});
 
 // type namespace
 let Type_ns = defns({name: 'Type', type: Type, 
@@ -269,31 +275,31 @@ let Type_ns = defns({name: 'Type', type: Type,
 // on builtins. This is probably for the best.
 
 let Bool = deftype({name: 'Boolean'});
-defns({name: 'Boolean', type: Bool, members: {}});
+defns({name: 'Bool', type: Bool, members: {}});
 Boolean.prototype[meta_tag] = Bool;
 
 let Num = deftype({name: 'Number'});
-defns({name: 'Math', type: Num, members: {}})
+defns({name: 'Num', type: Num, members: {}})
 Number.prototype[meta_tag] = Num;
 
 let Str = deftype({name: 'String'});
-defns({name: 'String', type: Str, members: {}});
+defns({name: 'Str', type: Str, members: {}});
 String.prototype[meta_tag] = Str;
 
 let Sym = deftype({name: 'Symbol'});
-defns({name: 'Symbol', type: Sym, members: {}});
+defns({name: 'Sym', type: Sym, members: {}});
 Symbol.prototype[meta_tag] = Sym;
 
 let Obj = deftype({name: 'Object'});
-defns({name: 'Object', type: Obj, members: {}});
+defns({name: 'Obj', type: Obj, members: {}});
 Object.prototype[meta_tag] = Obj;
 
 let Arr = deftype({name: 'Array'});
-defns({name: 'Array', type: Arr, members: {}});
+defns({name: 'Arr', type: Arr, members: {}});
 Array.prototype[meta_tag] = Arr;
 
 let Fn = deftype({name: 'Function'});
-defns({name: 'Function', type: Fn, members: {}});
+defns({name: 'Fn', type: Fn, members: {}});
 Function.prototype[meta_tag] = Fn;
 
 let types = {
@@ -316,6 +322,15 @@ let show = (x) => {
   return x;
 };
 
+let nses = Object.entries({Bool, Num, Str, Sym, Obj, Arr, Fn})
+  .reduce((obj, [k, v]) => {
+    obj[k] = v.ns;
+    return obj;
+  }, {})
+
 //////////////////// 5. Exports
 export {NS, Type_ns as Type};
-export default defns({name: 'Ludus', members: {...Ludus, show, NS, Type: Type_ns}});
+export default defns({name: 'Ludus', members: {
+  ...Ludus, show, NS, Type: Type_ns,
+  ...nses
+}});
