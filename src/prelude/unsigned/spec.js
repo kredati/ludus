@@ -111,6 +111,7 @@ let any = def({name: 'any', pred: (_) => true});
 let boolean = def({name: 'boolean', pred: P.is_bool});
 let string = def({name: 'string', pred: P.is_string});
 let number = def({name: 'number', pred: P.is_number});
+let integer = def({name: 'integer', pred: P.is_int});
 let key = def({name: 'key', pred: P.or(P.is_string, P.is_number)});
 let symbol = def({name: 'symbol', pred: P.is_symbol});
 let undef = def({name: 'undefined', pred: P.is_undef});
@@ -296,6 +297,7 @@ let explain = (spec, value, indent = 0) => {
 
 export default NS.defns({type: Spec, members: {
   Spec, defspec: def, show, is_spec, is_valid, and, or, tup, seq, at, record,
-  any, boolean, string, number, key, symbol, array, some, function: fn, obj,
+  any, boolean, string, number, integer, key, symbol, array, some, 
+  function: fn, obj, rename,
   assoc, iter, not_empty, sequence, dict, type, maybe, args, explain
 }});
