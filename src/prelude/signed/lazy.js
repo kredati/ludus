@@ -18,19 +18,29 @@ let {defn} = L.Fn;
 let {args, integer, any, function: fn, or} = L.Spec;
 let {seq, is_empty, size, seqable, first, rest}= Seq;
 
+let gen = defn({
+  name: 'gen',
+  doc: 'Creates a generator. It takes an `init`ial value, two or three unary functions: `step`, `done`, and, optionally, `map`. `step` should return the series of values, first by taking the `init` value, and then, the previous value. `done` should return `true` once the generator should terminate.\n\n`map` is optionally applied to the value before it is yielded into the generator. It is useful if your generator needs to keep track of state that is more complex than the values you wish to appear in the generator.',
+  pre: args([any, fn, fn], [any, fn, fn, fn]),
+  body: [
+    (init, step, done) => gen(init, step, done, (x) => x),
+    (init, step, done, map) => (function*() {
+      let value = init;
+      while(!done(value)) {
+        yield map(value);
+        value = step(value);
+      }
+    })
+  ]
+});
+
 let lazy = defn({
   name: 'lazy',
   doc: 'Creates a lazy, possibly infinite, sequence. It takes an `init`ial value, two or three unary functions: `step`, `done`, and, optionally, `map`. `step` should return the series of values, first by taking the `init` value, and then, the previous value. `done` should return `true` once the sequence should terminate.\n\n`map` is optionally applied to the value before it is yielded into the sequence. It is useful if your lazy sequence needs to keep track of state that is more complex than the values you wish to appear in the sequence.',
   pre: args([any, fn, fn], [any, fn, fn, fn]),
   body: [
     (init, step, done) => lazy(init, step, done, (x) => x),
-    (init, step, done, map) => seq((function*() {
-      let value = init;
-      while(!done(value)) {
-        yield map(value);
-        value = step(value);
-      }
-    })())
+    (init, step, done, map) => seq(gen(init, step, done, map)())
   ]
 });
 
@@ -138,4 +148,4 @@ let repeatedly = defn({
 });
 
 export default L.NS.defns({name: 'Lazy',
-  members: {cycle, interleave, lazy, range, repeat, repeatedly}});
+  members: {cycle, gen, interleave, lazy, range, repeat, repeatedly}});
