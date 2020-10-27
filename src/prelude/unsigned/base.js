@@ -244,7 +244,6 @@ let defns = ({name, type, members, ...attrs}) => {
   });
   let proxied = new Proxy(ns, ns_handler);
   if (type !== undefined) type.ns = proxied;
-  proxied //?
   return proxied;
 };
 
