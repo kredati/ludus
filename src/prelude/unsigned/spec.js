@@ -12,7 +12,9 @@ let Spec = Type.deftype({name: 'Spec'});
 // specified in attrs, it pulls the name from the predicate, allowing
 // `def({pred: is_string})`.
 let def = (attrs) => {
-  let name = attrs.name ?? attrs.pred?.name;
+  let name = attrs.name != undefined 
+    ? attrs.name 
+    : attrs.pred && attrs.pred.name;
   return Type.create(Spec, {spec: def, ...attrs, name});
 }; 
 
@@ -32,7 +34,7 @@ let is_spec = (x) => Type.is(Spec, x);
 // is_valid :: (spec, value) => boolean
 // The equivalent of valid? in clj; tells whether a value passes a spec
 let is_valid = (spec, value) => is_spec(spec) 
-  ? P.bool(spec.pred(value))
+  ? is_valid(spec.pred, value)
   : P.bool(spec(value));
 
 ///// Spec combinators
@@ -121,6 +123,7 @@ let fn = def({name: 'function', pred: P.is_fn});
 let obj = def({name: 'object', pred: P.is_obj});
 let assoc = def({name: 'assoc', pred: P.is_assoc});
 let iter = def({name: 'iter', pred: P.is_iter});
+let coll = rename('coll', or(assoc, iter));
 let sequence = def({name: 'sequence', pred: P.is_sequence});
 let dict = (spec) => def({name: `dict<${spec.name}>`,
   pred: (x) => P.is_assoc(x) && Object.values(x).every((v) => is_valid(spec, v)), 
@@ -295,9 +298,13 @@ let explain = (spec, value, indent = 0) => {
   }
 };
 
-export default NS.defns({type: Spec, members: {
+let spec_ns = NS.defns({type: Spec, members: {
   Spec, defspec: def, show, is_spec, is_valid, and, or, tup, seq, at, record,
-  any, boolean, string, number, integer, key, symbol, array, some, 
+  any, boolean, string, number, integer, key, symbol, array, some, undef,
   function: fn, obj, rename,
-  assoc, iter, not_empty, sequence, dict, type, maybe, args, explain
+  assoc, iter, coll, not_empty, sequence, dict, type, maybe, args, explain
 }});
+
+export default spec_ns;
+
+NS.is_ns(spec_ns) //?
