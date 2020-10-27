@@ -9,13 +9,14 @@
 //        the function called `repeatedly` below in early stages of learning,
 //        that's dangerous.
 
-import L from './deps.js';
 import Seq from './seqs.js';
 import P from './preds.js';
-import './fns.js';
+import Fn from './fns.js';
+import Spec from './spec.js';
+import NS from './ns.js';
 
-let {defn} = L.Fn;
-let {args, integer, any, function: fn, or} = L.Spec;
+let {defn} = Fn;
+let {args, integer, any, function: fn, or} = Spec;
 let {seq, is_empty, size, seqable, first, rest}= Seq;
 
 let gen = defn({
@@ -61,7 +62,7 @@ let range = defn({
   ]
 });
 
-let infinite = L.Spec.defspec({name: 'infinite', pred: (x) => x === Infinity});
+let infinite = Spec.defspec({name: 'infinite', pred: (x) => x === Infinity});
 
 let cycle = defn({
   name: 'cycle',
@@ -147,5 +148,5 @@ let repeatedly = defn({
   ]
 });
 
-export default L.NS.defns({name: 'Lazy',
+export default NS.defns({name: 'Lazy',
   members: {cycle, gen, interleave, lazy, range, repeat, repeatedly}});

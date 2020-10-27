@@ -4,6 +4,7 @@
 import L from './deps.js';
 import F from './fns.js';
 import P from './preds.js';
+import NS from './ns.js';
 
 let {defn, partial} = F;
 let {bool} = P;
@@ -44,4 +45,4 @@ let or = defn({
   ]
 });
 
-export default L.NS.defmembers(L.Bool, {and, or, not});
+export default NS.defmembers(L.Bool, {and, or, not});

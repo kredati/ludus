@@ -12,11 +12,14 @@
 
 import L from './deps.js';
 import P from './preds.js';
-import './fns.js';
+import Fn from './fns.js';
+import S from './spec.js';
+import T from './type.js';
+import NS from './ns.js';
 
-let {args, seq, iter, assoc, some, sequence, type} = L.Spec;
-let {defn, once} = L.Fn;
-let {create, deftype, is} = L.Type;
+let {args, seq, sequence, type} = S;
+let {defn, once} = Fn;
+let {create, deftype, is} = T;
 let {has, is_iter, is_assoc} = P;
 
 // obj_gen: creates a generator that iterates through the keys of an object
@@ -126,7 +129,7 @@ let seq_ = defn({
   }
 });
 
-let empty = seq([]);
+let empty = seq_([]);
 
 let concat = defn({
   name: 'concat',
@@ -138,7 +141,7 @@ let concat = defn({
         yield* seq_(seqable);
       }
     })();
-    let concat_size = seqables.reduce((acc, seq)=> acc + size(seq), 0);
+    let concat_size = seqables.reduce((acc, seq) => acc + size(seq), 0);
     concat_size = isNaN(concat_size) ? undefined : concat_size;
     return create_seq(generator, concat_size);
   }
@@ -165,7 +168,7 @@ let is_empty = defn({
   body: (seqable) => rest(seq_(seqable)) === empty
 });
 
-export default L.NS.defns({type: Seq,
+export default NS.defns({type: Seq,
   members: {
     concat, empty, first, is_empty, is_seq, is_seqable, seqable, 
     iterate, rest, seq: seq_, show, size

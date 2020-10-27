@@ -3,6 +3,7 @@
 // but also metaphysically.
 
 import L from './deps.js';
+import NS from './ns.js';
 import './fns.js';
 
 let eq_ = L.eq;
@@ -46,4 +47,4 @@ let eq = defn({
   ]
 });
 
-export default L.NS.defmembers(L, {eq, is_identical});
+export default NS.defmembers(L, {eq, is_identical});

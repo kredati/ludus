@@ -2,10 +2,12 @@
 // String manipulations, excepting regexes because ugh regexes
 
 import L from './deps.js';
-import './fns.js';
+import Fn from './fns.js';
+import Spec from './spec.js';
+import NS from './ns.js';
 
-let {defn, partial} = L.Fn;
-let {args, seq, string, number} = L.Spec;
+let {defn, partial} = Fn;
+let {args, seq, string, number} = Spec;
 
 let concat = defn({
   name: 'concat',
@@ -30,6 +32,16 @@ let str = defn({
       let xs_str = [x, y, ...more].map(x => x.toString());
       return ''.concat(...xs_str);
     }
+  ]
+});
+
+let from = defn({
+  name: 'from',
+  doc: 'Produces a string from any iterable. Takes an optional separator argument.',
+  pre: args([iter], [iter, string]),
+  body: [
+    (iter) => [...iter].join(''),
+    (iter, separator) => [...iter].join(separator)
   ]
 });
 
@@ -271,9 +283,22 @@ let slice = defn({
   ]
 });
 
-export default L.NS.defmembers(L.Str, {
-  capitalize, chars, code_at, concat, ends_with, from_code, includes,
+let empty = defn({
+  name: 'empty_',
+  doc: 'Returns an empty string.',
+  body: () => ''
+});
+
+let conj = defn({
+  name: 'conj',
+  doc: '`conj`oins two strings.',
+  pre: args([string, string]),
+  body: concat
+});
+
+export default NS.defmembers(L.Str, {
+  capitalize, chars, code_at, concat, ends_with, from, from_code, includes,
   index_of, is_blank, is_char, is_empty, last_index_of, lowcase, pad_left,
   pad_right, repeat, replace, replace_first, count, slice, split, starts_with,
-  str, trim, trim_left, trim_right, upcase, words
+  str, trim, trim_left, trim_right, upcase, words, empty, conj
 });

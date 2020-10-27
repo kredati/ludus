@@ -6,13 +6,15 @@
 
 import L from './deps.js';
 import P from './preds.js';
+import S from './spec.js';
+import NS from './ns.js';
 import './fns.js';
 import './nums.js';
 
 import A from './arr_immutable.js';
 
 let {defn} = L.Fn;
-let {args, seq, array, integer, any, string, iter, function: fn} = L.Spec;
+let {args, seq, array, integer, any, iter, function: fn} = S;
 let {is_natural, num} = L.Num;
 let {eq} = L;
 
@@ -25,7 +27,7 @@ let is_index = defn({
   }
 });
 
-let index = L.Spec.defspec({name: 'index', pred: is_index});
+let index = S.defspec({name: 'index', pred: is_index});
 
 let empty = defn({
   name: 'empty',
@@ -159,7 +161,7 @@ let sort = defn({
   ]
 });
 
-export default L.NS.defmembers(L.Arr, {
+export default NS.defmembers(L.Arr, {
   arr, assoc, concat, conj, conj_, empty, empty_, from,
   index, index_of, is_index, last_index_of, reverse,
   slice, sort, unconj

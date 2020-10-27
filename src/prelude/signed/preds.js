@@ -2,11 +2,13 @@
 // Signed predicates: new predicates, as well as signed versions of unsigned
 // predicates.
 
-import Ludus from './deps.js';
+import L from './deps.js';
+import S from './spec.js';
+import Fn from './fns.js';
+import NS from './ns.js';
 
-let {defn, partial} = Ludus.Fn;
-let P = Ludus.Pred;
-let S = Ludus.Spec;
+let {defn, partial} = Fn;
+let P = L.Pred;
 
 ///// Signed versions of old functions
 
@@ -167,7 +169,7 @@ let has = defn({
   doc: 'Tells if an object has some value set at a particular key. Note that it will return `true` if a particular object has had a key explicitly set to `undefined`. Only tests own properties.',
   pre: S.args([S.key], [S.key, S.any]),
   body: [
-    (key) => Ludus.fn(`has<${key}>`, (obj) => has(key, obj)),
+    (key) => L.fn(`has<${key}>`, (obj) => has(key, obj)),
     (key, obj) => obj != undefined && obj.hasOwnProperty(key)
   ]
 });
@@ -200,7 +202,7 @@ let dict = defn({
   })
 });
 
-let Pred = Ludus.NS.defns({
+export default NS.defns({
   name: 'Pred',
   members: {
     bool, is_any, is_undef, is_some, 
@@ -210,5 +212,3 @@ let Pred = Ludus.NS.defns({
     not, and, or, maybe, at, is_key, has, dict, 
   }
 });
-
-export default Pred;

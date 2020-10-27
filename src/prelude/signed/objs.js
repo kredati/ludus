@@ -4,11 +4,13 @@
 
 import L from './deps.js';
 import P from './preds.js';
-import './fns.js';
+import Fn from './fns.js';
+import NS from './ns.js';
+import Spec from './spec.js';
 import './eq.js';
 
-let {defn, partial} = L.Fn;
-let {args, any, key, assoc, function: fn, symbol, seq, dict, or} = L.Spec;
+let {defn, partial} = Fn;
+let {args, any, key, assoc, function: fn, symbol, seq, dict, or} = Spec;
 let {is_any, is_key, is_assoc, is_fn, has, is_symbol, is_sequence_of} = P;
 let {eq} = L;
 
@@ -98,8 +100,8 @@ let update_with = defn({
   }
 });
 
-let assign = defn({
-  name: 'assign',
+let concat = defn({
+  name: 'concat',
   doc: 'Creates a new object, combining the objects passed in. If objects duplicate a key, silently overwrites the value; later objects take precedence.E.g. `assign({a: 1, b: 2}, {b: 3, c: 4}); //=> {a: 1, b: 3, c: 4}`.',
   pre: seq(assoc),
   body: (...objs) => Object.assign({}, ...objs)
@@ -140,8 +142,37 @@ let entries = defn({
   body: (obj) => obj == undefined ? [] : Object.entries(obj)
 });
 
-export default L.NS.defmembers(L.Obj, {
+
+let empty = defn({
+  name: 'empty',
+  doc: 'Returns an empty object',
+  body: () => ({})
+});
+
+let conj = defn({
+  name: 'conj',
+  doc: '`conj`oins a `[key, value]` tuple to an object.',
+  pre: args([assoc, tup(key, any)]),
+  body: (obj, [key, value]) => assoc(obj, key, value)
+});
+
+let conj_ = defn({
+  name: 'conj_',
+  doc: '`conj`oins a `[key, value]` tuple to an object, mutating the object.',
+  pre: args([assoc, tup(key, any)]),
+  body: (obj, [key, value]) => assoc_(obj, key, value)
+});
+
+let from = defn({
+  name: 'from',
+  doc: 'Creates an object from an iterable containing `[key, value]` tuples.',
+  pre: args([seq(tup(key, any))]),
+  body: (entries) => Object.fromEntries(entries)
+});
+
+export default NS.defmembers(L.Obj, {
   get, get_js, get_in, 
-  assoc: assoc_, update, update_with,
-  assign, merge, keys, values, entries
+  concat, update, update_with,
+  merge, keys, values, entries,
+  empty, conj, conj_, from
 });

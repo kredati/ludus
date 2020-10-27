@@ -8,8 +8,9 @@
 import L from './deps.js';
 import F from './fns.js';
 import P from './preds.js';
+import S from './spec.js';
+import NS from './ns.js';
 
-let S = L.Spec;
 let {args, seq, number, integer} = S;
 
 let {defn, partial} = F;
@@ -474,7 +475,7 @@ let rad_to_deg = defn({
   body: norm(0, 2 * pi, 0, 360)
 });
 
-export default L.NS.defmembers(L.Num, {
+export default NS.defmembers(L.Num, {
   abs, add, ceil, dec, div, div_by, floor, gt, gte, hypot, inc,
   is_natural, is_negative, is_nonzero, is_positive, is_positive_int,
   lt, lte, mod, mult, num, pow, pow_by, precise, random, random_int, round,

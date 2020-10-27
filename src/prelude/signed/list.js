@@ -14,14 +14,15 @@
 
 // TODO: add pre/post conditions for list operations.
 
-import L from './deps.js';
-import P from './preds.js';
 import Lazy from './lazy.js';
-import './fns.js';
+import Fn from './fns.js';
+import Spec from './spec.js';
+import Type from './type.js';
+import NS from './ns.js';
 
-let {defn} = L.Fn;
-let {create, deftype, is} = L.Type;
-let {args, type, any, maybe} = L.Spec;
+let {defn} = Fn;
+let {create, deftype, is} = Type;
+let {args, type, any, maybe, iter} = Spec;
 
 let List = deftype({name: 'List'});
 
@@ -35,7 +36,7 @@ let iterate = defn({
 let show = defn({
   name: 'show',
   doc: 'Shows a list',
-  //pre: args([type(List)]),
+  pre: args([type(List)]),
   body: (list) => is_empty(list)
   ? '()'
   : `( ${[...list].join(', ')} )`
@@ -47,8 +48,15 @@ let is_list = defn({
   body: (x) => is(List, x)
 });
 
-let empty = create(List, {size: 0});
-empty.rest = empty;
+let empty = defn({
+  name: 'empty',
+  doc: 'Returns an empty list.',
+  body: () => {
+    let empty = create(List, {size: 0});
+    empty.rest = empty;
+    return empty;
+  }
+});
 
 let is_empty = (list) => list.size === 0;
 
@@ -56,7 +64,7 @@ let cons = defn({
   name: 'cons',
   doc: 'Adds a value to a list, value first. This is the classical lisp way, and included for historical reasons. Short for "construct".',
   pre: args([any], [any, maybe(type(List))]),
-  body: (value, list = empty) => 
+  body: (value, list = empty()) => 
     create(List, {first: value, rest: list, size: list.size + 1})
 });
 
@@ -65,16 +73,23 @@ let conj = defn({
   doc: 'Adds a value to a list, list first. `conj` is thus a reducer, and is the Ludus-preferred way. Short for "conjoin".',
   pre: args([], [any], [type(List), any]),
   body: [
-    () => empty,
+    () => empty(),
     (value) => cons(value),
     (list, value) => cons(value, list)
   ]
 });
 
+let from = defn({
+  name: 'from',
+  doc: 'Creates a list from an iterable.',
+  pre: args([iter]),
+  body: (xs) => list(...xs)
+});
+
 let list = defn({
   name: 'list',
   doc: 'Creates a list of the arguments, in order. E.g., `list(1, 2, 3); //=> ( 1, 2, 3 )`.',
-  body: (...elements) => elements.reduceRight(conj, empty)
+  body: (...elements) => elements.reduceRight(conj, empty())
 });
 
 let first = defn({
@@ -105,8 +120,28 @@ let cdr = defn({
   body: (list) => list.rest
 });
 
-export default L.NS.defns({type: List, members: {
-  show, iterate,
+let concat = defn({
+  name: 'concat',
+  doc: 'Concatenates lists.',
+  pre: args([], [iter]),
+  body: [
+    () => empty(),
+    (xs) => from(xs),
+    (xs, ys, ...more) => {
+      let iters = [xs, ys, ...more];
+      let arr = []; 
+      for (let iter of iters) {
+        for (let value of iter) {
+          arr.push(value);
+        }
+      }
+      return from(arr);
+    }
+  ]
+});
+
+export default NS.defns({type: List, members: {
+  show, iterate, empty,
   cons, car, cdr,
-  conj, first, rest, list, is_list
+  conj, first, rest, list, is_list, from, concat
 }});

@@ -3,11 +3,12 @@
 // and signed versions of previously-unsigned functions
 
 import Ludus from './deps.js';
+import S from './spec.js';
 
 let Fn = Ludus.Fn;
 
-let {record, maybe, string, seq, or, and, any, some, type, Spec, args, not_empty} = Ludus.Spec;
-let func = Ludus.Spec.function;
+let {record, maybe, string, seq, or, and, any, some, type, Spec, args, not_empty} = S;
+let func = S.function;
 
 let test = or(func, type(Spec));
 let pre_post = maybe(or(test, seq(test)));

@@ -1,18 +1,17 @@
-import { recur } from '../unsigned/fns.js';
 //////////////////// Transducers
 
 import L from './deps.js';
-import F from './fns.js';
 import P from './preds.js';
 import S from './seqs.js';
+import Spec from './spec.js';
+import NS from './ns.js'; 
 import A from './arr.js';
+import './fns.js';
 
-let {sign, splat} = L;
-let {defn} = F;
-let {is_fn, or, is_assoc, is_iter, is_any, bool} = P;
+let {args, seq, function: fn, or, coll, assoc, iter, any} = Spec;
+let {defn} = L.Fn;
+let {is_fn, is_assoc, is_iter, is_any, bool} = P;
 let {first, rest, is_empty} = S;
-
-let is_coll = or(is_assoc, is_iter);
 
 let completed = Symbol('ludus/completed');
 
@@ -25,7 +24,7 @@ let complete = defn({
 let reduce = defn({
   name: 'reduce',
   doc: 'Reduces a collection. (Oy, how do we explain reduce?)',
-  pre: sign([is_fn, is_coll], [is_fn, is_any, is_coll]),
+  pre: args([fn, coll], [fn, any, coll]),
   body: [
     (f, coll) => reduce(f, first(coll), rest(coll)),
     (f, accum, coll) => {
@@ -39,7 +38,7 @@ let reduce = defn({
 let transduce = defn({
   name: 'transduce',
   doc: 'Transduce is a transforming reducer. (Again, explaining this? Ugh.)',
-  pre: sign([is_fn, is_fn, is_coll], [is_fn, is_fn, is_any, is_coll]),
+  pre: args([fn, fn, coll], [fn, fn, any, coll]),
   body: [
     (xform, reducer, coll) => reduce(xform(reducer), coll),
     (xform, reducer, accum, coll) => reduce(xform(reducer), accum, coll)
@@ -47,17 +46,33 @@ let transduce = defn({
 });
 
 // THIS IS WHERE WE USE THE FASTER MUTATING FUNCTIONS
+// Notes:
+/*
+  - Perhaps the fastest data structure here is a mutable array
+  - Part of what we need, then, is a `from` function for each data structure that is able to parse any iterable
+  - What that then allows is to use a mutable array here
+  - What's the protocol for a collection, then?
+    - conj
+    - empty
+    - concat
+    - from
+    - I think that's it? More research here.
+  - That, however, means I need to figure out methods
+  - And protocols are actually pretty easy, then?--at least a bare implementation that doesn't worry about signatures and only worries that there are things there. (Protocol is like a struct, just: instead of having values at keys, it's the associated NS that has functions.)
+  - Just to be sure: Ludus native colls at this point are: string, list, array, and object. No sets or maps--yet. We just need to be sure each of these have the thing.
+*/
 let into = defn({
   name: 'into',
-  body: [  
-    (to, from) => transduce(id, conj, to, from),
+  pre: args([coll, coll], [coll, coll, fn]),
+  body: [
+    (to, from) => into(to, from, (x) => x),
     (to, from, xform) => transduce(xform, conj, to, from)
   ]
 });
 
 let into_arr = (to, from, xform) => {
   let out = transduce(xform, conj_, [], seq(from));
-  return concat(to, out)
+  return concat(to, out);
 };
 
 //list

@@ -4,13 +4,14 @@
 // an additional layer of parsing magic applied to them:
 // - `when`
 
-import L from './deps.js';
 import P from './preds.js';
-import './fns.js';
+import S from './spec.js';
+import NS from './ns.js';
+import Fn from './fns.js';
 
-let {defn} = L.Fn;
+let {defn} = Fn;
 let {bool} = P;
-let {rename, tup, function: fn, args, seq, any, integer} = L.Spec;
+let {rename, tup, function: fn, args, seq, any, integer} = S;
 
 let when = defn({
   name: 'when',
@@ -36,7 +37,7 @@ let fcond = defn({
   name: 'fcond',
   doc: '`fcond` takes a series of clauses, and returns a unary function that passes its value to the clauses, as `cond`.',
   pre: seq(clause),
-  body: (...clauses) => L.Fn.fn('fcond<...>', (x) => cond(x, ...clauses))
+  body: (...clauses) => Fn.fn('fcond<...>', (x) => cond(x, ...clauses))
 });
 
 let always = defn({
@@ -55,7 +56,7 @@ let make = defn({
 let just = defn({
   name: 'just',
   doc: 'Takes a value and returns a function that returns that value when called. (Also known as a `thunk`.)',
-  body: (x) => L.Fn.fn(`just<${x}>`, () => x)
+  body: (x) => Fn.fn(`just<${x}>`, () => x)
 });
 
 let repeat = defn({
@@ -71,5 +72,5 @@ let repeat = defn({
   }
 });
 
-export default L.NS.defns({name: 'Flow', 
+export default NS.defns({name: 'Flow', 
   members: {when, clause, cond, fcond, make, just, repeat, always}});
