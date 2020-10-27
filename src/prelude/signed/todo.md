@@ -2,7 +2,11 @@
 
 [x] Rework list/list_eg/list_mod into canonical list
 [ ] Complete ducers
-[ ] Create signed versions of spec, type, ns
+[ ] Create signed versions of spec, type, ns, errors
+  [x] spec
+  [x] type
+  [x] ns
+  [ ] errors
 [ ] Some lazy fns should be ducers
 [ ] Write refs
 [ ] Investigate `show`
