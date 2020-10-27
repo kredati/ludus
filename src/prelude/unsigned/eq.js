@@ -15,8 +15,8 @@ let eq = (x, y) => {
 // to test each element in turn
 let eq_iter = (xs, ys) => {
   // do a size check, if size info is available
-  let x_size = xs.length ?? xs.size;
-  let y_size = ys.length ?? ys.size;
+  let x_size = xs.length != undefined ? xs.length : xs.size;
+  let y_size = ys.length != undefined ? ys.length : ys.size;
   if (is_some(x_size) && is_some(y_size) &&
     x_size !== y_size) return false;
 
