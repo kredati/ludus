@@ -306,5 +306,3 @@ let spec_ns = NS.defns({type: Spec, members: {
 }});
 
 export default spec_ns;
-
-NS.is_ns(spec_ns) //?
