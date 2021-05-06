@@ -7,9 +7,16 @@ import Ludus from './base.js';
 // raise :: (Error, string, ...strings) -> undefined
 // functional error throwing
 // throws `err` with `msg`, but first, it reports `msgs` to the error console
-let raise = (err, msg, ...msgs) => {
-  if (msgs) Ludus.report(msgs);
-  throw new err(msg);
+let raise = (err, ...msgs) => {
+  if (msgs.length > 0) {
+    for (let m of msgs) Ludus.report(m);
+  };
+  if (err === Error || Object.getPrototypeOf(err) === Error) {
+    throw new err(msgs[0]);
+  } 
+  else {
+    throw err;
+  };
 };
 
 // bound :: fn -> fn
@@ -21,7 +28,7 @@ let bound = (fn) => Object.defineProperty(
     } catch (e) {
       return e;
     }
-  }, name, {value: fn.name || 'bounded'}
+  }, 'name', {value: fn.name || 'bounded'}
 );
 
 // handle :: fn -> fn
