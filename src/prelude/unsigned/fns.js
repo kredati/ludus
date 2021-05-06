@@ -204,17 +204,17 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
     if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${Spec.explain(spec, args)}`);
   }
 
-  let result = body(...args);
+  let returns = body(...args);
 
   let pass_post = true;
-  for (let pred of post) {
-    let result = pred(result);
-    let pass = result !== false && result != undefined;
+  for (let spec of post) {
+    let is_valid = Spec.is_valid(spec, returns);
+    let pass = is_valid !== false && is_valid != undefined;
     pass_post = pass_post && pass;
-    if (!pass_post) throw Error(`Returns from ${body.name} did not conform to spec.\n${explain(pred, result)}`);
+    if (!pass_post) throw Error(`Return from ${body.name} did not conform to spec.\n${Spec.explain(spec, returns)}`);
   }
 
-  return result;
+  return returns;
   });
 
 //////////////////// Defn
