@@ -8,13 +8,20 @@ import Ludus from './base.js';
 // functional error throwing
 // throws `err` with `msg`, but first, it reports `msgs` to the error console
 let raise = (err, ...msgs) => {
-  if (msgs.length > 0) {
-    for (let m of msgs) Ludus.report(m);
-  };
   if (err === Error || Object.getPrototypeOf(err) === Error) {
+    if (msgs.length > 0) {
+      for (let i = 1; i < msgs.length; i++) 
+        Ludus.report(msgs[i]);
+    };
+    let thrown = new err(msgs[0]);
+    if (thrown.stack) {
+      let [msg, _, ...trace] = thrown.stack.split('\n');
+      thrown.stack = [msg, ...trace].join('\n');
+    }
     throw new err(msgs[0]);
   } 
   else {
+    for (let msg of msgs) Ludus.report(msg);
     throw err;
   };
 };
@@ -39,7 +46,7 @@ let handle = (name, fn) => Object.defineProperty(
     try {
       return fn(...args);
     } catch (e) {
-      Ludus.report(`${e.name} thrown while calling ${fn.name || 'anon. fn'} with arguments (${args.map(arg => arg.toString()).join(', ')})`);
+      Ludus.report(`${e.name || e || 'unknown error'} thrown while calling ${fn.name || 'anon. fn'} with arguments (${args.map(arg => Ludus.show(arg)).join(', ')})`);
       throw e;
     }
   },
