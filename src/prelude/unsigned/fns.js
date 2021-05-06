@@ -34,7 +34,12 @@ let partial = (fn, ...args) => {
 
 // ArgumentError
 // An error for telling users: the arguments just aren't right
-class ArgumentError extends Error {};
+class ArgumentError extends Error {
+  constructor(...args) {
+    super(...args);
+    this.name = 'ArgumentError';
+  }
+};
 
 // n_ary :: (name, ...fn) -> fn
 // `n_ary` creates a function that dispatches on the number of arguments.
