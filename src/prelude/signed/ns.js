@@ -6,7 +6,7 @@ import Type from './type.js';
 
 let {Fn, Spec, NS} = L;
 let {defn} = Fn;
-let {args, string, type, any, obj, at, or, and, rename, defspec} = Spec;
+let {args, string, type, any, obj, at, or, and, defspec} = Spec;
 
 let is_ns = defn({
   name: 'is_ns',
