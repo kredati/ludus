@@ -6,13 +6,15 @@ import Ludus from './deps.js';
 import S from './spec.js';
 
 let Fn = Ludus.Fn;
+let {report} = Ludus;
 
 let {record, maybe, string, seq, or, and, any, some, type, Spec, args, not_empty} = S;
 let func = S.function;
 
-let test = or(func, type(Spec));
-let pre_post = maybe(or(test, seq(test)));
+let test = or(func, type(Spec)); // specs valid tests: a function or a spec
+let pre_post = maybe(or(test, seq(test))); // pre or post tests are optional, and either tests or sequences of tests
 
+// spec a function descriptor
 let fn_descriptor = record('fn_descriptor', {
   name: string,
   doc: maybe(string),
@@ -74,6 +76,8 @@ let once = defn({
   }
 });
 
+// TODO: improve errors from here on down
+
 // thread :: (value, ...fn) -> value
 // `thread`s a value through a series of functions, i.e. the value is passed
 // to the first function, the return value is then passed ot the second,
@@ -89,7 +93,7 @@ let thread = defn({
         value = fn(value);
       } catch (e) {
         report(`Error threading ${init}.`);
-        report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}`);
+        report(`${e.name || e || 'unknown error'} thrown while calling ${fn.name} with ${value.toString()}`);
         throw (e);
       }
     }
@@ -112,7 +116,7 @@ let thread_some = defn({
         if (value == null) return undefined;
       } catch (e) {
         report(`Error threading ${init}.`);
-        report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}`);
+        report(`${e.name || e || 'unknown error'} thrown while calling ${fn.name} with ${value.toString()}`);
         throw e;
       }
     }
@@ -120,13 +124,14 @@ let thread_some = defn({
   }
 });
 
+// TODO: improve names of piped/comped functions
 
 let pipe = defn({
   name: 'pipe',
   doc: 'Creates a pipeline of unary functions, returning a unary function. Passes the argument to the first function, and then passes the return value of the first to the second function, and so on. The first value must not be undefined. Handles errors reasonably gracefully.',
   pre: seq(func),
   body: (...fns) => defn({
-    name: 'pipe',
+    name: 'pipeline',
     pipe: fns,
     pre: args([some]),
     body: (value) => {
@@ -136,7 +141,7 @@ let pipe = defn({
           value = fn(value);
         } catch (e) {
           report(`Error in function pipeline called with ${init}.`)
-          report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}.`);
+          report(`${e.name || e || 'unknown error'} thrown while calling ${fn.name} with ${value.toString()}.`);
           throw e;
         }
       }
@@ -164,7 +169,7 @@ let pipe_some = defn({
           if (value == undefined) return undefined;
         } catch (e) {
           report(`Error in function pipeline called with ${init}.`)
-          report(`${e.name} thrown while calling ${fn.name} with ${value.toString()}.`);
+          report(`${e.name || e || 'unknown error'} thrown while calling ${fn.name} with ${value.toString()}.`);
           throw e;
         }
       }
@@ -207,3 +212,12 @@ export default Ludus.NS.defmembers(Fn, {
     defn, partial, loop, recur, fn,
     once, thread, thread_some, pipe, pipe_some, comp, comp_some
 });
+
+// quokka
+
+let foo = (x) => `foo: ${x}`;
+let bar = (x) => `bar: ${x}`;
+let baz = (x) => `baz: ${x}`;
+let quux = (x) => Ludus.Err.raise(`quux error`);
+
+comp(foo, bar, baz, quux)('blargh'); //?
