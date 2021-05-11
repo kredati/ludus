@@ -6,7 +6,7 @@
   [x] spec
   [x] type
   [x] ns
-  [ ] errors
+  [x] errors
 [ ] Some lazy fns should be ducers
 [ ] Write refs
 [ ] Investigate `show`
