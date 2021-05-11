@@ -212,12 +212,3 @@ export default Ludus.NS.defmembers(Fn, {
     defn, partial, loop, recur, fn,
     once, thread, thread_some, pipe, pipe_some, comp, comp_some
 });
-
-// quokka
-
-let foo = (x) => `foo: ${x}`;
-let bar = (x) => `bar: ${x}`;
-let baz = (x) => `baz: ${x}`;
-let quux = (x) => Ludus.Err.raise(`quux error`);
-
-comp(foo, bar, baz, quux)('blargh'); //?
