@@ -122,7 +122,7 @@ let cdr = defn({
 
 let concat = defn({
   name: 'concat',
-  doc: 'Concatenates lists.',
+  doc: 'Concatenates lists (or any iterable).',
   pre: args([], [iter]),
   body: [
     () => empty(),
