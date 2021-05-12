@@ -277,7 +277,7 @@ let Arr = {
   update (index, value) {
     if (index < 0 || index >= this.size || eq(this.get(index), value)) 
       return this; // is this the behavior we want? Clj throws
-    if (index > this.root.size) {
+    if (index >= this.root.size) {
       let tail_index = index - this.root.size
       return Arr.create(this.root, this.tail.update(tail_index, value), this.size)
     }
@@ -309,6 +309,9 @@ let Arr = {
     return Arr.from(out);
   },
   concat (arr) {
+    return Arr.from([...this, ...arr]);
+
+    // TODO: fix this optimization, maybe?
     let tail_capacity = node_size - this.tail.size;
     let tail_fill = arr.slice(0, tail_capacity);
     let filled_tail = Leaf.create([...this.tail.nodes, ...tail_fill]);
@@ -383,7 +386,7 @@ let Arr = {
   },
   [Symbol.isConcatSpreadable]: true,
   [Symbol.for('nodejs.util.inspect.custom')] () {
-    return `[${[...this].join(', ')}]`;
+    return `[ ${[...this].join(', ')} ]`;
   }
 };
 
