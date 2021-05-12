@@ -11,8 +11,8 @@
   [x] Draft refs
   [ ] Update refs for new ludus scheme
 [ ] Develop `method` scheme
-  [ ] Hand code a few methods
-  [ ] Find my abstractions
+  [x] Hand code a few methods
+  [x] Find my abstractions
   [ ] Draft base implementation
 [ ] Complete ducers
 [ ] Some lazy fns should be ducers
