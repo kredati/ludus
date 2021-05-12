@@ -13,7 +13,8 @@
 [ ] Develop `method` scheme
   [x] Hand code a few methods
   [x] Find my abstractions
-  [ ] Draft base implementation
+  [x] Draft base implementation
+  [ ] Determine next steps
 [ ] Complete ducers
 [ ] Some lazy fns should be ducers
 [ ] Start writing tests (ugh)
