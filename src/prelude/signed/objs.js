@@ -10,8 +10,8 @@ import Spec from './spec.js';
 import './eq.js';
 
 let {defn, partial} = Fn;
-let {args, any, key, assoc, function: fn, symbol, seq, dict, or} = Spec;
-let {is_any, is_key, is_assoc, is_fn, has, is_symbol, is_sequence_of} = P;
+let {args, any, key, assoc, function: fn, symbol, seq, dict, or, tup} = Spec;
+let {is_any, is_key, is_assoc, is_fn, has, is_sequence_of} = P;
 let {eq} = L;
 
 let js_key = or(key, symbol);
@@ -61,11 +61,21 @@ let get_in = defn({
 
 // TODO: get object update functions to work nicely on sequences
 // Honestly, these feel like they might want to be methods
-let assoc_ = defn({
+let _assoc = defn({
   name: 'assoc',
   doc: 'Returns a new object with the value at that key.',
   pre: args([assoc, key, any]),
   body: (obj, key, value) => ({...obj, [key]: value})
+});
+
+let _assoc_ = defn({
+  name: 'assoc_',
+  doc: 'Mutates an object, associating the value with the key.',
+  pre: args([assoc, key, any]),
+  body: (obj, key, value) => {
+    obj[key] = value;
+    return obj;
+  }
 });
 
 let update = defn({
@@ -142,7 +152,6 @@ let entries = defn({
   body: (obj) => obj == undefined ? [] : Object.entries(obj)
 });
 
-
 let empty = defn({
   name: 'empty',
   doc: 'Returns an empty object',
@@ -153,14 +162,14 @@ let conj = defn({
   name: 'conj',
   doc: '`conj`oins a `[key, value]` tuple to an object.',
   pre: args([assoc, tup(key, any)]),
-  body: (obj, [key, value]) => assoc(obj, key, value)
+  body: (obj, [key, value]) => _assoc(obj, key, value)
 });
 
 let conj_ = defn({
   name: 'conj_',
   doc: '`conj`oins a `[key, value]` tuple to an object, mutating the object.',
   pre: args([assoc, tup(key, any)]),
-  body: (obj, [key, value]) => assoc_(obj, key, value)
+  body: (obj, [key, value]) => _assoc_(obj, key, value)
 });
 
 let from = defn({
@@ -174,5 +183,6 @@ export default NS.defmembers(L.Obj, {
   get, get_js, get_in, 
   concat, update, update_with,
   merge, keys, values, entries,
-  empty, conj, conj_, from
+  empty, conj, conj_, from,
+  assoc: _assoc, assoc_: _assoc_
 });
