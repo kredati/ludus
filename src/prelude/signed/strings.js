@@ -7,7 +7,7 @@ import Spec from './spec.js';
 import NS from './ns.js';
 
 let {defn, partial} = Fn;
-let {args, seq, string, number} = Spec;
+let {args, seq, string, number, iter} = Spec;
 
 let concat = defn({
   name: 'concat',
