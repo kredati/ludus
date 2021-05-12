@@ -15,14 +15,12 @@ import ns from './ns.js';
 
 let {defn} = Fn;
 
+// TODO: spec this
 let defmethod = defn({
     name: 'defmethod',
     doc: 'Defines a method.',
-    body: ({name, doc}) => defn({
-        name, doc, 
+    body: ({name, ...attrs}) => defn({
+        name, ...attrs, 
         body: (first, ...rest) => NS.get_ns(first)[name](first, ...rest)
     })
 });
-
-let conj = defmethod({name: 'conj'}); //?
-conj([1, 2], 3, 4, 5, 6, 7, 8, 9); //?
