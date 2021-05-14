@@ -35,16 +35,15 @@ let swap = (ref, new_value) => {
 };
 
 let ping_watchers = (ref) => {
-  ref.watchers //?
   ref.watchers.forEach(([fn, args]) => {
-    fn(deref(ref), ...args);
+    fn(deref(ref), ...args); // TODO: debounce this?
   });
   return undefined;
 };
 
 let watch = (ref, fn, ...args) => {
   ref.watchers.push([fn, args]);
-  future(fn, [deref(ref), ...args])
+  future(fn, [deref(ref), ...args]); // TODO: don't call the watcher right away
   return ref; // is this the right return value?
 };
 
