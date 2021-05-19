@@ -1,3 +1,4 @@
 node_modules/*
+.vscode/*
 .git\\COMMIT_EDITMSG
 
