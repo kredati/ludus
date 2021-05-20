@@ -12,7 +12,7 @@
 // protocol, and a special inspector that gives us a nice representation
 // at the repl.
 
-// TODO: add pre/post conditions for list operations.
+// TODO: Rewrite this in Ludus. The self-reference in an empty list is what might make this difficult.
 
 import Lazy from './lazy.js';
 import Fn from './fns.js';
@@ -39,7 +39,7 @@ let show = defn({
   pre: args([type(List)]),
   body: (list) => is_empty(list)
   ? '()'
-  : `( ${[...list].join(', ')} )`
+  : `( ${[...list].join(', ')} )` // can easily be rewritten using Arr functions
 });
 
 let is_list = defn({
@@ -53,7 +53,7 @@ let empty = defn({
   doc: 'Returns an empty list.',
   body: () => {
     let empty = create(List, {size: 0});
-    empty.rest = empty;
+    empty.rest = empty; // This recursive bit is the sticky wicket
     return empty;
   }
 });
