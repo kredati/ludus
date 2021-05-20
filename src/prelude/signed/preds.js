@@ -86,7 +86,7 @@ let is_obj = defn({
 
 let is_assoc = defn({
   name: 'is_assoc',
-  doc: '// tells if a value is an "associative data structure" in Ludus. For the most part, this means Object literals. It excludes any JS objects that are constructed using `new`, but it does not exclude objects that are created using `Object.create`. Ludus objects are all `create`d, but also always set a constructor property on the prototype, so this should exclude any Ludus objects.',
+  doc: 'Tells if a value is an "associative data structure" in Ludus. For the most part, this means Object literals. It excludes any JS objects that are constructed using `new`, but it does not exclude objects that are created using `Object.create`. Ludus objects are all `create`d, but also always set a constructor property on the prototype, so this should exclude any Ludus objects.',
   body: P.is_assoc
 });
 
