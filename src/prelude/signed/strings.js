@@ -284,7 +284,7 @@ let slice = defn({
 });
 
 let empty = defn({
-  name: 'empty_',
+  name: 'empty',
   doc: 'Returns an empty string.',
   body: () => ''
 });
