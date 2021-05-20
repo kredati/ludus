@@ -46,11 +46,7 @@ let loop = defn({
   body: Fn.loop
 });
 
-let recur = defn({
-  name: 'recur', 
-  doc: '`recur` is used within functions wrapped by `loop` to eliminate recursive tail calls. It will throw a variety of helpful errors if used in any other way, which can help identify when recursive calls are not in tail position.',
-  body: Fn.recur
-});
+Fn.recur.doc = '`recur` is used within functions wrapped by `loop` to eliminate recursive tail calls. It will throw a variety of helpful errors if used in any other way, which can help identify when recursive calls are not in tail position.';
 
 let fn = defn({
   name: 'fn', 
@@ -209,6 +205,6 @@ let comp_some = defn({
 });
 
 export default Ludus.NS.defmembers(Fn, {
-    defn, partial, loop, recur, fn,
+    defn, partial, loop, recur: Fn.recur, fn,
     once, thread, thread_some, pipe, pipe_some, comp, comp_some
 });
