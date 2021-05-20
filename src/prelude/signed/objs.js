@@ -10,7 +10,7 @@ import Spec from './spec.js';
 import './eq.js';
 
 let {defn, partial} = Fn;
-let {args, any, key, assoc, function: fn, symbol, seq, dict, or, tup} = Spec;
+let {args, any, key, assoc, function: fn, symbol, seq, dict, or, tup, obj} = Spec;
 let {is_any, is_key, is_assoc, is_fn, has, is_sequence_of} = P;
 let {eq} = L;
 
@@ -29,8 +29,8 @@ let get = defn({
   ]
 });
 
-let get_js = defn({
-  name: 'get_js',
+let get_ = defn({
+  name: 'get_',
   doc: 'Gets the value stored at a particular key in an object, traversing the prototype chain, and also allowing symbols to serve as keys. Returns `undefined` if an object is missing a key, or cannot store keys.',
   pre: args([js_key], [js_key, any]),
   body: [
@@ -71,7 +71,7 @@ let _assoc = defn({
 let _assoc_ = defn({
   name: 'assoc_',
   doc: 'Mutates an object, associating the value with the key.',
-  pre: args([assoc, key, any]),
+  pre: args([obj, key, any]),
   body: (obj, key, value) => {
     obj[key] = value;
     return obj;
@@ -110,28 +110,20 @@ let update_with = defn({
   }
 });
 
+let kv = tup(key, any);
+
 let concat = defn({
   name: 'concat',
-  doc: 'Creates a new object, combining the objects passed in. If objects duplicate a key, silently overwrites the value; later objects take precedence.E.g. `assign({a: 1, b: 2}, {b: 3, c: 4}); //=> {a: 1, b: 3, c: 4}`.',
-  pre: seq(assoc),
-  body: (...objs) => Object.assign({}, ...objs)
+  doc: 'Creates a new object, combining the object as the first argument with a sequence of key-value tuples. If the key-value pairs duplicate a key, silently overwrites the value; later pairs take precedence. E.g., `concat({a: 1}, [[\'b\', 2], [\'c\', 3]]; //=> {a: 1, b: 2, c: 3}`.',
+  pre: args([assoc, seq(kv)]),
+  body: (obj, kvs) => Object.assign(obj, Object.fromEntries(kvs))
 });
 
 let merge = defn({
   name: 'merge',
-  doc: 'Creates a new object, combining the objects passed in. If objects duplicate a key and the values at that key are different (according to `eq`), it throws an error. E.g., `merge({a: 1, b: 2}, {c: 3}); //=> {a: 1, b: 2, c: 3}`.',
+  doc: 'Creates a new object, combining the objects passed in. If objects duplicate a key, silently overwrites the value; later objects take precedence.E.g. `assign({a: 1, b: 2}, {b: 3, c: 4}); //=> {a: 1, b: 3, c: 4}`.',
   pre: seq(assoc),
-  body: (...objs) => {
-    let out = {};
-    for (let obj of objs) {
-      for (let key in obj) {
-        if (has(key, out) && !eq(obj[key], out[key]))
-          throw Error(`Cannot merge: multiple objects have key ${key} in them.`); // TODO: improve this error message
-        out[key] = obj[key];
-      }
-    }
-    return out;
-  }
+  body: (...objs) => Object.assign({}, ...objs)
 });
 
 let keys = defn({
@@ -180,7 +172,7 @@ let from = defn({
 });
 
 export default NS.defmembers(L.Obj, {
-  get, get_js, get_in, 
+  get, get_, get_in, 
   concat, update, update_with,
   merge, keys, values, entries,
   empty, conj, conj_, from,
