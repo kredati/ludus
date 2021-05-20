@@ -2,7 +2,7 @@
 // proof of concept:
 // basically a persistent immutable vector like clojure's
 
-// things to add:
+// TODO:
 // [*] an update function: update(list, index, value)
 // [*] an iterator
 // [*] a proxy over the list that will allow index addressing
@@ -77,7 +77,7 @@ let chunk = (arr, by) => {
 
 ///// Defaults
 // node_factor is the power of two that expresses node size
-let node_factor = 2; // NB: clj has this at 5 // node_size at 32
+let node_factor = 5; // NB: clj has this at 5 // node_size at 32
 // calculate node size
 let node_size = 1 << node_factor; // = 2 ** node_factor
 
