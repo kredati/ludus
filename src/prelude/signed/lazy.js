@@ -37,7 +37,7 @@ let gen = defn({
 
 let lazy = defn({
   name: 'lazy',
-  doc: 'Creates a lazy, possibly infinite, sequence. It takes an `init`ial value, two or three unary functions: `step`, `done`, and, optionally, `map`. `step` should return the series of values, first by taking the `init` value, and then, the previous value. `done` should return `true` once the sequence should terminate.\n\n`map` is optionally applied to the value before it is yielded into the sequence. It is useful if your lazy sequence needs to keep track of state that is more complex than the values you wish to appear in the sequence.',
+  doc: 'Creates a lazy, possibly infinite, sequence. It takes an `init`ial value, two or three unary functions: `step`, `done`, and, optionally, `map`. `step` should return the series of values, first by taking the `init` value, and then, the previous value. `done` should return `true` once the sequence should terminate. `map` is optionally applied to the value before it is yielded into the sequence. It is useful if your lazy sequence needs to keep track of state that is more complex than the values you wish to appear in the sequence.',
   pre: args([any, fn, fn], [any, fn, fn, fn]),
   body: [
     (init, step, done) => lazy(init, step, done, (x) => x),
