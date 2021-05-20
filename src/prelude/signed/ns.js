@@ -5,7 +5,7 @@ import L from './deps.js';
 import Type from './type.js';
 
 let {Fn, Spec, NS} = L;
-let {defn} = Fn;
+let {defn, partial} = Fn;
 let {args, string, type, any, obj, at, or, and, defspec} = Spec;
 
 let is_ns = defn({
@@ -59,6 +59,16 @@ let show = defn({
   doc: 'Shows a namespace.',
   pre: args([ns]),
   body: NS.show
+});
+
+let has = defn({
+  name: 'has',
+  doc: 'Tells if a namespace has a value associated with a particular name.',
+  pre: args([string], [string, ns]),
+  body: [
+    (name) => partial(has, name),
+    (name, ns) => name in ns
+  ]
 });
 
 export default defns({
