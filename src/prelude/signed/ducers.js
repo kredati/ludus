@@ -1,26 +1,51 @@
-//////////////////// Transducers
+//////////////////// Ducers
+// Ducers: reducers and transducers
+// Reduction is a fundamental computational operation, traversing a collection
+// and keeping a running tally of results. `reduce` has the following signature:
+// `((a, b) -> a, a, [b]) -> b`. I'm still figuring out how to explain reduce
+// without simply multiplying examples.
 
-import L from './deps.js';
+// Clojure introduces the concept of "transforming reducers," which allow for
+// a very powerful operation: composing transformations of a collection, e.g.
+// `map` and `filter`, without producing intermediate collections. In other
+// words, if a computation is expressible by reduction over a collection---
+// and a shocking number are!---then it's easy to write performant reducers
+// that are composed of simple functions.
+
+// Note that the function composition of transducers happens in the opposite 
+// order of normal function composition. Where you would use `pipe` for normal 
+// function composition, use `comp` for transducers.
+
+// This document, as of May 2021, is definitely still a work in progress:
+// TODO:
+// [ ] add more transduction functions (list at end of file)
+// [ ] figure out lazy transduction, if it makes sense for Ludus
+// [ ] improve documentation
+// [ ] spec all the transducers
+// [ ] consider how to instrument the transducers, if at all
+// [ ] consider moving zip, etc. to another namespace
+
 import P from './preds.js';
-import S from './seqs.js';
+import Seq from './seqs.js';
 import Spec from './spec.js';
-import NS from './ns.js'; 
 import A from './arr.js';
 import Fn from './fns.js';
 import M from './method.js';
-import N from './nums.js';
-import List from './list.js';
+import B from './bools.js';
+import L from './lazy.js';
+import NS from './ns.js';
 
-let {args, seq, function: fn, or, coll, assoc, iter, any} = Spec;
+let {args, function: fn, coll, any} = Spec;
 let {defn, recur} = Fn;
-let {is_fn, is_assoc, is_iter, is_any, bool} = P;
-let {first, rest, is_empty} = S;
+let {bool} = P;
+let {first, rest, is_empty} = Seq;
+let {interleave} = L;
 
 let completed = Symbol('ludus/completed');
 
 let complete = defn({
   name: 'complete',
-  doc: 'Short-circuits `reduce`, returning the value and halting the reduction.',
+  doc: 'Short-circuits `reduce`, returning the value and halting the reduction. Used to optimize transducers that do not traverse a whole collection.',
   body: (value) => ({value, [completed]: true})
 });
 
@@ -31,7 +56,7 @@ let reduce = defn({
   body: [
     (f, coll) => reduce(f, first(coll), rest(coll)),
     (f, accum, coll) => {
-      if (bool(accum[completed])) return accum.value;
+      if (accum != undefined && bool(accum[completed])) return accum.value;
       if (is_empty(coll)) return accum;
       return recur(f, f(accum, first(coll)), rest(coll));
     }
@@ -48,20 +73,13 @@ let transduce = defn({
   ] 
 });
 
-// THIS IS WHERE WE USE THE FASTER MUTATING FUNCTIONS
-// Notes:
-/*
-  - The fastest data structure here is a mutable array; use that under the hood
-  - We only need a method that allows us to add an iterable to another iterable: `concat`
-  - What that then allows is to use a mutable array here: we always use a mutable array
-  - Just to be sure: Ludus native colls at this point are: string, list, array, and object. No sets or maps--yet. We just need to be sure each of these have the thing.
-*/
-
 let concat = M.defmethod({name: 'concat'});
+
+let empty = M.defmethod({name: 'empty'});
 
 let into = defn({
   name: 'into',
-  doc: 'Takes the contents of one collection and puts them into another, working across types. Takes an optional transforming function.',
+  doc: 'Takes the contents of one collection and puts them into another, working across types. Takes an optional transducer.',
   pre: args([coll, coll], [coll, fn, coll]),
   body: [
     (to, from) => into(to, (x) => x, from),
@@ -69,77 +87,101 @@ let into = defn({
   ]
 });
 
-let sequence = defn({
-  name: 'sequence',
-  doc: 'Transforms a ',
-  body: () => {} // do something
+let map = defn({
+  name: 'map',
+  doc: 'Applies a transforming function to every element of a collection. With two arguments, takes a unary transforming function and a collection, and produces a new collection of that kind with all elements transformed by that function. With a single argument, takes a unary transforming function, and returns a mapping transducer. E.g. `map(add(1), [1 2 3]); //=> [2, 3, 4]',
+  body: [
+  (f) => (rf) => (accum, x) => rf(accum, f(x)),
+  (f, coll) => into(empty(coll), map(f), coll)
+]});
+
+let filter = defn({
+  name: 'filter',
+  doc: 'Applies a filtering function to a collection, keeping only elements that return a truthy value from that function. With two arguments, takes a unary filtering function and a collection, and produces a new collection of that kind that only includes elements that pass the filter. With a single argument, takes a unary filtering function, and returns a filtering transducer. E.g. `filter(lte(3), [1, 2.3, 4.542, 3, -2]); //=> [4.542, 3]',
+  body: [
+    (f) => (rf) => (accum, x) => bool(f(x)) ? rf(accum, x) : accum,
+    (f, coll) => into(empty(coll), filter(f), coll)
+  ]
 });
 
-//list
-//array
-//string
-//object
+let take = defn({
+  name: 'take',
+  doc: 'Takes the first n elements of a collection. With two arguments, takes a number of elements to keep and a collection, and produces a new collection of that kind that includes only the first n elements. With a single argument, takes an non-negative integer, and returns a taking transducer. Especially useful for dealing with infinite sequences. E.g. `take(4, [1, 2, 3, 4, 5, 6, 7]); //=> [1, 2, 3, 4]`',
+  body: [
+    (n) => {
+      let count = 0;
+      return (rf) => (accum, x) => {
+        if (count >= n) return complete(accum);
+        count += 1;
+        return rf(accum, x);
+      };
+    },
+    (n, coll) => into(empty(coll), take(n), coll)
+  ]
+});
 
-/*
-let map = n_ary('map',
-  (f) => (rf) => (accum, x) => rf(accum, f(x)),
-  (f, coll) => transduce(map(f), conj, empty(coll), coll)
-);
+let keep = defn({
+  name: 'keep',
+  doc: 'Filters a collection by taking a function, `f`, removing any element, `x`, where `f(x)` evaluates to `undefined`. With two arguments, takes a keeping function and a collection, and returns a collection of the same type with `undefined` elements removed. With a single arguemnt, returns a transducer. E.g. `keep(id, [1, undefined, 4, undefined, 6]; //=> [1, 4, 6]',
+  body: [
+    (f) => (rf) => (accum, x) => f(x) == undefined ? accum : rf(accum, x),
+    (f, coll) => into(empty(coll), keep(f), coll)
+  ]
+});
 
-/*
-let filter = n_ary('filter',
-  (f) => (rf) => (accum, x) => boolean(f(x)) ? rf(accum, x) : accum,
-  (f, coll) => transduce(filter(f), conj, empty(coll), coll)
-);
+let every = defn({
+  name: 'every',
+  doc: 'Determines if every element of a collection passes a conditional function. With two arguments, returns true if every element, with the conditional function applied, returns a truthy value---and false otherwise. With one argument, returns a transducer. E.g. `every(is_int, [1, 2, "foo"]); //=> false`.',
+  body: [
+    (f) => (rf) => (_, x) => bool(f(x)) ? rf(true, true) : complete(false),
+    (f, coll) => transduce(every(f), B.and, true, coll)
+  ]
+});
 
-let take = n_ary('take',
-  (n) => {
-    let count = 0;
-    return (rf) => (accum, x) => {
-      if (count >= n) return complete(accum);
-      count += 1;
-      return rf(accum, x);
-    };
-  },
-  (n, coll) => transduce(take(n), conj, empty(coll), coll)
-);
+let some = defn({
+  name: 'some',
+  doc: 'Determines if any element of a collection passes a conditional function. With two arguments, returns true if any element, with the conditional function applied, returns a truthy value---and false otherwise. With one argument, returns a transducer. E.g. `some(is_int, [2.1, "foo", {a: 1}, 12]); //=> true`.',
+  body: [
+    (f) => (rf) => (_, x) => bool(f(x)) ? complete(true) : rf(false, false),
+    (f, coll) => transduce(some(f), B.or, false, coll)
+  ]
+});
 
-// TODO: make keep a nullary reducer?
-// switch not on arity but on the type of the argument: function or not?
-// e.g. multimethod, not n_ary
-let keep = n_ary('keep',
-  (f) => (rf) => (accum, x) => f(x) == undefined ? accum : rf(accum, x),
-  (f, coll) => transduce(keep(f), conj, empty(coll), coll)
-);
+let none = defn({
+  name: 'none',
+  doc: 'Determines if every element of a collection fails a conditional function. With two arguments, returns true if every element, with the conditional function applied, returns a falsy value---and false otherwise. With one argument, returns a transducer. E.g. `none(is_string, [1, 2, 3, {}]); //=> true`.',
+  body: [
+    (f) => (rf) => (_, x) => bool(f(x)) ? complete(false) : rf(true, true),
+    (f, coll) => transduce(none(f), B.and, true, coll)
+  ]
+});
 
-let every = n_ary('every',
-  (f) => (rf) => (_, x) => boolean(f(x)) ? rf(true, true) : complete(false),
-  (f, coll) => transduce(every(f), (x, y) => x && y, true, coll)
-);
 
-let some = n_ary('some',
-  (f) => (rf) => (_, x) => boolean(f(x)) ? complete(true) : rf(false, false),
-  (f, coll) => transduce(some(f), (x, y) => x || y, false, coll)
-);
+let chunk = defn({
+  name: 'chunk',
+  doc: 'Segments a collection into n-sized array chunks. With two arguments, an integer, `n`, and a collection, returns a collection of the same type chunked into arrays of the size `n`, discarding any elements that do not fill the last chunk (thus guaranteeing all chunks will be of size `n`). With a single argument, returns a transducer. E.g. `chunk(3, [1, 2, 3, 4, 5, 6]); //=> [[1, 2, 3], [4, 5, 6]]`.',
+  body: [
+    (n) => {
+      let chunk = [];
+      return (rf) => (accum, x) => {
+        chunk = A.conj_(chunk, x);
+        if (chunk.length === n) {
+          let out = chunk;
+          chunk = [];
+          return rf(accum, out)
+        }
+        return accum;
+      };
+    },
+    (n, coll) => into(empty(coll), chunk(n), coll)
+  ]
+});
 
-let chunk = n_ary('chunk',
-  (n) => {
-    let chunk = [];
-    return (rf) => (accum, x) => {
-      chunk = conj(chunk, x);
-      if (chunk.length === n) {
-        let out = chunk;
-        chunk = [];
-        return rf(accum, out)
-      }
-      return accum;
-    };
-  },
-  (n, coll) => transduce(chunk(n), conj, empty(coll), coll)
-);
-
-let zip = (...seqs) => 
-  transduce(chunk(seqs.length), conj, [], interleave(...seqs));
+let zip = defn({
+  name: 'zip',
+  body: (...seqs) => 
+    into(empty(seqs[0]), chunk(seqs.length), interleave(...seqs))
+});
 
 ///// Transduers to add
 // cat
@@ -148,16 +190,16 @@ let zip = (...seqs) =>
 // dedupe
 // interpose
 // chunk_by
-// repeat
 // drop
 // drop_while
 // drop_nth
 // take_while
 // take_nth
 // remove
-// none
 // on_keys
 // on_values
 
-export let transducers = {reduce, transduce, into, map, complete, filter, take, zip, chunk, every, some, keep};
-*/
+export default NS.defns({name: 'Ducers', members: {
+  reduce, transduce, complete, every, filter, into, keep, map, none, some, zip,
+  concat, empty
+}});
