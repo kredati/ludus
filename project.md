@@ -25,19 +25,19 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 [-] Clean up `core.js`
   [x] Rename to `prelude.js`
   [-] Move to `prelude` directory of modules
-    [-] Environments
+    [*] Environments
     [*] Errors
-    [-] Namespaces
-    [-] Refs
+    [*] Namespaces
+    [*] Refs
     [*] Functions
     [*] HashMap
     [*] Methods
     [*] Predicates
     [*] Equality
-    [-] List
-    [-] Vector
+    [*] List
+    [*] ~~Vector~~ Array
     [*] Seqs
-    [ ] Ducers
+    [-] Ducers
     [*] Values
         ^ `prelude` value functions are the things that require operations not available in Ludus, i.e. infix operations (dot property access, addition, boolean and, etc.)
   [*] Design: what must be in a truly minimal `prelude` (vs. `core`)?
@@ -60,21 +60,22 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] `loop`/`recur`: better recursion
     [-] `fn`: basic decorated fns
       [*] base implementation
-      [.] optimize for looping
+      [*] optimize for looping
     [-] `pre_post`
       [*] base implementation: bare predicates
       [-] optimize for good errors: `explain` framework
-        [*] implement `explain` multimethod
+        [x] implement `explain` multimethod (no multimethods, not yet)
+        [ ] improve `explain`
     [-] `defn`
       [*] base implementation: pass an object
       [.] allow for environment-based optimizations (REPL vs. production)
       [x] n-ary implementation: vary `defn` on arity :: named fields only
-      [.] ensure `loop`/`recur` optimizations
+      [*] ensure `loop`/`recur` optimizations
   [-] Function manipulations
     [*] `once`: runs a function only once and then caches the result
     [*] `partial`: partial function application
     [*] `rename`: renames functions; we can't do that without relying on JS
-    [-] function combinators
+    [*] function combinators
       [*] investigate: do function combinators belong in `prelude` or `core`?
           [x] performance considerations: `reduce` vs. `for..of`
           [*] error handling
@@ -85,7 +86,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
       [*] `comp`
       [*] `comp_some`
 [-] Polymorphic dispatch
-  [*] Multimethods
+  [x] Multimethods
     [*] base implementation
     [*] design metadata
     [*] pre & post condition testing
@@ -94,29 +95,37 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
         [x] research `Record` performance
         [x] research use of HAMTs
         [*] custom `HashMap` implementation
-  [.] Prototype-based dispatch
+  [x] Prototype-based dispatch
     [ ] design research
     [ ] base implementation
+  [*] Methods
+    [*] base implementation
+    [ ] move from `signed/methods` to `base`
+      [ ] add the possibility of default behavior if method not found
+      [ ] improve errors
+    [ ] move protocols from `signed/methods` to `spec`
 [-] Datatypes & type system
   [*] design & implement basic scheme
-  [.] design research: does the basic scheme work?
-    [ ] consider `new`/object construction
-    [ ] consider `extends` and class hierarchies, incl. `instanceof`
-    [ ] condiser prototype-based construction
-    [ ] are magic strings enough?
-    [ ] can we abstract over prototypes, classes, and magic strings?
+  [*] design research: does the basic scheme work?
+    [x] consider `new`/object construction
+    [x] consider `extends` and class hierarchies, incl. `instanceof`
+    [*] condiser prototype-based construction
+    [x] are magic strings enough?
+    [x] can we abstract over prototypes, classes, and magic strings?
+    [*] implement basic type scheme
 [-] Immutable vectors
   [*] basic functionality
   [ ] test harness
-  [-] optimization
-    [-] `tail`
+  [*] optimization
+    [*] `tail`
     [x] `head`
-  [ ] remove `shift`/`rest`-like functionality
+  [*] remove `shift`/`rest`-like functionality
       ^ `first`/`rest` will be provided by the `seq` abstraction
+  [ ] clean everything up
 [*] Linked lists
   [*] basic functionality
-  [*] performance optimization: pointers or arrays?
-[-] Seqs
+  [x] performance optimization: pointers or arrays?
+[*] Seqs
   ^ combines JS iteration protocol with a `first`/`rest` protocol
   [*] basic functionality
   [*] design size/infinity info
@@ -124,18 +133,20 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 [-] Reduce & Transduce
   [*] `reduce` over seqs
     [*] with short-circuiting
-  [-] `transduce`
+  [*] `transduce`
     [*] core functionality
-    [ ] ensure completeness
-    [ ] devise scheme for mutating `conj_`
+    [*] ensure completeness
+    [*] devise scheme for mutating `conj_`
   [-] prelude transducers
     [ ] identify which tranducers belong in `prelude`
-[-] Foundational value operations
+    [ ] complete them!
+[*] Foundational value operations
   [*] safe `get`
   [*] better booleans
   [*] all infix operators -> fns
     [*] boolean operators
     [*] number operators
+    [*] string operators
 [-] equality testing
   [*] base implementation
   [ ] testing
@@ -155,7 +166,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [?] file access 
   [*] Using JS libraries
     [*] EFI: how to handle calling out to regular JS?
-    [ ] Consider `js`: simply skip Ludus parsing and hand it to the host.
+    [*] Consider `js`: simply skip Ludus parsing and hand it to the host.
         ^ this, but we don't need it/can't muster it until we have a parser/interpreter
 [-] Environment
   [*] Namespaces
@@ -163,7 +174,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] `def`
   [*] Custom repl printing
   [*] Runtime detection
-  [ ] Abstraction for IO
+  [?] Abstraction for IO
 [ ] Comprehensive testing of `prelude` functions TODO: THIS
 
 ### Milestone: Core
@@ -182,9 +193,9 @@ Core is a relatively complete standard library whose constituents are the buildi
       [*] any collection
       [*] seqs / ordered collections 
     [*] objects
-    [-] arrays/vectors
-    [?] sets
-    [?] maps
+    [*] arrays/vectors
+    [x] sets
+    [x] maps
 [*] Seq elaboration
   [*] seq combinators
   [*] useful infinite seqs
@@ -198,7 +209,7 @@ See [./nodes_and_research/language.md].
 
 Special forms:
 [*] `when` + ternary operator
-[-] `cond` + compilation
+[x] `cond` + compilation
 [ ] `js` + no parsing
 
 ### Milestone: Ludus Parser
