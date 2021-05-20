@@ -11,7 +11,7 @@ let {defn, partial} = L.Fn;
 
 let is_identical = defn({
   name: 'is_identical',
-  doc: 'Returns true if two values are reference-identical (JS `===`). This is a much faster operation than `eq`, but may give unintuitive answers. `[1, 2, 3]` is not `identical` to `[1, 2, 3]`.',
+  doc: 'Returns true if two values are reference-identical (JS `===`). This is a much faster operation than `eq`, but may give unintuitive answers. `is_identical([1, 2, 3], [1, 2, 3]); //=> false`.',
   body: [
     (x) => partial(is_identical, x),
     (x, y) => x === y,
