@@ -129,7 +129,13 @@ let seq_ = defn({
   }
 });
 
-let empty = seq_([]);
+let empty_seq = seq_([]);
+
+let empty = defn({
+  name: 'empty',
+  doc: 'Returns an empty seq.',
+  body: () => empty_seq
+});
 
 let concat = defn({
   name: 'concat',
@@ -158,14 +164,14 @@ let rest = defn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
   pre: args([seqable]),
-  body: (seqable) => seq_(seqable).rest() || empty
+  body: (seqable) => seq_(seqable).rest() || empty_seq
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
   pre: args([seqable]),
-  body: (seqable) => rest(seq_(seqable)) === empty
+  body: (seqable) => rest(seq_(seqable)) === empty_seq
 });
 
 export default NS.defns({type: Seq,
