@@ -181,6 +181,11 @@ let ns_handler = {
   has (target, key) {
     return key in target || key in target[members_tag];
   },
+  getOwnPropertyDescriptor (target, property) {
+    if (property in target || property in target[members_tag]) {
+      return {configurable: true, enumerable: true};
+    }
+  },
   // gets a key from the namespace
   get (target, key) {
     // symbol keys are passed through to the ns
