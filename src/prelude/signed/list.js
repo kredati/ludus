@@ -12,7 +12,7 @@
 // protocol, and a special inspector that gives us a nice representation
 // at the repl.
 
-// TODO: Rewrite this in Ludus. The self-reference in an empty list is what might make this difficult.
+// TODO: Rewrite this in Ludus.
 
 import Lazy from './lazy.js';
 import Fn from './fns.js';
@@ -48,17 +48,15 @@ let is_list = defn({
   body: (x) => is(List, x)
 });
 
+let empty_list = create(List, {size: 0});
+
 let empty = defn({
   name: 'empty',
   doc: 'Returns an empty list.',
-  body: () => {
-    let empty = create(List, {size: 0});
-    empty.rest = empty; // This recursive bit is the sticky wicket
-    return empty;
-  }
+  body: () => empty_list
 });
 
-let is_empty = (list) => list.size === 0;
+let is_empty = (list) => list === empty_list;
 
 let cons = defn({
   name: 'cons',
@@ -110,14 +108,14 @@ let rest = defn({
   name: 'rest',
   doc: 'Returns the contents of a list, excepting the first element, e.g. `rest(list(1, 2, 3)); //=> ( 2, 3 )`.',
   pre: args([type(List)]),
-  body: (list) => list.rest
+  body: (list) => list.rest ? list.rest : empty_list
 });
 
 let cdr = defn({
   name: 'cdr',
   doc: 'Returns the contents of a list, excepting the first element, e.g. `cdr(list(1, 2, 3)); //=> ( 2, 3 )`. This is the classical lisp name for this operation. Short for "contents of the decrement register," which refers to the hardware operations underlying the first implementations of lisp in the 1950s. An alias for `rest`.',
   pre: args([type(List)]),
-  body: (list) => list.rest
+  body: (list) => list.rest ? list.rest : empty_list
 });
 
 let concat = defn({
@@ -141,7 +139,7 @@ let concat = defn({
 });
 
 export default NS.defns({type: List, members: {
-  show, iterate, empty,
+  show, empty, iterate,
   cons, car, cdr,
   conj, first, rest, list, is_list, from, concat
 }});
