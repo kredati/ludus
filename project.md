@@ -30,7 +30,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] Namespaces
     [*] Refs
     [*] Functions
-    [*] HashMap
+    [x] HashMap
     [*] Methods
     [*] Predicates
     [*] Equality
@@ -48,7 +48,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] base implementation
     [*] add `report`ing
   [*] `bound`: return errors instead of throwing
-  [-] `handle`: wraps a function with a `try`/`catch`
+  [*] `handle`: wraps a function with a `try`/`catch`
     [*] basic implementation
     [.] improve messaging
   [*] `report`: helper function which sends messages to `console.error`
@@ -103,6 +103,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [ ] move from `signed/methods` to `base`
       [ ] add the possibility of default behavior if method not found
       [ ] improve errors
+      [ ] `show` in `base`: our first method
     [ ] move protocols from `signed/methods` to `spec`
 [-] Datatypes & type system
   [*] design & implement basic scheme
@@ -200,12 +201,11 @@ Core is a relatively complete standard library whose constituents are the buildi
   [*] seq combinators
   [*] useful infinite seqs
 [ ] Complete set of transducers
-[ ] `show`
 [ ] `doc`
 [ ] Comprehensive testing of `core` functions
 
 ### Milestone: Language design
-See [./nodes_and_research/language.md].
+See [./notes_and_research/language.md].
 
 Special forms:
 [*] `when` + ternary operator
