@@ -20,16 +20,27 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 * Relies on JS internals that will not be available in Ludus.
 * Is a bedrock dependency for other parts of `prelude`.
 
-`prelude` is itself broken into two stages: unsigned and signed. The unsigned portion of `prelude` involves only what we need to get to signing of function arguments. The `signed` portion is everything else, and uses `defn` and `sign` (&c.) to sign all its functions.
+`prelude` is itself broken into two stages: unsigned and signed. The unsigned portion of `prelude` involves only what we need to get to signing of function arguments. The `signed` portion is everything else, and uses `defn` and `pre` (&c.) to sign all its functions.
 
 [-] Clean up `core.js`
   [x] Rename to `prelude.js`
+  [*] Rename to `base.js`
   [-] Move to `prelude` directory of modules
     [*] Environments
-    [*] Errors
+    [-] Errors
+      [ ] change language from "throw" to "raise"
     [*] Namespaces
+      [ ] research namespace/type parsing situation: can we enforce dot-access property only on 
     [*] Refs
-    [*] Functions
+    [-] Functions
+      [ ] revise core function instrumentation
+        [ ] improve errors
+          [?] throw strings
+          [ ] change language from "throw" to "raise"
+        [.] devise optimization scheme for different environments
+        [?] `pre_post` scheme -> `args`
+          [ ] research: do we only want argument typechecking?
+          [ ] rewrite all the `defn`ed functions in `prelude` (ugh)
     [x] HashMap
     [*] Methods
     [*] Predicates
@@ -58,14 +69,14 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
       [*] base implementation
       [*] design problem: rest args, default args
     [*] `loop`/`recur`: better recursion
-    [-] `fn`: basic decorated fns
+    [*] `fn`: basic decorated fns
       [*] base implementation
       [*] optimize for looping
     [-] `pre_post`
       [*] base implementation: bare predicates
       [-] optimize for good errors: `explain` framework
         [x] implement `explain` multimethod (no multimethods, not yet)
-        [ ] improve `explain`
+        [x] improve `explain` >>moved to spec<<
     [-] `defn`
       [*] base implementation: pass an object
       [.] allow for environment-based optimizations (REPL vs. production)
@@ -100,10 +111,10 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [ ] base implementation
   [*] Methods
     [*] base implementation
-    [ ] move from `signed/methods` to `base`
-      [ ] add the possibility of default behavior if method not found
-      [ ] improve errors
-      [ ] `show` in `base`: our first method
+    [-] move from `signed/methods` to `base`
+      [*] add the possibility of default behavior if method not found
+      [?] improve errors
+      [*] `show` in `base`: our first method
     [ ] move protocols from `signed/methods` to `spec`
 [-] Datatypes & type system
   [*] design & implement basic scheme
@@ -119,7 +130,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [ ] test harness
   [*] optimization
     [*] `tail`
-    [x] `head`
+    [.] `head`
   [*] remove `shift`/`rest`-like functionality
       ^ `first`/`rest` will be provided by the `seq` abstraction
   [ ] clean everything up
@@ -141,6 +152,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [-] prelude transducers
     [ ] identify which tranducers belong in `prelude`
     [ ] complete them!
+  [?] consider instrumenting transducers
 [*] Foundational value operations
   [*] safe `get`
   [*] better booleans
@@ -150,8 +162,9 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] string operators
 [-] equality testing
   [*] base implementation
-  [ ] testing
+  [ ] correctness testing
   [ ] improvement
+  [ ] performance testing
 [*] References
   [*] study Clojure references
   [*] base implementation
@@ -176,6 +189,8 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [*] Custom repl printing
   [*] Runtime detection
   [?] Abstraction for IO
+[*] settle on/improve `show` default behaviors
+  [ ] ramify show throughout `prelude` (esp. in template strings)
 [ ] Comprehensive testing of `prelude` functions TODO: THIS
 
 ### Milestone: Core
@@ -200,9 +215,10 @@ Core is a relatively complete standard library whose constituents are the buildi
 [*] Seq elaboration
   [*] seq combinators
   [*] useful infinite seqs
-[ ] Complete set of transducers
+[ ] complete set of transducers
 [ ] `doc`
-[ ] Comprehensive testing of `core` functions
+[ ] comprehensive testing of `core` functions
+[ ] move `list` to `core` from `prelude`
 
 ### Milestone: Language design
 See [./notes_and_research/language.md].
