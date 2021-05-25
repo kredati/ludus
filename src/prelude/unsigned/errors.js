@@ -1,6 +1,5 @@
 //////////////////// Errors
 // helpers for better functional error handling
-// TODO: also consider standard error types for Ludus
 
 import Ludus from './base.js';
 
@@ -46,7 +45,7 @@ let handle = (name, fn) => Object.defineProperty(
     try {
       return fn(...args);
     } catch (e) {
-      Ludus.report(`${e.name || e || 'unknown error'} thrown while calling ${fn.name || 'anon. fn'} with arguments (${args.map(arg => Ludus.show(arg)).join(', ')})`);
+      Ludus.report(`${e.name || e || 'unknown error'} while calling ${fn.name || 'anon. fn'} with args (${args.map(arg => Ludus.show(arg)).join(', ')})`);
       throw e;
     }
   },
