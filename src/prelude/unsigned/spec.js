@@ -1,3 +1,7 @@
+//////////////////// Spec
+// Specs are composable guards, mostly used for runtime argument typechecking
+// for Ludus-instrumented functions.
+
 import L from './base.js';
 import P from './preds.js';
 
