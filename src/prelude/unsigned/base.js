@@ -63,36 +63,60 @@ Ludus.meta = meta;
 Ludus.meta_tag = meta_tag;
 Ludus.proto = ludus_proto;
 
+///// Methods
+// We need to integrate polymorphism at a very low level.
+// Ludus's model for polymorphism are methods: functions with the
+// same name in different type-associated namespaces.
+// e.g., `show` will produce a repl-friendly string
+
+let get_ns = (x) => {
+  let _meta = meta(x);
+  return _meta && _meta.ns;
+};
+
+// defmethod :: ({name: string, not_found: fn?}) -> fn
+// defines a method: a function that dispatches to the ns associated
+// with the type of the first argument.
+// takes an optional 
+let defmethod = ({name, not_found, ...attrs}) => Object.assign(Object.defineProperty(
+  (first, ...rest) => {
+    let ns = get_ns(first);
+    if (ns && name in ns) return ns[name](first, ...rest);
+    if (not_found) return not_found(first, ...rest);
+    throw `Method ${name} not found for ${show(first)}.`;
+  },
+  'name',
+  {value: name}),
+  {...attrs}
+);
+
+let show = defmethod({
+  name: 'show',
+  not_found: (x) => {
+    if (x == undefined) return 'undefined';
+    if (Object.getPrototypeOf(x) === null) return `{}`;
+    if (Object.getPrototypeOf(x) === ludus_proto) return `{{${meta(x).name}}}`;
+    return x;
+  }
+});
+
+let iterate = defmethod({
+  name: 'iterate',
+  not_found: () => undefined
+});
+
 ///// Base methods
 // JS needs for the the iterator to be an nullary function
 // To fake this, we dispatch to the `iterate` function in the object's namespace. If the iterator is not defined in that namespace, you'll get a ReferenceError. (More on this below.)
-ludus_proto[Symbol.iterator] = function () {
-  let my_meta = meta(this);
-  let my_ns = my_meta && my_meta.ns;
-  let iterate = my_meta && my_ns 
-    ? my_ns.iterate 
-    : (() => {
-      throw TypeError(`No iteration methods found for ${(this[Ludus.custom] 
-        || ((x) => x.toString()))(this)}.`);
-    });
-  return iterate(this);
-};
 Object.defineProperty(ludus_proto, Symbol.iterator, {get: function iterator () {
-  let my_meta = meta(this);
-  let ns = my_meta && my_meta.ns;
-  if (ns == undefined) return undefined;
-  if ('iterate' in ns) return ns.iterate(this);
-  return undefined;
+  return iterate(this);
 }});
+
 
 // Likewise, JS expects repl-display objects to have a nullary method
 // This dispatches to `show` in the object's namespace. If `show` isn't defined, just return the object and let the repl environment deal with it.
 ludus_proto[Ludus.custom] = function () {
-  let my_meta = meta(this);
-  let ns = my_meta && my_meta.ns;
-  if (ns == undefined) return undefined;
-  if ('show' in ns) return ns.show(this);
-  return this;
+  return show(this);
 };
 
 Object.defineProperty(ludus_proto, 'toString', {value: ludus_proto[Ludus.custom]});
@@ -122,7 +146,8 @@ let create = (
     : Object.create(ludus_proto);
   delete attrs[meta_tag];
   // create a bare object
-  let created = Object.assign(Object.create(ludus_proto), attrs);
+  let created = Object.create(ludus_proto);
+  Object.assign(created, attrs);
   meta = Object.assign(Object.create(type), meta);
   created[meta_tag] = meta;
   return created;
@@ -181,8 +206,11 @@ let ns_handler = {
   has (target, key) {
     return key in target || key in target[members_tag];
   },
+  // allows for a `has` function for nses by allowing the `in` operator
+  // to work
   getOwnPropertyDescriptor (target, property) {
     if (property in target || property in target[members_tag]) {
+      // must be configurable--but why?
       return {configurable: true, enumerable: true};
     }
   },
@@ -260,10 +288,6 @@ let is_ns = (x) => is(Namespace, x);
 // Gets the namespace associated with a value; returns undefined
 // if there is no such namespace (although there should always be)
 // one, if we get everything right.
-let get_ns = (x) => {
-  let _meta = meta(x);
-  return _meta && _meta.ns;
-}; 
 
 ///// Some namespaces to go with our existing types
 // namespace namespace
@@ -273,6 +297,10 @@ let NS = defns({name: 'Namespace', type: Namespace,
 // type namespace
 let Type_ns = defns({name: 'Type', type: Type, 
   members: {show: show_type, deftype, type_of, is, meta, create, Type}});
+
+// undefined namespace
+//let Undef_ns = defns({name: 'Undefined', type: Undefined,
+//  members: {show: show_undef}});
 
 //////////////////// 4. Bolting Ludus onto JS
 // Next, we take the builtins that Ludus knows about, and give them
@@ -329,14 +357,7 @@ let types = {
 
 defmembers(Type_ns, {t: types, types, ...types});
 
-let show = (x) => {
-  let ns = get_ns(x);
-  if (ns == undefined) return 'undefined';
-  if ('show' in ns) return ns.show(x);
-  return x;
-};
-
-let nses = Object.entries({Bool, Num, Str, Sym, Obj, Arr, Fn})
+let nses = Object.entries({Bool, Num, Str, Sym, Obj, Arr, Fn, Undefined})
   .reduce((obj, [k, v]) => {
     obj[k] = v.ns;
     return obj;
@@ -345,6 +366,6 @@ let nses = Object.entries({Bool, Num, Str, Sym, Obj, Arr, Fn})
 //////////////////// 5. Exports
 export {NS, Type_ns as Type};
 export default defns({name: 'Ludus', members: {
-  ...Ludus, show, NS, Type: Type_ns,
+  ...Ludus, show, defmethod, iterate, NS, Type: Type_ns,
   ...nses
 }});
