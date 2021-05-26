@@ -12,6 +12,7 @@ import Fn from './fns.js';
 let {defn} = Fn;
 let {bool} = P;
 let {rename, tup, fn, args, seq, any, int} = S;
+let {ns} = NS;
 
 let when = defn({
   name: 'when',
@@ -72,5 +73,5 @@ let repeat = defn({
   }
 });
 
-export default NS.defns({name: 'Flow', 
+export default ns({name: 'Flow', 
   members: {when, clause, cond, fcond, make, just, repeat, always}});
