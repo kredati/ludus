@@ -6,7 +6,7 @@
 import {NS, Type} from './base.js';
 import {copy_attrs} from './util.js';
 
-let {is, t} = Type;
+let {is, types} = Type;
 
 // All predicates have the signature (value) -> boolean
 
@@ -40,31 +40,30 @@ let not = (pred) => copy_attrs(
 // everything passes this predicate
 let is_any = (_) => true;
 
-let is_undef = (x) => is(t.Undefined, x);
+let is_undef = (x) => is(types.undef, x);
 
 // tells if a value is `not` undefined
-let is_some = (x) => !is(t.Undefined, x);
+let is_some = (x) => !is(types.undef, x);
 
-let is_string = (x) => is(t.String, x);
+let is_string = (x) => is(types.str, x);
 
-let is_number = (x) => is(t.Number, x);
+let is_number = (x) => is(types.num, x);
 
 // tells if a value is a number that is also an integer
 let is_int = (x) => is_number(x) && (x | 0) === x;
 
-let is_bigint = (x) => typeof x === 'bigint';
+// for now, Ludus doesn't have bigints
+// let is_bigint = (x) => typeof x === 'bigint';
 
-let is_bool = (x) => is(t.Boolean, x);
+let is_bool = (x) => is(types.bool, x);
 
-let is_symbol = (x) => is(t.Symbol, x);
+let is_fn = (x) => is(types.fn, x);
 
-let is_fn = (x) => is(t.Function, x);
-
-let is_array = (x) => is(t.Array, x);
+let is_array = (x) => is(types.arr, x);
 
 // tells if a value is a js object
 // this is almost always not interesting in Ludus
-let is_obj = (x) => is(t.Object, x);
+let is_obj = (x) => is(types.obj, x);
 
 // tells if a value is an "associative data structure" in Ludus
 // for the most part, this means Object literals
@@ -111,8 +110,8 @@ let is_not_empty = (x) => {
   return Object.keys(x).length > 0;
 }
 
-export default NS.defns({name: 'Preds', members: {
+export default NS.ns({name: 'Preds', members: {
   bool, and, or, not, is_any, is_undef, is_some, 
-  is_string, is_number, is_int, is_bigint, is_bool, is_symbol,
+  is_string, is_number, is_int, is_bool,
   is_fn, is_array, is_obj, is_assoc, is_iter, is_sequence, is_coll, is_not_empty
 }});

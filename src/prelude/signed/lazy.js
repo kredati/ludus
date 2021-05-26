@@ -16,8 +16,9 @@ import Spec from './spec.js';
 import NS from './ns.js';
 
 let {defn} = Fn;
-let {args, integer, any, function: fn, or} = Spec;
+let {args, int, any, fn, or} = Spec;
 let {seq, is_empty, size, seqable, first, rest}= Seq;
+let {ns} = NS;
 
 let gen = defn({
   name: 'gen',
@@ -48,7 +49,7 @@ let lazy = defn({
 let range = defn({
   name: 'range',
   doc: 'Creates a sequence of numbers, in order. With one argument, it counts up from 0 to the maximum (exclusive) in steps of +1. With two arguments, it counts up from the start to the max in steps of +1. With three, it counts up to max from start, in steps of whatever you give it.',
-  pre: args([integer]),
+  pre: args([int]),
   body: [
     (max) => range(0, max, 1),
     (start, max) => range(start, max, 1),
@@ -67,7 +68,7 @@ let infinite = Spec.defspec({name: 'infinite', pred: (x) => x === Infinity});
 let cycle = defn({
   name: 'cycle',
   doc: 'Creates a lazy, possibly infinite, sequence of values created by cycling through the members of a sequence. E.g., `cycle([1, 2, 3]); //=> 1, 2, 3, 1, 2, 3, 1, 2, ...`. With two arguments, the first argument specifies how many times to execute the cycle.',
-  pre: args([seqable], [or(integer, infinite), seqable]),
+  pre: args([seqable], [or(int, infinite), seqable]),
   body: [
     (seqable) => cycle(Infinity, seqable),
     (count, seqable) => {
@@ -111,7 +112,7 @@ let interleave = defn({
 let repeat = defn({
   name: 'repeat',
   doc: 'Produces a possibly infinite `seq` that is just the same value, repeated over and over again. With two arguments, the first is the number of times to repeate `value`. E.g., `repeat(4, \'foo\'); //=> Seq( \'foo\', \'foo\', \'foo\', \'foo\' )`.',
-  pre: args([any], [or(integer, infinite), any]),
+  pre: args([any], [or(int, infinite), any]),
   body: [
     (value) => repeat(Infinity, value),
     (count, value) => {
@@ -131,7 +132,7 @@ let repeat = defn({
 let repeatedly = defn({
   name: 'repeatedly',
   doc: 'Takes a nullary function, presumably with side effects, and calls that function over and over again. With one argument, it will call the fucntion infinitely. With two, it will call the function `count` times.',
-  pre: args([fn], [or(integer, infinite), fn]),
+  pre: args([fn], [or(int, infinite), fn]),
   body: [
     (fn) => repeatedly(Infinity, fn),
     (count, fn) => {
@@ -148,5 +149,5 @@ let repeatedly = defn({
   ]
 });
 
-export default NS.defns({name: 'Lazy',
+export default ns({name: 'Lazy',
   members: {cycle, gen, interleave, lazy, range, repeat, repeatedly}});

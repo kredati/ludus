@@ -8,6 +8,7 @@ import NS from './ns.js';
 
 let {defn, partial} = F;
 let {bool} = P;
+let {ns} = NS; 
 
 let not = defn({
   name: 'not',
@@ -45,4 +46,4 @@ let or = defn({
   ]
 });
 
-export default NS.defmembers(L.Bool, {and, or, not});
+export default ns(L.Bool, {and, or, not});

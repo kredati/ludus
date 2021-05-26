@@ -63,7 +63,7 @@ let deref = defn({
 
 let swap = defn({
   name: 'swap',
-  doc: 'Updates the value in a ref, mutating its state. Returns the ref.',
+  doc: 'Updates the value in a ref, mutating its state. Returns undefined.',
   pre: args([type(Ref), any]),
   body: (ref, new_value) => {
     if (!eq(ref.value, new_value)) {
@@ -71,6 +71,17 @@ let swap = defn({
       ref.pending = true;
       future(ping_watchers, [ref]);
     };
+    return undefined;
+  }
+});
+
+let update = defn({
+  name: 'update',
+  doc: 'Updates the value in a ref, mutating its state, by applying the supplied function to its value. Returns the ref.',
+  pre: args([fn, type(Ref)]),
+  body: (updater, ref) => {
+    let new_value = updater(ref.value);
+    swap(ref, new_value);
     return undefined;
   }
 });

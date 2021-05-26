@@ -69,6 +69,8 @@ Ludus.proto = ludus_proto;
 // same name in different type-associated namespaces.
 // e.g., `show` will produce a repl-friendly string
 
+// get a namespace for something
+// this would normally go in the ns portion but we need it up here
 let get_ns = (x) => {
   let _meta = meta(x);
   return _meta && _meta.ns;
@@ -94,7 +96,7 @@ let show = defmethod({
   name: 'show',
   not_found: (x) => {
     if (x == undefined) return 'undefined';
-    if (Object.getPrototypeOf(x) === null) return `{}`;
+    if (Object.getPrototypeOf(x) === null) return `{.}`;
     if (Object.getPrototypeOf(x) === ludus_proto) return `{{${meta(x).name}}}`;
     return x;
   }
@@ -125,12 +127,12 @@ Object.defineProperty(ludus_proto, 'toString', {value: ludus_proto[Ludus.custom]
 // Types are the prototypes for the metadata on any given object. Types hold hold four properties: a `name`; `type`, which is a circular reference; `ns`, which is a namespace associated with that type; and `methods`, which holds any methods that get added outside the core namespace.
 
 // A Type type
-let Type = Object.create(ludus_proto);
-Type.name = 'Type';
-Type.type = Type;
-Type[meta_tag] = Object.create(ludus_proto);
-Object.defineProperty(Type[meta_tag], 'ns', {get: () => Type.ns});
-Type[meta_tag].type = Type;
+let type_t = Object.create(ludus_proto);
+type_t.name = 'type';
+type_t.type = type_t;
+type_t[meta_tag] = Object.create(ludus_proto);
+Object.defineProperty(type_t[meta_tag], 'ns', {get: () => type_t.ns});
+type_t[meta_tag].type = type_t;
 
 // create :: (type, obj) -> type
 // `create` is the way we create objects that aren't simply object literals
@@ -141,6 +143,9 @@ let create = (
   // NB: passing metadata should be a rare case in the early stages of boostrapping Ludus, since symbol tags aren't allowed in Ludus
   attrs = {}
   ) => {
+  // we have to pull the metadata out of attrs
+  // we can't do this normal ways because otherwise we end up tracing
+  // the prototype chain:
   let meta = Object.prototype.hasOwnProperty.call(attrs, meta_tag)
     ? attrs[meta_tag]
     : Object.create(ludus_proto);
@@ -156,28 +161,30 @@ let create = (
 // deftype :: (obj) -> type
 // Defines a type. The `name` field is required
 let deftype = (attrs) => {
-  let type = create(Type, attrs);
+  let type = create(type_t, attrs);
   // a circular reference for type metadata
   type.type = type;
   // a place for methods not defined in a ns
-  type.methods = {};
+  //type.methods = {}; // this is obsolete, I think
   return type;
 };
 
 // show_type :: (type) -> string
 // displays a type as { Name }
-let show_type = (type) => `{ ${type.name} }`;
+let show_type = (type) => `t:{${type.name}}`;
 
 // a special type for `undefined`.
-let Undefined = deftype({name: 'Undefined'});
+let undef_t = deftype({name: 'undefined'});
 
 // type_of :: (any) -> type
 // a simple type_of function
 // only `undefined` needs a special case;
 // everything else will have 
-let type_of = (x) => x == undefined 
-  ? Undefined
-  : meta(x).type;
+let type_of = (x) => x == undefined
+  ? undef_t
+  : meta(x) === undefined
+    ? undefined
+    : meta(x).type;
 
 // is :: (type, any) -> boolean
 // a predicate for knowing whether something is of a particular type
@@ -228,18 +235,29 @@ let ns_handler = {
 };
 
 // a namespace type
-let Namespace = deftype({name: 'Namespace'});
+let ns_t = deftype({name: 'namespace'});
 
 // show_ns :: (namespace) -> string
 // shows a namespace
-let show_ns = (ns) => `Namespace { ${ns[meta_tag].name} }`;
+let show_ns = (ns) => `ns:{${ns[meta_tag].name}}`;
+
+let is_capitalized = (x) => {
+  let code = x.charCodeAt(0);
+  return code >= 65 && code <= 90;
+};
 
 // def :: (namespace, string, any) -> any
 // `def` allows for dynamic manipulation of a namespace: add a member
 // to a namespace you have a reference to
 // This should be used very sparingly in actual Ludus, but helps us
 // manage namespaces in the boostrapping prelude phases
-let def = (ns, key, value) => { 
+let def = (ns, key, value) => {
+  if (is_capitalized(key) && !is(ns_t, value)) {
+    throw `Only names of namespaces may be capitalized. You attempted to define ${show(value)} at ${key}.`
+  }
+  if (!is_capitalized(key) && is(ns_t, value)) {
+    throw `Names of namespaces must be capitalized. You attempted to give ${show(ns)} the name ${key}.`
+  }
   ns[members_tag][key] = value; 
   return value;
 };
@@ -266,23 +284,27 @@ let members = (ns) => ns[members_tag];
 // For now, Ludus requires types to be defined before namespaces,
 // since the expectation is that types get definied at the tops of
 // modules, and namespaces only on export, at the bottom.
-let defns = ({name, type, members, ...attrs}) => {
+let ns = ({name, type, members, ...attrs}) => {
   name = name != undefined ? name : type.name;
   let meta = Object.assign(Object.create(ludus_proto), 
     type === undefined ? {name, ...attrs} : {name, ns_type: type, ...attrs});
-  let ns = create(Namespace, {
+  let ns = create(ns_t, {
     name,
-    [members_tag]: {...members},
+    [members_tag]: {},
     [meta_tag]: meta
   });
   let proxied = new Proxy(ns, ns_handler);
-  if (type !== undefined) type.ns = proxied;
+  if (type !== undefined) {
+    type.ns = proxied
+    def(proxied, 't', type);
+  };
+  defmembers(proxied, members);
   return proxied;
 };
 
 // is_ns :: (any) -> boolean
 // Tells if something is a namespace
-let is_ns = (x) => is(Namespace, x);
+let is_ns = (x) => is(ns_t, x);
 
 // get_ns :: (any) -> maybe(ns)
 // Gets the namespace associated with a value; returns undefined
@@ -291,12 +313,12 @@ let is_ns = (x) => is(Namespace, x);
 
 ///// Some namespaces to go with our existing types
 // namespace namespace
-let NS = defns({name: 'Namespace', type: Namespace,
-  members: {is_ns, defns, defmembers, members, def, get_ns, show: show_ns}});
+let NS = ns({name: 'Namespace', type: ns_t,
+  members: {is_ns, ns, defmembers, members, def, get_ns, show: show_ns}});
 
 // type namespace
-let Type_ns = defns({name: 'Type', type: Type, 
-  members: {show: show_type, deftype, type_of, is, meta, create, Type}});
+let Type = ns({name: 'Type', type: type_t, 
+  members: {show: show_type, deftype, type_of, is, meta, create}});
 
 // undefined namespace
 //let Undef_ns = defns({name: 'Undefined', type: Undefined,
@@ -316,56 +338,51 @@ let Type_ns = defns({name: 'Type', type: Type,
 // the meta_tags, we won't get custom inspect or iteration behaviors
 // on builtins. This is probably for the best.
 
-let Bool = deftype({name: 'Boolean'});
-defns({name: 'Bool', type: Bool, members: {}});
-Boolean.prototype[meta_tag] = Bool;
+let bool_t = deftype({name: 'Boolean'});
+let Bool = ns({type: bool_t, members: {}});
+Boolean.prototype[meta_tag] = bool_t;
 
-let Num = deftype({name: 'Number'});
-defns({name: 'Num', type: Num, members: {}})
-Number.prototype[meta_tag] = Num;
+let num_t = deftype({name: 'Number'});
+let Num = ns({type: num_t, members: {}})
+Number.prototype[meta_tag] = num_t;
 
-let Str = deftype({name: 'String'});
-defns({name: 'Str', type: Str, members: {}});
-String.prototype[meta_tag] = Str;
+let str_t = deftype({name: 'String'});
+let Str = ns({type: str_t, members: {}});
+String.prototype[meta_tag] = str_t;
 
-let Sym = deftype({name: 'Symbol'});
-defns({name: 'Sym', type: Sym, members: {}});
-Symbol.prototype[meta_tag] = Sym;
+/* we don't use symbols in Ludus
+let sym_t = deftype({name: 'Symbol'});
+let Sym = ns({type: sym_t, members: {}});
+Symbol.prototype[meta_tag] = sym_t;
+*/
 
-let Obj = deftype({name: 'Object'});
-defns({name: 'Obj', type: Obj, members: {}});
-Object.prototype[meta_tag] = Obj;
+let obj_t = deftype({name: 'Object'});
+let Obj = ns({type: obj_t, members: {}});
+Object.prototype[meta_tag] = obj_t;
 
-let Arr = deftype({name: 'Array'});
-defns({name: 'Arr', type: Arr, members: {}});
-Array.prototype[meta_tag] = Arr;
+let arr_t = deftype({name: 'Array'});
+let Arr = ns({type: arr_t, members: {}});
+Array.prototype[meta_tag] = arr_t;
 
-let Fn = deftype({name: 'Function'});
-defns({name: 'Fn', type: Fn, members: {}});
-Function.prototype[meta_tag] = Fn;
+let fn_t = deftype({name: 'Function'});
+let Fn = ns({type: fn_t, members: {}});
+Function.prototype[meta_tag] = fn_t;
 
 let types = {
-  Boolean: Bool,
-  Number: Num,
-  String: Str,
-  Symbol: Sym,
-  Object: Obj,
-  Array: Arr,
-  Function: Fn,
-  Undefined
+  bool: bool_t,
+  num: num_t,
+  str: str_t,
+  obj: obj_t,
+  arr: arr_t,
+  fn: fn_t,
+  undef: undef_t
 };
 
-defmembers(Type_ns, {t: types, types, ...types});
-
-let nses = Object.entries({Bool, Num, Str, Sym, Obj, Arr, Fn, Undefined})
-  .reduce((obj, [k, v]) => {
-    obj[k] = v.ns;
-    return obj;
-  }, {})
+defmembers(Type, {types, ...types});
 
 //////////////////// 5. Exports
-export {NS, Type_ns as Type};
-export default defns({name: 'Ludus', members: {
-  ...Ludus, show, defmethod, iterate, NS, Type: Type_ns,
-  ...nses
+export {NS, Type};
+export default ns({name: 'Ludus', members: {
+  ...Ludus, show, defmethod, iterate, // functions & props
+  NS, Type, Bool, Num, Str, Obj, Arr, Fn // namespaces
 }});

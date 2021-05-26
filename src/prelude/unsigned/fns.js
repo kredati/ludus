@@ -27,13 +27,15 @@ let partial = (fn, ...args) => {
   return rename(partial_name, 
     (...args2) => args2.length > 0
       ? fn(...args, ...args2) 
-      : raise(Error, `Not enough arguments to \`${partial_name}\`: Partially applied functions must be called with at least 1 argument; you passed 0.`));
+      : raise(`Not enough arguments to \`${partial_name}\`: Partially applied functions must be called with at least 1 argument; you passed 0.`));
   };
 
 ///// Function dispatch
 
 // ArgumentError
 // An error for telling users: the arguments just aren't right
+// for now we're not throwing/raising particular errors
+// not exported
 class ArgumentError extends Error {
   constructor(...args) {
     super(...args);
@@ -62,7 +64,7 @@ let n_ary = (name, ...clauses) => {
   let arity_map = clauses.reduce(
     (map, fn) => !(fn.length in map)
       ? Object.assign(map, {[fn.length]: fn})
-      : raise(Error, `Functions may only have one clause of a given arity. You gave ${name} two clauses of arity ${fn.length}.`), 
+      : raise(`Functions may only have one clause of a given arity. You gave ${name} two clauses of arity ${fn.length}.`), 
     {});
   let max_arity = Math.max(...Object.keys(arity_map));
 
@@ -100,10 +102,10 @@ let recur_args = Symbol('ludus/recur/args'); // not exported
 let recur_handler = { // not exported
   get (target, prop) { // will throw if anything but symbol tags are accessed
     if (prop === recur_tag || prop === recur_args) return target[prop];
-    throw new SyntaxError('recur must only be used in the tail position inside of loop.');
+    raise('`recur` must only be used in the tail position inside of `loop`.');
   },
   apply () { // will throw if something `recurred` is called as a function
-    throw new SyntaxError('recur must only be used in the tail position inside of loop.');
+    raise('`recur` must only be used in the tail position inside of `loop`.');
   }
 };
 
@@ -114,10 +116,10 @@ let recur = (...args) => new Proxy(Object.assign(() => {},
   {
     [recur_tag]: true, [recur_args]: args,
     [Symbol.toPrimitive] () { // will throw on coercion to an atomic value
-      throw new SyntaxError('recur must only be used in the tail position inside of loop.');
+      raise('`recur` must only be used in the tail position inside of `loop`.');
     },
     [Symbol.toString] () { // will throw on coercion to a string
-      throw new SyntaxError('recur must only be used in the tail position inside of loop.');
+      raise('`recur` must only be used in the tail position inside of `loop`.');
   }
 }), recur_handler);
 
@@ -140,7 +142,7 @@ let loop = (fn, max_iter = 1000000) => {
     }
 
     if (iter >= max_iter) 
-      throw new Error(`Too much recursion in ${name}.`)
+      raise(`Too much recursion in \`${name}\`.`)
     
     return result;
   };
@@ -183,7 +185,7 @@ let fn = n_ary('fn',
       case 'object':
         return body[Symbol.iterator]
           ? rename(name, loop(handle(name, n_ary(name, ...body))))
-          : raise(TypeError, `Body clauses must be contained in an iterable.`)
+          : raise(`Body clauses must be contained in an iterable.`)
     }
   }
 );
@@ -206,7 +208,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
     let result = Spec.is_valid(spec, args);
     let pass = result !== false && result != undefined;
     pass_pre = pass_pre && pass;
-    if (!pass_pre) throw new ArgumentError(`Arguments to ${body.name} did not conform to spec.\n${Spec.explain(spec, args)}`);
+    if (!pass_pre) raise(`Arguments to \`${body.name}\` did not conform to spec.\n${Spec.explain(spec, args)}`);
   }
 
   let returns = body(...args);
@@ -216,13 +218,13 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
     let is_valid = Spec.is_valid(spec, returns);
     let pass = is_valid !== false && is_valid != undefined;
     pass_post = pass_post && pass;
-    if (!pass_post) throw Error(`Return from ${body.name} did not conform to spec.\n${Spec.explain(spec, returns)}`);
+    if (!pass_post) raise(`Return from \`${body.name}\` did not conform to spec.\n${Spec.explain(spec, returns)}`);
   }
 
   return returns;
   });
 
-//////////////////// Defn
+//////////////////// defn
 // finally
 
 // defn :: (object) -> fn
@@ -243,12 +245,6 @@ let defn = ({name, body, pre = [], post = [], ...attrs}) => {
   let clauses = Pred.is_fn(body) ? [body] : body;
   let out = pre_post(pre, post, fn(name, clauses));
   return copy_attrs(out, {name, clauses, ...attrs});
-};
-
-export {rename, partial, 
-  n_ary, loop, recur, fn, pre_post, 
-  ArgumentError,
-  defn 
 };
 
 export default Ludus.NS.defmembers(Ludus.Fn,

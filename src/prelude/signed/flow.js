@@ -11,7 +11,7 @@ import Fn from './fns.js';
 
 let {defn} = Fn;
 let {bool} = P;
-let {rename, tup, function: fn, args, seq, any, integer} = S;
+let {rename, tup, fn, args, seq, any, int} = S;
 
 let when = defn({
   name: 'when',
@@ -62,7 +62,7 @@ let just = defn({
 let repeat = defn({
   name: 'repeat',
   doc: 'Takes a number, `count`, and a function. Calls that function `count` times, passing the `count` into the function as an argument. Returns the result of the last call.',
-  pre: args([integer, fn]),
+  pre: args([int, fn]),
   body: (count, fn) => {
     let result = undefined;
     for (let i = 0; i < count; i++) {

@@ -8,6 +8,7 @@ import './fns.js';
 
 let eq_ = L.eq;
 let {defn, partial} = L.Fn;
+let {ns} = NS;
 
 let is_identical = defn({
   name: 'is_identical',
@@ -47,4 +48,4 @@ let eq = defn({
   ]
 });
 
-export default NS.defmembers(L, {eq, is_identical});
+export default ns(L, {eq, is_identical});

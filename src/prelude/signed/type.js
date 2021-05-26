@@ -5,7 +5,7 @@ import L from './deps.js';
 
 let {Type, Fn, NS, Spec} = L;
 let {defn, partial} = Fn;
-let {args, type, string, any, assoc, at} = Spec;
+let {args, type, str, any, assoc, at} = Spec;
 
 let meta = defn({
   name: 'meta',
@@ -16,14 +16,14 @@ let meta = defn({
 let show = defn({
   name: 'show',
   doc: 'Shows a type.',
-  pre: args([type(Type.Type)]),
+  pre: args([type(Type.t)]),
   body: Type.show
 });
 
 let deftype = defn({
   name: 'deftype',
   doc: 'Defines a type.',
-  pre: args([at('name', string)]),
+  pre: args([at('name', str)]),
   body: Type.deftype
 });
 
@@ -36,7 +36,7 @@ let type_of = defn({
 let is = defn({
   name: 'is',
   doc: 'Tells if something is of a given type. With one argument, returns a predicate function. With two arguments, acts as a predicate function.',
-  pre: args([type(Type.Type)], [type(Type.Type), any]),
+  pre: args([type(Type.t)], [type(Type.t), any]),
   body: [
     (type) => partial(is, type),
     (type, x) => type_of(x) === type
@@ -46,7 +46,7 @@ let is = defn({
 let create = defn({
   name: 'create',
   doc: 'Creates an object of a specified type. Copies all the attributes from the optional second argument onto the created object.',
-  pre: args([type(Type.Type)], [type(Type.Type), assoc]),
+  pre: args([type(Type.t)], [type(Type.t), assoc]),
   body: [
     (type) => Type.create(type),
     (type, attrs) => Type.create(type, attrs)
@@ -55,8 +55,11 @@ let create = defn({
 
 let types = Type.types;
 
-export default NS.defns({
-  type: Type.Type,
-  members: {meta, show, deftype, type_of, is, create, Type: Type.Type,
-    ...types, types, t: types}
+// We have to create a new Type namespace because if we modify it, it leads
+// to endless recursion
+export default NS.ns({
+  type: Type.t,
+  members: {
+    meta, show, deftype, type_of, is, create, types, ...types
+  }
 });

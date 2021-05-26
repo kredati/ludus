@@ -21,6 +21,7 @@ let {args, seq, sequence, type} = S;
 let {defn, once} = Fn;
 let {create, deftype, is} = T;
 let {has, is_iter, is_assoc} = P;
+let {ns} = NS;
 
 // obj_gen: creates a generator that iterates through the keys of an object
 // only covers string keys
@@ -33,17 +34,16 @@ let obj_gen = function* (obj) {
   }
 };
 
-let Seq = deftype({name: 'Seq'});
+let seq_t = deftype({name: 'Seq'});
 
 // iterate: creates an iterator over a seq
 // uses a closure to get JS iterator behavior on something that
 // implements first/rest semantics.
-// not exported, but used to implement the iterator protocol
 // in a seq
 let iterate = defn({
   name: 'iterate',
   doc: 'Creates an iterator over a `seq`.',
-  pre: args([type(Seq)]),
+  pre: args([type(seq_t)]),
   body: (seq) => () => {
     let first = seq.first();
     let rest = seq.rest();
@@ -63,14 +63,14 @@ let iterate = defn({
 let show = defn({
   name: 'show',
   doc: 'Shows a `seq`.',
-  pre: args([type(Seq)]),
+  pre: args([type(seq_t)]),
   body: (seq) => seq.size != undefined ? `Seq(${seq.size})` : 'Seq(...)'
 });
 
 let is_seq = defn({
   name: 'is_seq',
   doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, see `is_seqable`.',
-  body: (x) => is(Seq, x) 
+  body: (x) => is(seq_t, x) 
 });
 
 let is_seqable = defn({
@@ -103,7 +103,7 @@ let create_seq = (iterator, size) => {
   let current = iterator.next();
   let rest = once(() => current.done ? undefined : create_seq(iterator));
   let first = () => current.done ? undefined : current.value;
-  let out = create(Seq, {rest, first, size});
+  let out = create(seq_t, {rest, first, size});
   return out;
 };
 
@@ -174,7 +174,8 @@ let is_empty = defn({
   body: (seqable) => rest(seq_(seqable)) === empty_seq
 });
 
-export default NS.defns({type: Seq,
+export default ns({
+  type: seq_t,
   members: {
     concat, empty, first, is_empty, is_seq, is_seqable, seqable, 
     iterate, rest, seq: seq_, show, size

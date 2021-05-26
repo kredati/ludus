@@ -6,18 +6,13 @@ import NS from './ns.js';
 
 let {Spec, Fn} = L;
 let {defn, partial} = Fn;
+let {ns} = NS;
 
-import Type from './type.js';
-NS.is_ns(Spec) //?
+let spec = Spec.or(Spec.type(Spec.t), Spec.fn);
 
-let spec = Spec.or(Spec.type(Spec.Spec), Spec.function);
-
-let spec_descriptor = Spec.defspec({
-  name: 'spec_descriptor',
-  pred: Spec.and(
-    Spec.at('name', Spec.string),
-    Spec.at('pred', spec)
-  )
+let spec_descriptor = Spec.record('spec_descriptor', {
+  name: Spec.str,
+  pred: spec
 });
 
 let defspec = defn({
@@ -30,7 +25,7 @@ let defspec = defn({
 let is_spec = defn({
   name: 'is_spec',
   doc: 'Tells if something is a spec.',
-  body: (x) => Type.is(Spec, x)
+  body: (x) => Type.is(Spec.t, x)
 });
 
 let show = defn({
@@ -82,19 +77,19 @@ let seq = defn({
 let at = defn({
   name: 'at',
   doc: 'Creates a spec that validates a value by applying the spec to the field contained on that value.',
-  pre: Spec.args([Spec.string, spec]),
+  pre: Spec.args([Spec.str, spec]),
   body: Spec.at
 });
 
 let record = defn({
   name: 'Creates a `record`: a named collection of specs. Takes a string name and a "map," which contains specs in various fields. Validates all specs by applying them to the corresponding field on the validated value. Essentially, the `and` of each `at` in the map.',
-  pre: Spec.args([Spec.string, Spec.dict(spec)]),
+  pre: Spec.args([Spec.str, Spec.dict(spec)]),
   body: Spec.record
 });
 
 let rename = defn({
   name: 'Renames a spec. Useful for giving descriptive names to otherwise complex specs.',
-  pre: Spec.args([Spec.string, Spec.type(Spec.Spec)]),
+  pre: Spec.args([Spec.str, Spec.type(Spec.t)]),
   body: Spec.rename
 });
 
@@ -122,12 +117,14 @@ let args = defn({
 let explain = defn({
   name: 'explain',
   doc: 'Provides a hopefully-informative explanation of why a value did not conform to a spec.',
-  pre: Spec.args([spec, Spec.any, maybe(Spec.number)]),
+  pre: Spec.args([spec, Spec.any, maybe(Spec.num)]),
   body: Spec.explain
 });
 
-export default NS.defns({type: Spec.Spec, members: {
-  ...NS.members(Spec), and, args, at, defspec, dict, explain,
-  is_spec, is_valid, maybe, or, record, rename,
-  seq, show, tup
+export default ns({
+  type: Spec.t, 
+  members: {
+    ...NS.members(Spec), and, args, at, defspec, dict, explain,
+    is_spec, is_valid, maybe, or, record, rename,
+    seq, show, tup
 }});

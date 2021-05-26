@@ -10,15 +10,16 @@ import Spec from './spec.js';
 import './eq.js';
 
 let {defn, partial} = Fn;
-let {args, any, key, assoc, function: fn, symbol, seq, dict, or, tup, obj} = Spec;
+let {args, any, key, assoc, fn, symbol, seq, dict, or, tup, obj} = Spec;
 let {is_any, is_key, is_assoc, is_fn, has, is_sequence_of} = P;
 let {eq} = L;
+let {ns} = NS;
 
 let js_key = or(key, symbol);
 
 let get = defn({
   name: 'get',
-  doc: `Gets the value stored at a particular key in an object. Returns \`undefined\` if value is not found. It returns \`undefined\` when looking for a property on anything that cannot have properties: e.g., \`undefined\`, booleans, and numbers. Given an indexed value (arrays, but also strings) it returns the value at the corresponding index. Returns only own properties. To get properties in the prototype chain, or at symbol keys, use \`get_js\`.`,
+  doc: `Gets the value stored at a particular key in an object. Returns \`undefined\` if value is not found. It returns \`undefined\` when looking for a property on anything that cannot have properties: e.g., \`undefined\`, booleans, and numbers. Given an indexed value (arrays, but also strings) it returns the value at the corresponding index. Returns only own properties. To get properties in the prototype chain, or at symbol keys, use \`get_\`.`,
   pre: args([key], [key, any]),
   body: [
     (key) => partial(get, key),
@@ -31,7 +32,7 @@ let get = defn({
 
 let get_ = defn({
   name: 'get_',
-  doc: 'Gets the value stored at a particular key in an object, traversing the prototype chain, and also allowing symbols to serve as keys. Returns `undefined` if an object is missing a key, or cannot store keys.',
+  doc: 'Gets the value stored at a particular key in an object, traversing the JS prototype chain, and also allowing symbols to serve as keys. Returns `undefined` if an object is missing a key, or cannot store keys.',
   pre: args([js_key], [js_key, any]),
   body: [
     (key) => partial(get_js, key),

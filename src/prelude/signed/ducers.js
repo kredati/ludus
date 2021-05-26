@@ -35,7 +35,7 @@ import B from './bools.js';
 import L from './lazy.js';
 import NS from './ns.js';
 
-let {args, function: fn, coll, any} = Spec;
+let {args, fn, coll, any} = Spec;
 let {defn, recur} = Fn;
 let {bool} = P;
 let {first, rest, is_empty} = Seq;

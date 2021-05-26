@@ -53,6 +53,6 @@ let handle = (name, fn) => Object.defineProperty(
   {value: name || fn.name || 'anon. fn'}
 );
 
-export default Ludus.NS.defns({name: 'Errors', members: {
+export default Ludus.NS.ns({name: 'Errors', members: {
   raise, bound, handle
 }});

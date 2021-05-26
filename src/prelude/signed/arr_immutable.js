@@ -43,9 +43,8 @@ let {eq} = L;
 
 // first, some utility functions
 
-// create an object
-let create_ = (proto, attrs) => Object.freeze(Object.assign(Object.create(proto), attrs));
-
+// create an object---with a prototype
+// this is not a Ludus object but a JS one
 let create = (proto, attrs) => {
   let obj = Object.create(proto);
   for (let key in attrs) {
@@ -264,7 +263,7 @@ let list_handler = {
 };
 
 let Arr = {
-  [L.meta_tag]: L.Type.Array,
+  [L.meta_tag]: L.Arr.t,
   create: (root, tail, size) => 
     new Proxy(create(Arr, {root, tail, size}), list_handler),
   empty: () => Arr.create(Node.empty(), Leaf.empty(), 0),
@@ -386,7 +385,7 @@ let Arr = {
   },
   [Symbol.isConcatSpreadable]: true,
   [Symbol.for('nodejs.util.inspect.custom')] () {
-    return `[ ${[...this].join(', ')} ]`;
+    return this.is_empty() ? [] : `[ ${[...this].join(', ')} ]`;
   }
 };
 

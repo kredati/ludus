@@ -6,20 +6,21 @@ import L from './base.js';
 import P from './preds.js';
 
 let {Type, NS} = L;
+let {ns} = NS;
 
 ///// Spec definition
 // a Spec type
-let Spec = Type.deftype({name: 'Spec'});
+let spec_t = Type.deftype({name: 'Spec'});
 
 // def :: ({name: string?, pred: function, ...rest}) => Spec
 // Defines a Spec, taking at minimum a predicate. If no name is
 // specified in attrs, it pulls the name from the predicate, allowing
 // `def({pred: is_string})`.
-let def = (attrs) => {
+let defspec = (attrs) => {
   let name = attrs.name != undefined 
     ? attrs.name 
     : attrs.pred && attrs.pred.name;
-  return Type.create(Spec, {spec: def, ...attrs, name});
+  return Type.create(spec_t, {spec: defspec, ...attrs, name});
 }; 
 
 ///// Spec utils
@@ -28,18 +29,27 @@ let rename = (name, spec) => Object.defineProperty(spec, 'name', {value: name});
 
 // show :: (spec) => string
 // Gives a string representation of a spec
-let show = (spec) => `Spec: ${spec.name}`;
+let show = (spec) => `spec:{${spec.name}}`;
 
 // is_spec :: (any) => boolean
 // Tells if something is a spec
-let is_spec = (x) => Type.is(Spec, x);
+let is_spec = (x) => Type.is(spec_t, x);
 
 ///// Spec validation
 // is_valid :: (spec, value) => boolean
 // The equivalent of valid? in clj; tells whether a value passes a spec
-let is_valid = (spec, value) => is_spec(spec) 
+let is_valid_recursive = (spec, value) => is_spec(spec) 
   ? is_valid(spec.pred, value)
   : P.bool(spec(value));
+
+// since is_valid gets called over and over again
+// here's a faster, non-recursive version
+let is_valid = (spec, value) => {
+  while (typeof spec !== 'function') {
+    spec = spec.pred;
+  }
+  return P.bool(spec(value));
+}
 
 ///// Spec combinators
 // Note that spec combinators combine *specs*, not their predicates.
@@ -50,7 +60,7 @@ let is_valid = (spec, value) => is_spec(spec)
 let or = (...specs) => {
   let name = `or<${specs.map((s) => s.name)}>`;
   let pred = P.or(...specs.map((s) => s.pred));
-  return def({name, pred, spec: or, members: specs});
+  return defspec({name, pred, spec: or, members: specs});
 };
 
 // and :: (...specs) => spec
@@ -58,11 +68,13 @@ let or = (...specs) => {
 let and = (...specs) => {
   let name = `and<${specs.map((s) => s.name)}>`;
   let pred = P.and(...specs.map((s) => s.pred));
-  return def({name, pred, spec: and, members: specs});
+  return defspec({name, pred, spec: and, members: specs});
 };
 
 // tup :: (...specs) => spec
-// Combines specs into a tuple.
+// Combines specs into a tuple
+// A tuple matches on position in an array
+// e.g. `tup(string, number)` matches `['foo', 42]`
 let tup = (...specs) => {
   let name = `tup<${specs.map((s) => s.name)}>`;
   let pred = (tup) => {
@@ -72,7 +84,7 @@ let tup = (...specs) => {
     }
     return true;
   };
-  return def({name, pred, spec: tup, members: specs});
+  return defspec({name, pred, spec: tup, members: specs});
 };
 
 // seq :: (spec) => spec
@@ -86,7 +98,7 @@ let seq = (spec) => {
     }
     return true;
   }
-  return def({name, pred, spec: seq, members: spec});
+  return defspec({name, pred, spec: seq, members: spec});
 };
 
 // key :: (string, spec) => spec
@@ -95,7 +107,7 @@ let seq = (spec) => {
 let at = (key, spec) => {
   let name = `at<${key}: ${spec.name}>`;
   let pred = (obj) => obj != undefined && is_valid(spec, obj[key]);
-  return def({name, pred, spec: at, members: {key, spec}});
+  return defspec({name, pred, spec: at, members: {key, spec}});
 };
 
 // record :: (string, dict(specs)) => spec
@@ -113,28 +125,28 @@ let record = (name, map) => {
 };
 
 ///// Useful specs
-let any = def({name: 'any', pred: (_) => true});
-let boolean = def({name: 'boolean', pred: P.is_bool});
-let string = def({name: 'string', pred: P.is_string});
-let number = def({name: 'number', pred: P.is_number});
-let integer = def({name: 'integer', pred: P.is_int});
-let key = def({name: 'key', pred: P.or(P.is_string, P.is_number)});
-let symbol = def({name: 'symbol', pred: P.is_symbol});
-let undef = def({name: 'undefined', pred: P.is_undef});
-let array = def({name: 'array', pred: P.is_array});
-let some = def({name: 'some', pred: P.is_some});
-let fn = def({name: 'function', pred: P.is_fn});
-let obj = def({name: 'object', pred: P.is_obj});
-let assoc = def({name: 'assoc', pred: P.is_assoc});
-let iter = def({name: 'iter', pred: P.is_iter});
+let any = defspec({name: 'any', pred: (_) => true});
+let bool = defspec({name: 'bool', pred: P.is_bool});
+let str = defspec({name: 'str', pred: P.is_string});
+let num = defspec({name: 'num', pred: P.is_number});
+let int = defspec({name: 'int', pred: P.is_int});
+let key = defspec({name: 'key', pred: P.or(P.is_string, P.is_number)});
+//let symbol = def({name: 'symbol', pred: P.is_symbol});
+let undef = defspec({name: 'undef', pred: P.is_undef});
+let arr = defspec({name: 'arr', pred: P.is_array});
+let some = defspec({name: 'some', pred: P.is_some});
+let fn = defspec({name: 'fn', pred: P.is_fn});
+let obj = defspec({name: 'obj', pred: P.is_obj});
+let assoc = defspec({name: 'assoc', pred: P.is_assoc});
+let iter = defspec({name: 'iter', pred: P.is_iter});
 let coll = rename('coll', or(assoc, iter));
-let sequence = def({name: 'sequence', pred: P.is_sequence});
-let dict = (spec) => def({name: `dict<${spec.name}>`,
+let sequence = defspec({name: 'sequence', pred: P.is_sequence});
+let dict = (spec) => defspec({name: `dict<${spec.name}>`,
   pred: (x) => P.is_assoc(x) && Object.values(x).every((v) => is_valid(spec, v)), 
   spec: dict,
   members: spec});
-let not_empty = def({name: 'not_empty', pred: P.is_not_empty});
-let type = (t) => def({name: t.name, 
+let not_empty = defspec({name: 'not_empty', pred: P.is_not_empty});
+let type = (t) => defspec({name: t.name, 
   pred: (x) => Type.is(t, x), 
   spec: type,
   members: t});
@@ -163,16 +175,18 @@ let args = (...tups) => {
       && seq(longest[longest.length - 1]).pred(rest);
   };
   // TODO: give this a nicer name?--or leave the plumbing exposed?
-  return def({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
+  return defspec({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
     pred, spec: args, members: arg_tuples});
 };
 
+// TODO: review, improve, simplify this
 let explain = (spec, value, indent = 0) => {
+  let shown = L.show(value);
   let pad = ' '.repeat(indent);
-  if (is_valid(spec, value)) return `${value} passes ${spec.name}`;
+  if (is_valid(spec, value)) return `${shown} passes ${spec.name}`;
   switch (spec.spec) {
     case and: {
-      let msg = `${value} failed ${spec.name}:\n`;
+      let msg = `${shown} failed ${spec.name}:\n`;
       let msgs = [];
       for (let mem of spec.members) {
         if (!is_valid(mem, value))
@@ -181,7 +195,7 @@ let explain = (spec, value, indent = 0) => {
       return msg + msgs.join('\n');
     }
     case or: {
-      let msg = `${value} failed ${spec.name}:\n`;
+      let msg = `${shown} failed ${spec.name}:\n`;
       let msgs = [];
       for (let mem of spec.members) { 
         msgs.push(pad + explain(mem, value, indent + 2));
@@ -191,9 +205,9 @@ let explain = (spec, value, indent = 0) => {
     case tup: {
       let mems = spec.members;
       let length = mems.length;
-      let msg = `${value} failed ${spec.name}:\n`;
+      let msg = `${shown} failed ${spec.name}:\n`;
       if (!P.is_array(value)) {
-        return msg + pad + `${value} is not an array. Tuples must be arrays.`
+        return msg + pad + `${shown} is not an array. Tuples must be arrays.`
       }
       if (value.length !== length) {
         return msg + pad + `Length mismatch. Expected: ${length}; received: ${value.length}.`;
@@ -203,7 +217,7 @@ let explain = (spec, value, indent = 0) => {
         let mem = mems[i];
         let val = value[i];
         if (is_valid(mem, val)) {
-          msgs.push(pad + `At ${i}: ${val} passes ${mem.name}.`);
+          msgs.push(pad + `At ${i}: ${L.show(val)} passes ${mem.name}.`);
         } else {
           msgs.push(pad + `At ${i}: ${explain(mem, val, indent + 2)}`);
         }
@@ -211,9 +225,9 @@ let explain = (spec, value, indent = 0) => {
       return msg + msgs.join('\n');
     }
     case seq: {
-      let msg = `${value} fails ${spec.name}: `;
+      let msg = `${shown} fails ${spec.name}: `;
       if (!P.is_sequence(value)) {
-        return msg + `${value} is not a sequence.`;
+        return msg + `${shown} is not a sequence.`;
       }
       let mem = spec.members;
       let i = 0;
@@ -228,10 +242,10 @@ let explain = (spec, value, indent = 0) => {
       let s = spec.members.spec;
       let key = spec.members.key;
       let val = value != undefined ? value[key] : undefined;
-      return `${value} fails ${spec.name}\n${pad}At ${key}: ${explain(s, val, indent + 2)}`;
+      return `${shown} fails ${spec.name}\n${pad}At ${key}: ${explain(s, val, indent + 2)}`;
     }
     case record: {
-      let msg = `${value} failed ${spec.name}:\n`;
+      let msg = `${shown} failed ${spec.name}:\n`;
       let msgs = [];
       for (let mem of spec.members) {
         let key = mem.members.key;
@@ -243,7 +257,7 @@ let explain = (spec, value, indent = 0) => {
       return msg + msgs.join('\n');
     }
     case dict: {
-      let msg = `${value} failed ${spec.name}:`;
+      let msg = `${shown} failed ${spec.name}:`;
       if (!P.is_assoc(value)) {
         return msg + `Dicts must be associative.`;
       }
@@ -256,7 +270,7 @@ let explain = (spec, value, indent = 0) => {
       return msg + '\n' + msgs.join('\n');
     }
     case type: {
-      return `${value} failed ${spec.name}: Expected ${spec.members} but received ${Type.type_of(value)}.`;
+      return `${shown} failed ${spec.name}: Expected ${spec.members} but received ${Type.type_of(value)}.`;
     }
     case args: {
       let max_arity = 0;
@@ -269,10 +283,10 @@ let explain = (spec, value, indent = 0) => {
       let num_args = value.length;
       let arg_tuple = arity_map[Math.min(num_args, max_arity)];
       if (arg_tuple == undefined) {
-        return `${value} failed ${spec.name}: Wrong number of arguments. Expected ${Object.keys(arity_map).join(' | ')} but received ${num_args}.`
+        return `${shown} failed ${spec.name}: Wrong number of arguments. Expected ${Object.keys(arity_map).join(' | ')} but received ${num_args}.`
       }
       if (num_args <= max_arity) {
-        return `${value} failed ${spec.name}:\n${pad}${explain(arg_tuple, value, indent + 2)}`;
+        return `${shown} failed ${spec.name}:\n${pad}${explain(arg_tuple, value, indent + 2)}`;
       }
       let explicit = value.slice(0, max_arity);
       let rest = value.slice(max_arity);
@@ -281,7 +295,7 @@ let explain = (spec, value, indent = 0) => {
         let arg = explicit[i];
         let arg_spec = arg_tuple.members[i];
         if (is_valid(arg_spec, arg)) {
-          tup_msgs.push(`At ${i}: ${arg} passes ${arg_spec.name}.`);
+          tup_msgs.push(`At ${i}: ${L.show(arg)} passes ${arg_spec.name}.`);
         } else {
           tup_msgs.push(`At ${i}: ${explain(arg_spec, arg, indent + 2)}`);
         }
@@ -290,23 +304,31 @@ let explain = (spec, value, indent = 0) => {
       let rest_spec = arg_tuple.members[max_arity - 1];
       for (let i = 0; i < rest.length; i ++) {
         if (is_valid(rest_spec, rest[i])) {
-          rest_msgs.push(pad + `At ${i + max_arity}: ${rest[i]} passes ${rest_spec.name}.`)
+          rest_msgs.push(pad + `At ${i + max_arity}: ${L.show(rest[i])} passes ${rest_spec.name}.`)
         } else {
           rest_msgs.push(pad + `At ${i + max_arity}: ${explain(rest_spec, rest[i], indent + 2)}`);
         }
       }
-      return `${value} failed ${spec.name}\nwith <${arg_tuple.members.map((s) => s.name).join(', ')}>:\n${[...tup_msgs, ...rest_msgs].join('\n')}`;
+      return `${shown} failed ${spec.name}\nwith <${arg_tuple.members.map((s) => s.name).join(', ')}>:\n${[...tup_msgs, ...rest_msgs].join('\n')}`;
     }
     default:
-      return `${value} fails ${spec.name}.`;
+      return `${shown} fails ${spec.name}.`;
   }
 };
 
-let spec_ns = NS.defns({type: Spec, members: {
-  Spec, defspec: def, show, is_spec, is_valid, and, or, tup, seq, at, record,
-  any, boolean, string, number, integer, key, symbol, array, some, undef,
-  function: fn, obj, rename,
-  assoc, iter, coll, not_empty, sequence, dict, type, maybe, args, explain
-}});
+export default ns({
+  type: spec_t,
+  members: {
+    defspec, show, is_spec, is_valid, rename, // utils
+    and, or, tup, seq, at, record, // combinators
+    any, bool, str, num, int, key, arr, some, undef, fn, obj,
+    assoc, iter, coll, not_empty, sequence, // useful
+    dict, type, maybe, args, // parametric
+    explain // and explain
+  }
+});
 
-export default spec_ns;
+let named_or_typed = or(at('name', str), at('type', type(Type.t)));
+let with_members = at('members', obj);
+let ns_descriptor = defspec({name: 'ns_descriptor', pred: and(named_or_typed, with_members)});
+let ns_args = args([ns_descriptor], [type(NS.t), obj]);

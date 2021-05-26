@@ -16,7 +16,7 @@
   [x] Write protocols
     [ ] consider moving protocols into Spec
   [?] Determine next steps
-    [ ] consider moving methods into `base`: `show` wants to be a method
+    [*] consider moving methods into `base`: `show` wants to be a method
 [-] Complete ducers
   [ ] TODOs are in file
 [ ] pull out TODOs from everywhere into a list

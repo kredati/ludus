@@ -3,21 +3,24 @@
 // and signed versions of previously-unsigned functions
 
 import Ludus from './deps.js';
-import S from './spec.js';
+import Spec from './spec.js';
+import NS from './ns.js';
 
 let Fn = Ludus.Fn;
 let {report} = Ludus;
+let {ns} = NS;
 
-let {record, maybe, string, seq, or, and, any, some, type, Spec, args, not_empty} = S;
-let func = S.function;
+let {record, maybe, str, seq, or, and, any, some, type, args, not_empty} = Spec;
 
-let test = or(func, type(Spec)); // specs valid tests: a function or a spec
+let func = Spec.fn;
+
+let test = or(func, type(Spec.t)); // specs valid tests: a function or a spec
 let pre_post = maybe(or(test, seq(test))); // pre or post tests are optional, and either tests or sequences of tests
 
 // spec a function descriptor
 let fn_descriptor = record('fn_descriptor', {
-  name: string,
-  doc: maybe(string),
+  name: str,
+  doc: maybe(str),
   pre: pre_post,
   post: pre_post,
   body: or(func, and(not_empty, seq(func))) 
@@ -46,12 +49,14 @@ let loop = defn({
   body: Fn.loop
 });
 
+// `recur` cannot be instrumented because of its
+// extraordinarily weird behavior
 Fn.recur.doc = '`recur` is used within functions wrapped by `loop` to eliminate recursive tail calls. It will throw a variety of helpful errors if used in any other way, which can help identify when recursive calls are not in tail position.';
 
 let fn = defn({
   name: 'fn', 
   doc: '`fn` is a convnience form of `defn`. It takes a string name and a function body or sequence of body clauses. It does not offer provisions for docstrings, nor for pre/post condition testing.',
-  pre: args([string, func]),
+  pre: args([str, func]),
   body: Fn.fn
 });
 
@@ -204,7 +209,24 @@ let comp_some = defn({
   }
 });
 
-export default Ludus.NS.defmembers(Fn, {
+let method_descriptor = Spec.record('method_descriptor', {
+  name: str,
+  not_found: maybe(Spec.fn)
+});
+
+let defmethod = defn({
+  name: 'defmethod',
+  pre: args([method_descriptor]),
+  body: Ludus.defmethod
+});
+
+let show = defn({
+  name: 'show',
+  pre: args([Spec.fn]),
+  body: (fn) => fn.name ? `[λ: ${fn.name}]` : '[λ]'
+});
+
+export default ns(Fn, {
     defn, partial, loop, recur: Fn.recur, fn,
-    once, thread, thread_some, pipe, pipe_some, comp, comp_some
+    once, thread, thread_some, pipe, pipe_some, comp, comp_some, defmethod, show
 });
