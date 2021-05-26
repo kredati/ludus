@@ -1,7 +1,7 @@
 # Reserved words
 Here are the JS reserved words:
 
-### ES2015
+### ES2015 (from MDN)
 break
 case
 catch
@@ -36,7 +36,7 @@ while
 with
 yield
 
-### Additional words
+### Additional words (from MDN)
 enum
 implements
 interface
@@ -49,6 +49,9 @@ await
 true
 false
 null
+
+### Additional words
+async
 
 ### Ludus-specific reserved words?
 #### "Special forms"
