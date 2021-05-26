@@ -8,5 +8,9 @@
   "author": "Scott Richmond",
   "license": "MIT",
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {},
+  "quokka": {
+    "stdEsm": false,
+    "nativeEsm": true
+  }
 }
