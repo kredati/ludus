@@ -27,8 +27,8 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
   [*] Rename to `base.js`
   [-] Move to `prelude` directory of modules
     [*] Environments
-    [-] Errors
-      [ ] change language from "throw" to "raise"
+    [*] Errors
+      [*] change language from "throw" to "raise"
     [*] Namespaces
       [ ] research namespace/type parsing situation: can we enforce dot-access property only on 
     [*] Refs
