@@ -3,6 +3,8 @@
 ## Meta
 [ ] Develop this further
 [ ] Write new thoughts about standalone vs. using libraries
+[ ] Clean this up!--May 2021
+[ ] Clean up notes and research folder; remove cruft
 
 ### Project key
 * `[ ]`: To do
@@ -199,7 +201,7 @@ Core is a relatively complete standard library whose constituents are the buildi
 [ ] parser combinators
 [ ] full set of transducers
   [ ] identify core transducers
-[*] value operations
+[*] value operations (NB: these are in `prelude`, since they require operatoirs)
   [*] atoms
     [*] booleans
     [*] numbers (math)
@@ -218,7 +220,7 @@ Core is a relatively complete standard library whose constituents are the buildi
 [ ] complete set of transducers
 [ ] `doc`
 [ ] comprehensive testing of `core` functions
-[ ] move `list` to `core` from `prelude`
+[x] move `list` to `core` from `prelude`
 
 ### Milestone: Language design
 See [./notes_and_research/language.md].
@@ -227,6 +229,7 @@ Special forms:
 [*] `when` + ternary operator
 [x] `cond` + compilation
 [ ] `js` + no parsing
+[ ] `ns` + exports
 
 ### Milestone: Ludus Parser
 TBD
