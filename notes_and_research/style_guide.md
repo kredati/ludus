@@ -20,6 +20,7 @@
 * All elaboration of local identifiers from namespaces should come after imports and before any local definitions.
 * Prefer destructuring assignment for local identifiers.
 * Functions should always have explicit returns, even if mutating functions `return undefined`.
+* Functions that have stateful effects should never return anything other than `undefined`.
 
 ### In JS
 * Unless it's impossible or for optimization purposes, all JS should stay as close to Ludus as possible.
