@@ -17,7 +17,7 @@ import S from './spec.js';
 import T from './type.js';
 import NS from './ns.js';
 
-let {args, seq, sequence, type} = S;
+let {args, seq, sequence, type, fn} = S;
 let {defn, once} = Fn;
 let {create, deftype, is} = T;
 let {has, is_iter, is_assoc} = P;
@@ -110,13 +110,13 @@ let create_seq = (iterator, size) => {
 let seq_ = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
-  pre: args([seqable]),
+  pre: args([seqable], [fn, seqable]),
   body: [
     (seqable) => {
       // if it's already a seq, just return it
       if (is_seq(seqable)) return seqable;
       // if it's undefined, return an empty seq
-      if (seqable == undefined) return empty;
+      if (seqable == undefined) return empty();
       // if it's iterable, return a seq over a new iterator over it
       // js: strings, arrays, Maps, and Sets are iterable
       // ld: vectors and lists are iterable
@@ -128,9 +128,24 @@ let seq_ = defn({
       // however, with our precondition, we should never get here.
       throw TypeError(`${seqable} is not seqable.`);
     },
-    (xform, seqable) => {}
+    (xform, seqable) => seq_(xform_seq(xform, seqable))
   ]
 });
+
+let conj_ = (xs, x) => xs.push(x), xs;
+
+let xform_seq = function* (xform, seqable) {
+  let seq = seq_(seqable);
+  let queue = [];
+  while (!is_empty(seq)) {
+    while (queue.length === 0) {
+      queue = xform(conj_)([], first(seq));
+    }
+    yield* queue;
+    seq = rest(seq);
+    queue = [];
+  }
+}
 
 let empty_seq = seq_([]);
 
