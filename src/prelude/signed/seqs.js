@@ -111,22 +111,25 @@ let seq_ = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
   pre: args([seqable]),
-  body: (seqable) => {
-    // if it's already a seq, just return it
-    if (is_seq(seqable)) return seqable;
-    // if it's undefined, return an empty seq
-    if (seqable == undefined) return empty;
-    // if it's iterable, return a seq over a new iterator over it
-    // js: strings, arrays, Maps, and Sets are iterable
-    // ld: vectors and lists are iterable
-    if (is_iter(seqable)) 
-      return create_seq(seqable[Symbol.iterator](), size(seqable));
-    // if it's a record (object literal) return a seq over an object generator
-    if (is_assoc(seqable)) return create_seq(obj_gen(seqable), size(seqable));
-    // otherwise we don't know what to do; throw your hands up
-    // however, with our precondition, we should never get here.
-    throw TypeError(`${seqable} is not seqable.`);
-  }
+  body: [
+    (seqable) => {
+      // if it's already a seq, just return it
+      if (is_seq(seqable)) return seqable;
+      // if it's undefined, return an empty seq
+      if (seqable == undefined) return empty;
+      // if it's iterable, return a seq over a new iterator over it
+      // js: strings, arrays, Maps, and Sets are iterable
+      // ld: vectors and lists are iterable
+      if (is_iter(seqable)) 
+        return create_seq(seqable[Symbol.iterator](), size(seqable));
+      // if it's a record (object literal) return a seq over an object generator
+      if (is_assoc(seqable)) return create_seq(obj_gen(seqable), size(seqable));
+      // otherwise we don't know what to do; throw your hands up
+      // however, with our precondition, we should never get here.
+      throw TypeError(`${seqable} is not seqable.`);
+    },
+    (xform, seqable) => {}
+  ]
 });
 
 let empty_seq = seq_([]);
