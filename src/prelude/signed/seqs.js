@@ -10,18 +10,19 @@
 // Seqs are immutable and stateless, and are an abstraction over
 // any number of things.
 
-import L from './deps.js';
 import P from './preds.js';
 import Fn from './fns.js';
 import S from './spec.js';
 import T from './type.js';
 import NS from './ns.js';
+import A from './arr.js';
 
-let {args, seq, sequence, type, fn} = S;
-let {defn, once} = Fn;
+let {args, seq, type, fn, coll, any} = S;
+let {defn, once, defmethod, recur} = Fn;
 let {create, deftype, is} = T;
-let {has, is_iter, is_assoc} = P;
+let {has, is_iter, is_assoc, bool} = P;
 let {ns} = NS;
+let {conj_} = A;
 
 // obj_gen: creates a generator that iterates through the keys of an object
 // only covers string keys
@@ -69,22 +70,14 @@ let show = defn({
 
 let is_seq = defn({
   name: 'is_seq',
-  doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, see `is_seqable`.',
+  doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, use `coll`.',
   body: (x) => is(seq_t, x) 
 });
-
-let is_seqable = defn({
-  name: 'is_seqable',
-  doc: 'Tells if a `seq` can be generated over a value. This will return true for `string`s, `object`s, and `iterables`.',
-  body: (x) => is_iter(x) || is_assoc(x) 
-});
-
-let seqable = L.Spec.defspec({name: 'seqable', pred: is_seqable});
 
 let size = defn({
   name: 'size',
   doc: 'Determines the size of a collection.',
-  pre: args([seqable]),
+  pre: args([coll]),
   body: (x) => {
     if (x.length != undefined) return x.length;
     if (x.size != undefined) return x.size;
@@ -93,7 +86,7 @@ let size = defn({
   }
 });
 
-// make_seq: takes anything that conforms to the iteration protocol
+// create_seq: takes anything that conforms to the iteration protocol
 // and returns a seq over it
 // seqs themselves conform to the iteration protocol
 // they also have `first` and `rest` methods
@@ -110,7 +103,7 @@ let create_seq = (iterator, size) => {
 let seq_ = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
-  pre: args([seqable], [fn, seqable]),
+  pre: args([coll], [fn, coll]),
   body: [
     (seqable) => {
       // if it's already a seq, just return it
@@ -132,15 +125,13 @@ let seq_ = defn({
   ]
 });
 
-let conj_ = (xs, x) => (xs.push(x), xs);
-
-let xform_seq = function* (xform, seqable) {
-  let seq = seq_(seqable);
+let xform_seq = function* (xform, coll) {
+  let seq = seq_(coll);
   console.log([...seq]);
   let queue = [];
   while (!is_empty(seq) && queue.length === 0) {
     queue = xform(conj_)([], first(seq));
-    if (queue.value) {
+    if (is_complete(queue)) {
       queue = queue.value;
     }
     for (let x of queue) {
@@ -163,11 +154,11 @@ let empty = defn({
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates `seq`s, placing one after the other.',
-  pre: seq(sequence),
-  body: (...seqables) => {
+  pre: seq(coll),
+  body: (...colls) => {
     let generator = (function*(){
-      for (let seqable of seqables) {
-        yield* seq_(seqable);
+      for (let coll of colls) {
+        yield* seq_(coll);
       }
     })();
     let concat_size = seqables.reduce((acc, seq) => acc + size(seq), 0);
@@ -179,27 +170,79 @@ let concat = defn({
 let first = defn({
   name: 'first',
   doc: 'Gets the first element of any `seq`able.',
-  pre: args([seqable]),
-  body: (seqable) => seq_(seqable).first()
+  pre: args([coll]),
+  body: (coll) => seq_(coll).first()
 });
 
 let rest = defn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
-  pre: args([seqable]),
-  body: (seqable) => seq_(seqable).rest() || empty_seq
+  pre: args([coll]),
+  body: (coll) => seq_(coll).rest() || empty_seq
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
-  pre: args([seqable]),
-  body: (seqable) => rest(seq_(seqable)) === empty_seq
+  pre: args([coll]),
+  body: (coll) => rest(seq_(coll)) === empty_seq
+});
+
+let completed = Symbol('ludus/completed');
+
+let complete = defn({
+  name: 'complete',
+  doc: 'Short-circuits `reduce`, returning the value and halting the reduction. Used to optimize transducers that do not traverse a whole collection.',
+  body: (value) => ({value, [completed]: true})
+});
+
+let is_complete = defn({
+  name: 'is_complete',
+  doc: 'Tells if a value, presumably passed to a reducing function, has completed the reduction.',
+  body: (x) => x != undefined && bool(x[completed])
+});
+
+let reduce = defn({
+  name: 'reduce',
+  pre: args([fn, coll], [fn, any, coll]),
+  body: [
+    (f, coll) => reduce_loop(f, first(coll), rest(coll)),
+    (f, accum, coll) => {
+      for (let x of seq_(coll)) {
+        if (is_complete(accum)) return accum.value;
+        accum = f(accum, x);
+      }
+      return accum;
+    }
+  ]
+});
+
+let transduce = defn({
+  name: 'transduce',
+  doc: 'Transduce is a transforming reducer. (Again, explaining this? Ugh.)',
+  pre: args([fn, fn, coll], [fn, fn, any, coll]),
+  body: [
+    (xform, reducer, coll) => reduce(xform(reducer), coll),
+    (xform, reducer, accum, coll) => reduce(xform(reducer), accum, coll)
+  ]
+});
+
+let concat_m = defmethod({name: 'concat'});
+
+let into = defn({
+  name: 'into',
+  doc: 'Takes the contents of one collection and puts them into another, working across types. Takes an optional transducer.',
+  pre: args([coll, coll], [coll, fn, coll]),
+  body: [
+    (to, from) => concat_m(to, seq_(from)),
+    (to, xform, from) => concat_m(to, transduce(xform, A.conj_, [], from))
+  ]
 });
 
 export default ns({
   type: seq_t,
   members: {
-    concat, empty, first, is_empty, is_seq, is_seqable, seqable, 
-    iterate, rest, seq: seq_, show, size
+    concat, empty, first, is_empty, is_seq, 
+    iterate, rest, seq: seq_, show, size,
+    reduce, transduce, into, complete, is_complete
   }});

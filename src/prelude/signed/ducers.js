@@ -54,7 +54,7 @@ let reduce = defn({
   name: 'reduce',
   doc: 'Reduces a collection. (Oy, how do we explain reduce?)',
   pre: args([fn, coll], [fn, any, coll]),
-  body: [
+  body: [ 
     (f, coll) => reduce(f, first(coll), rest(coll)),
     (f, accum, coll) => {
       if (accum != undefined && bool(accum[completed])) return accum.value;
@@ -71,7 +71,7 @@ let transduce = defn({
   body: [
     (xform, reducer, coll) => reduce(xform(reducer), coll),
     (xform, reducer, accum, coll) => reduce(xform(reducer), accum, coll)
-  ] 
+  ]
 });
 
 let concat = defmethod({name: 'concat'});
