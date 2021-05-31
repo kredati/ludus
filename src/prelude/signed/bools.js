@@ -46,4 +46,4 @@ let or = defn({
   ]
 });
 
-export default ns(L.Bool, {and, or, not});
+export default ns(L.Bool, {and, or, not, bool});
