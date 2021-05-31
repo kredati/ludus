@@ -1,5 +1,4 @@
-//////////////////// Ducers
-// Ducers: reducers and transducers
+//////////////////// Transducers
 // Reduction is a fundamental computational operation, traversing a collection
 // and keeping a running tally of results. `reduce` has the following signature:
 // `((a, b) -> a, a, [b]) -> b`. I'm still figuring out how to explain reduce
@@ -16,6 +15,11 @@
 // order of normal function composition. Where you would use `pipe` for normal 
 // function composition, use `comp` for transducers.
 
+// Note that some of the fundamental operations of transducers---`reduce`,
+// `transduce`, `seq`, `into`---are defined in `seq`, as abstractions over
+// `seq`. This namespace, instead, defines the transducers themselves:
+// composable transducing functions.
+
 // This document, as of May 2021, is definitely still a work in progress:
 // TODO:
 // [ ] add more transduction functions (list at end of file)
@@ -31,62 +35,17 @@ import Seq from './seqs.js';
 import Spec from './spec.js';
 import A from './arr.js';
 import Fn from './fns.js';
-import B from './bools.js';
 import L from './lazy.js';
 import NS from './ns.js';
 
-let {args, fn, coll, any} = Spec;
-let {defn, recur, defmethod} = Fn;
+let {args, fn, coll, any, int} = Spec;
+let {defn, defmethod} = Fn;
 let {bool} = P;
-let {first, rest, is_empty} = Seq;
+let {into, complete} = Seq;
 let {interleave} = L;
 let {ns} = NS;
 
-let completed = Symbol('ludus/completed');
-
-let complete = defn({
-  name: 'complete',
-  doc: 'Short-circuits `reduce`, returning the value and halting the reduction. Used to optimize transducers that do not traverse a whole collection.',
-  body: (value) => ({value, [completed]: true})
-});
-
-let reduce = defn({
-  name: 'reduce',
-  doc: 'Reduces a collection. (Oy, how do we explain reduce?)',
-  pre: args([fn, coll], [fn, any, coll]),
-  body: [ 
-    (f, coll) => reduce(f, first(coll), rest(coll)),
-    (f, accum, coll) => {
-      if (accum != undefined && bool(accum[completed])) return accum.value;
-      if (is_empty(coll)) return accum;
-      return recur(f, f(accum, first(coll)), rest(coll));
-    }
-  ]
-});
-
-let transduce = defn({
-  name: 'transduce',
-  doc: 'Transduce is a transforming reducer. (Again, explaining this? Ugh.)',
-  pre: args([fn, fn, coll], [fn, fn, any, coll]),
-  body: [
-    (xform, reducer, coll) => reduce(xform(reducer), coll),
-    (xform, reducer, accum, coll) => reduce(xform(reducer), accum, coll)
-  ]
-});
-
-let concat = defmethod({name: 'concat'});
-
 let empty = defmethod({name: 'empty'});
-
-let into = defn({
-  name: 'into',
-  doc: 'Takes the contents of one collection and puts them into another, working across types. Takes an optional transducer.',
-  pre: args([coll, coll], [coll, fn, coll]),
-  body: [
-    (to, from) => into(to, (x) => x, from),
-    (to, xform, from) => concat(to, transduce(xform, A.conj_, [], from))
-  ]
-});
 
 let map = defn({
   name: 'map',
@@ -202,7 +161,8 @@ let zip = defn({
 // on_values
 // partition, _while, _by?
 
-export default ns({name: 'Ducers', members: {
-  reduce, transduce, complete, every, filter, into, keep, map, none, some, zip,
-  concat, empty
+export default ns({
+  name: 'Ducers', 
+  members: {
+    every, filter, keep, map, none, some, zip
 }});
