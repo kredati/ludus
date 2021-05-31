@@ -47,12 +47,15 @@ let always = defn({
   body: () => true
 });
 
+/* Drop this for now; we actually don't allow default values in Ludus
+Leave this in for posterity, though?
 let make = defn({
   name: 'make',
   doc: 'The Ludus equivalent of a `let` expression in Lisp. (`make` is the Logo name for this operation.) Allows for fully functional programming. In place of `let` and `return` statements, takes a function literal with default paramters as the bindings, and returns the value of the expression after the arrow. Commas may be used put expressions together, returning the value of the last one. E.g. `make((x = 2, y = 3) => mult(x, y)) //=> 6.`',
   pre: seq(fn),
   body: (fn) => fn()
 });
+*/
 
 let just = defn({
   name: 'just',
@@ -73,5 +76,7 @@ let repeat = defn({
   }
 });
 
-export default ns({name: 'Flow', 
-  members: {when, clause, cond, fcond, make, just, repeat, always}});
+export default ns({
+  name: 'Flow', 
+  members: {when, clause, cond, fcond, just, repeat, always}
+});
