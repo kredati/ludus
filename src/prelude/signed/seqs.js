@@ -132,16 +132,21 @@ let seq_ = defn({
   ]
 });
 
-let conj_ = (xs, x) => xs.push(x), xs;
+let conj_ = (xs, x) => (xs.push(x), xs);
 
 let xform_seq = function* (xform, seqable) {
   let seq = seq_(seqable);
+  console.log([...seq]);
   let queue = [];
-  while (!is_empty(seq)) {
-    while (queue.length === 0) {
-      queue = xform(conj_)([], first(seq));
+  while (!is_empty(seq) && queue.length === 0) {
+    queue = xform(conj_)([], first(seq));
+    if (queue.value) {
+      queue = queue.value;
     }
-    yield* queue;
+    for (let x of queue) {
+      console.log(x);
+      yield x;
+    }
     seq = rest(seq);
     queue = [];
   }
