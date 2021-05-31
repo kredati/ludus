@@ -32,7 +32,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
     [*] Errors
       [*] change language from "throw" to "raise"
     [*] Namespaces
-      [ ] research namespace/type parsing situation: can we enforce dot-access property only on 
+      [-] research namespace/type parsing situation: can we enforce dot-access property only on 
     [*] Refs
     [-] Functions
       [ ] revise core function instrumentation
