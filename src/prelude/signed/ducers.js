@@ -19,27 +19,28 @@
 // This document, as of May 2021, is definitely still a work in progress:
 // TODO:
 // [ ] add more transduction functions (list at end of file)
-// [ ] figure out lazy transduction, if it makes sense for Ludus
+// [*] figure out lazy transduction, if it makes sense for Ludus
 // [ ] improve documentation
 // [ ] spec all the transducers
 // [ ] consider how to instrument the transducers, if at all
 // [ ] consider moving zip, etc. to another namespace
+// [ ] improve transducers/reduce/etc. to clj interface (0, 1, and 2-arity)
 
 import P from './preds.js';
 import Seq from './seqs.js';
 import Spec from './spec.js';
 import A from './arr.js';
 import Fn from './fns.js';
-import M from './method.js';
 import B from './bools.js';
 import L from './lazy.js';
 import NS from './ns.js';
 
 let {args, fn, coll, any} = Spec;
-let {defn, recur} = Fn;
+let {defn, recur, defmethod} = Fn;
 let {bool} = P;
 let {first, rest, is_empty} = Seq;
 let {interleave} = L;
+let {ns} = NS;
 
 let completed = Symbol('ludus/completed');
 
@@ -73,9 +74,9 @@ let transduce = defn({
   ] 
 });
 
-let concat = M.defmethod({name: 'concat'});
+let concat = defmethod({name: 'concat'});
 
-let empty = M.defmethod({name: 'empty'});
+let empty = defmethod({name: 'empty'});
 
 let into = defn({
   name: 'into',
@@ -185,6 +186,7 @@ let zip = defn({
 
 ///// Transduers to add
 // cat
+// mapcat
 // flat
 // unique
 // dedupe
@@ -198,8 +200,9 @@ let zip = defn({
 // remove
 // on_keys
 // on_values
+// partition, _while, _by?
 
-export default NS.defns({name: 'Ducers', members: {
+export default ns({name: 'Ducers', members: {
   reduce, transduce, complete, every, filter, into, keep, map, none, some, zip,
   concat, empty
 }});
