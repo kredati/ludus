@@ -57,14 +57,16 @@ let from = defn({
 
 let concat = defn({
   name: 'concat',
-  doc: 'Concatenates two or more arrays.',
-  pre: seq(arr),
-  body: (first, ...rest) => {
-    let out = from(first);
-    for (let arr of rest) {
-      out = out.concat(from(arr));
+  doc: 'Concatenates an array with zero or more iterables.',
+  pre: args([arr], [arr, iter]),
+  body: (...iters) => {
+    let out = [];
+    for (let xs of iters) {
+      for (let x of xs) {
+        out.push(x);
+      }
     }
-    return out;
+    return from(out);
   }
 });
 
