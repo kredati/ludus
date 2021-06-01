@@ -7,19 +7,19 @@ TODO:
 [x] add `join` to Arr
 [*] `and`/`or`/`not` methods
     [*] add speccing to `defmethod`
-    [x] write these to dispatch to `Fn` or `Bool` but not `Spec`
+    [x] write these to dispatch to `Fn` or `Bool` but not `Spec` (not necessary)
 [ ] consider collapsing `fn` and `defn`
 [ ] consider losing the `def` in:
     [ ] defmethod
     [ ] defspec
     [ ] defn
     [ ] deftype
-[ ] consider: should `assoc` be a method or an abstracted function?
-[ ] are `Obj.update` and `Ref.update` abstractable into a method?
+[*] consider: should `assoc` be a method or an abstracted function?
+[*] are `Obj.update` and `Ref.update`  abstractable into a method? (yes)
 [ ] can we use `Seq.concat` as an abstracted concat, or should it be a method?
 [ ] standardize `count` vs `size`: which should we use?
 [ ] write methods
-    [ ] assoc?
+    [ ] assoc
     [ ] conj
     [ ] empty
     [ ] index_of
@@ -27,7 +27,7 @@ TODO:
     [ ] and
     [ ] or
     [ ] not
-    [ ] update?
+    [ ] update
     [ ] concat?
 [ ] standardize `from` across `Arr`, `Str`, `Obj`
 [ ] do some perf testing on `recur`
