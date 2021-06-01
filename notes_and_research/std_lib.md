@@ -8,28 +8,29 @@ TODO:
 [*] `and`/`or`/`not` methods
     [*] add speccing to `defmethod`
     [x] write these to dispatch to `Fn` or `Bool` but not `Spec` (not necessary)
-[ ] consider collapsing `fn` and `defn`
 [ ] consider losing the `def` in:
     [ ] defmethod
     [ ] defspec
     [ ] defn
+        [ ] consider collapsing `fn` and `defn`
     [ ] deftype
 [*] consider: should `assoc` be a method or an abstracted function?
 [*] are `Obj.update` and `Ref.update`  abstractable into a method? (yes)
 [*] can we use `Seq.concat` as an abstracted concat, or should it be a method? (method)
 [*] standardize `count` vs `size`: which should we use? (count)
-[ ] write methods
-    [ ] assoc
-    [ ] conj
-    [ ] empty 
-    [ ] index_of
-    [ ] slice
-    [ ] and
-    [ ] or
-    [ ] not
-    [ ] update
-    [ ] concat
-[ ] standardize `from` across `Arr`, `Str`, `Obj`
+[-] write methods
+    [*] assoc
+    [*] conj
+    [*] empty 
+    [*] index_of
+    [*] slice
+    [*] and
+    [*] or
+    [*] not
+    [*] update
+    [*] concat
+    [ ] Write doc for all of the above
+[*] standardize `from` across `Arr`, `Str`, `Obj`
 [ ] do some perf testing on `recur`
 [ ] determine what to include from `Num`
 
@@ -38,7 +39,7 @@ Arr:
     & assoc
     & concat
     & conj
-    &? conj_
+    conj_
     & empty
     empty_
     from
@@ -85,8 +86,8 @@ Fn:
     rename,
     + partial,
     n_ary,
-    + loop,
-    + recur,
+    * loop,
+    * recur,
     fn,
     pre_post,
     defn,
