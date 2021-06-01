@@ -21,7 +21,7 @@ let raise = (err, ...msgs) => {
   } 
   else {
     for (let msg of msgs) Ludus.report(msg);
-    throw err;
+    throw Error(err);
   };
 };
 
