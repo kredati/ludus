@@ -3,14 +3,12 @@
 // TODO: decide if I want all objs to become hamts
 
 import L from './deps.js';
-import P from './preds.js';
 import Fn from './fns.js';
 import NS from './ns.js';
 import Spec from './spec.js';
 
 let {defn, partial} = Fn;
 let {args, any, key, assoc, fn, seq, dict, tup, obj} = Spec;
-let {is_any, is_key, is_assoc, is_fn, is_sequence_of} = P;
 let {ns} = NS;
 
 let get = defn({
