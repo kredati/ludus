@@ -5,9 +5,9 @@
 
 TODO:
 [x] add `join` to Arr
-[ ] `and`/`or`/`not` methods
-    [ ] add speccing to `defmethod`
-    [ ] write these to dispatch to `Fn` or `Bool` but not `Spec`
+[*] `and`/`or`/`not` methods
+    [*] add speccing to `defmethod`
+    [x] write these to dispatch to `Fn` or `Bool` but not `Spec`
 [ ] consider collapsing `fn` and `defn`
 [ ] consider losing the `def` in:
     [ ] defmethod
