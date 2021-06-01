@@ -59,7 +59,9 @@ let is_valid = (spec, value) => {
 // Combines specs with a boolean or.
 let or = (...specs) => {
   let name = `or<${specs.map((s) => s.name)}>`;
-  let pred = P.or(...specs.map((s) => s.pred));
+  let specced = specs.map((s) => 
+    is_spec(s)? s : defspec({pred: s}));
+  let pred = P.or(...specced.map((s) => s.pred));
   return defspec({name, pred, spec: or, members: specs});
 };
 
@@ -67,7 +69,9 @@ let or = (...specs) => {
 // Combines specs with a boolean and.
 let and = (...specs) => {
   let name = `and<${specs.map((s) => s.name)}>`;
-  let pred = P.and(...specs.map((s) => s.pred));
+  let specced = specs.map((s) => 
+    is_spec(s) ? s : defspec({pred: s}));
+  let pred = P.and(...specced.map((s) => s.pred));
   return defspec({name, pred, spec: and, members: specs});
 };
 
