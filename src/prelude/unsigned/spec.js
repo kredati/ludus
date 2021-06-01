@@ -75,6 +75,14 @@ let and = (...specs) => {
   return defspec({name, pred, spec: and, members: specs});
 };
 
+// not :: (...specs) => spec
+// Negates a spec with boolean not.
+let not = (spec) => {
+  let name = `not<${spec.name}>`;
+  let pred = P.not(is_spec(spec) ? s.pred : s);
+  return defspec({name, pred, spec: not, members: [spec]});
+};
+
 // tup :: (...specs) => spec
 // Combines specs into a tuple
 // A tuple matches on position in an array
@@ -324,15 +332,10 @@ export default ns({
   type: spec_t,
   members: {
     defspec, show, is_spec, is_valid, rename, // utils
-    and, or, tup, seq, at, record, // combinators
+    and, or, not, tup, seq, at, record, // combinators
     any, bool, str, num, int, key, arr, some, undef, fn, obj,
     assoc, iter, coll, not_empty, sequence, // useful
     dict, type, maybe, args, // parametric
     explain // and explain
   }
 });
-
-let named_or_typed = or(at('name', str), at('type', type(Type.t)));
-let with_members = at('members', obj);
-let ns_descriptor = defspec({name: 'ns_descriptor', pred: and(named_or_typed, with_members)});
-let ns_args = args([ns_descriptor], [type(NS.t), obj]);
