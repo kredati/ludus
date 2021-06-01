@@ -21,7 +21,10 @@ import './globals.js';
 
 let {members} = NS;
 
-members(Type); //?
+let and = Fn.defmethod({
+    name: 'and',
+    not_found: (...args) => Bool.and(...args)
+});
 
 let ctx = {
     L: Ludus, Ludus, Arr, Bool, Ducers, Err, Flow, Fn, Lazy, NS, Num, Obj,
