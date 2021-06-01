@@ -19,13 +19,6 @@ import Type from './type.js';
 import './eq.js';
 import './globals.js';
 
-let {members} = NS;
-
-let and = Fn.defmethod({
-    name: 'and',
-    not_found: (...args) => Bool.and(...args)
-});
-
 let ctx = {
     L: Ludus, Ludus, Arr, Bool, Ducers, Err, Flow, Fn, Lazy, NS, Num, Obj,
     Preds, Ref, Seq, Spec, S: Spec, Str, Type,
