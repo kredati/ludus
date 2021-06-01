@@ -61,6 +61,13 @@ let or = defn({
   body: Spec.or
 });
 
+let not = defn({
+  name: 'not',
+  doc: 'Negates a spec with boolean not.',
+  pre: Spec.args([spec]),
+  body: Spec.not
+});
+
 let tup = defn({
   name: 'tup',
   doc: 'Creates a tuple: a spec that validates arrays by applying specs at particular positions to corresponding elements in the tuple. E.g. `is_valid(tup(string, number), [\'foo\', 42]) //=> true`, but `is_valid(tup(string, number), [23, 42]) //=> false`.',
@@ -126,6 +133,6 @@ export default ns({
   type: Spec.t, 
   members: {
     ...NS.members(Spec), and, args, at, defspec, dict, explain,
-    is_spec, is_valid, maybe, or, record, rename,
+    is_spec, is_valid, maybe, not, or, record, rename,
     seq, show, tup
 }});
