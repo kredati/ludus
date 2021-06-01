@@ -211,13 +211,19 @@ let comp_some = defn({
 
 let method_descriptor = Spec.record('method_descriptor', {
   name: str,
-  not_found: maybe(Spec.fn)
+  not_found: maybe(Spec.fn),
+  doc: maybe(str),
+  pre: pre_post,
+  post: pre_post
 });
 
 let defmethod = defn({
   name: 'defmethod',
   pre: args([method_descriptor]),
-  body: Ludus.defmethod
+  body: ({name, not_found, ...attrs}) => {
+    return defn({name, not_found, ...attrs,
+      body: Ludus.defmethod({name, not_found})});
+  }
 });
 
 let show = defn({
