@@ -36,32 +36,41 @@ let ctx = {
     // methods
     ...NS.members(Mthd),
     // from Arr
-    
+    is_index: Arr.is_index,
     // from Bool
-
     // from Ducers
-
+    every: Ducers.every, filter: Ducers.filter, keep: Ducers.keep,
+    map: Ducers.map, none: Ducers.none, some: Ducers.some,
+    take: Ducers.take,
     // from Err
-
+    handle: Err.handle,
     // from Flow
-
+    just: Flow.just, always: Flow.always,
     // from Fn
-
+    partial: Fn.partial, thread: Fn.thread, pipe: Fn.pipe, comp: Fn.comp,
     // from Lazy
-
+    cycle: Lazy.cycle, lazy: Lazy.lazy, range: Lazy.range,
     // from NS
-
+    is_ns: NS.is_ns, members: NS.members,
     // from Num
-
+        // TODO
     // from Obj
-
+    get: Obj.get, get_in: Obj.get_in, merge: Obj.merge, keys: Obj.keys,
+    values: Obj.values, entries: Obj.entries,
     // from Preds
-
+    is_any: Preds.is_any, is_undef: Preds.is_undef, is_some: Preds.is_some,
+    is_str: Preds.is_str, is_num: Preds.is_num, is_int: Preds.is_int,
+    is_bool: Preds.is_bool, is_fn: Preds.is_fn, is_obj: Preds.is_obj,
+    is_assoc: Preds.is_assoc, is_iter: Preds.is_iter, is_sequence: Preds.is_sequence,
+    is_arr: Preds.is_arr, is_key: Preds.is_key,
     // from Ref
-
+    swap: Ref.swap, watch: Ref.watch, unwatch: Ref.unwatch, future: Ref.future,
     // from Seq
-
+    first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
+    into: Seq.into,
     // from Str
-
+    capitalize: Str.capitalize, chars: Str.chars, is_char: Str.is_char, lowcase: Str.lowcase, split: Str.split, join: Str.from, trim: Str.trim,
+    upcase: Str.upcase, words: Str.words,
     // from Type
+    meta: Type.meta, type_of: Type.type_of, is: Type.is, create: Type.create
 };

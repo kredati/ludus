@@ -33,6 +33,10 @@ TODO:
 [*] standardize `from` across `Arr`, `Str`, `Obj`
 [ ] do some perf testing on `recur`
 [ ] determine what to include from `Num`
+[ ] standardize across object predicates & specs: `is_obj`, `is_assoc`, etc.
+[ ] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
+[ ] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
+
 
 Arr:
     * arr
@@ -44,7 +48,7 @@ Arr:
     empty_
     from
     & index_of
-    + is_index
+    * is_index
     last_index_of
     reverse
     & slice
@@ -59,13 +63,13 @@ Bool:
     * bool
 
 Ducers:
-    + every
-    + filter
-    + keep
-    + map
-    + none
-    + some
-    + take
+    * every
+    * filter
+    * keep
+    * map
+    * none
+    * some
+    * take
     zip
     // and more
 
@@ -78,13 +82,13 @@ Flow:
     * when
     * cond
     * fcond
-    + just
+    * just
     repeat
-    + always
+    * always
 
 Fn:
     rename,
-    + partial,
+    * partial,
     n_ary,
     * loop,
     * recur,
@@ -92,29 +96,29 @@ Fn:
     pre_post,
     defn,
     once,
-    + thread,
+    * thread,
     thread_some,
-    + pipe,
+    * pipe,
     pipe_some,
-    + comp,
+    * comp,
     comp_some,
     + defmethod,
     & show
 
 Lazy:
-    + cycle,
+    * cycle,
     gen,
     interleave,
-    + lazy,
-    + range,
+    * lazy,
+    * range,
     ? repeat,
     ? repeatedly
 
 NS:
-    + is_ns,
+    * is_ns,
     * ns,
     defmembers,
-    + members,
+    * members,
     def,
     get_ns,
     & show
@@ -180,47 +184,47 @@ Num:
     & show
 
 Obj:
-    + get,
+    * get,
     get_,
-    + get_in,
+    * get_in,
     & concat,
     &? update,
     update_with,
-    + merge,
-    + keys,
-    + values,
-    + entries,
+    * merge,
+    * keys,
+    * values,
+    * entries,
     & empty,
     & conj,
-    & conj_,
+    conj_,
     from,
-    &? assoc,
+    & assoc,
     assoc_
 
 Preds:
     bool,
-    + is_any,
-    + is_undef,
-    + is_some,
-    + is_str,
-    + is_num,
-    + is_int,
-    + is_bool,
-    + is_fn,
-    + is_obj,
-    + is_assoc,
-    + is_iter,
-    + is_sequence,
+    * is_any,
+    * is_undef,
+    * is_some,
+    * is_str,
+    * is_num,
+    * is_int,
+    * is_bool,
+    * is_fn,
+    * is_obj,
+    * is_assoc,
+    * is_iter,
+    * is_sequence,
     is_sequence_of,
-    is_arr,
+    * is_arr,
     & not,
     & and,
     & or,
-    + maybe,
-    + at,
-    is_key,
-    + has,
-    + dict
+    ? maybe,
+    ? at,
+    * is_key,
+    ? has,
+    ? dict
 
 Ref:
     * ref,
@@ -232,37 +236,37 @@ Ref:
     &? update
 
 Seq:
-    + concat,
+    concat,
     & empty,
-    + first,
-    + is_empty,
-    + is_seq,
+    * first,
+    * is_empty,
+    * is_seq,
     iterate,
-    + rest,
+    * rest,
     * seq,
     & show,
     size,
-    + reduce,
-    + transduce,
-    + into,
+    * reduce,
+    * transduce,
+    * into,
     complete,
     is_complete
 
 Str:
-    + capitalize,
-    + chars,
+    * capitalize,
+    * chars,
     code_at,
-    &? concat,
+    & concat,
     ends_with,
-    from,
+    * from (as `join`),
     from_code,
     includes,
     & index_of,
     is_blank,
-    + is_char,
+    * is_char,
     is_empty,
     last_index_of,
-    + lowcase,
+    * lowcase,
     pad_left,
     pad_right,
     repeat,
@@ -270,14 +274,14 @@ Str:
     replace_first,
     count,
     & slice,
-    + split,
+    * split,
     starts_with,
     * str,
-    + trim,
+    * trim,
     trim_left,
     trim_right,
-    + upcase,
-    + words,
+    * upcase,
+    * words,
     & empty,
     & conj,
     & show
