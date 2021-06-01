@@ -3,6 +3,7 @@
 
 import L from './deps.js';
 import NS from './ns.js';
+import Type from './type.js';
 
 let {Spec, Fn} = L;
 let {defn, partial} = Fn;
