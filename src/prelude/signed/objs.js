@@ -7,15 +7,11 @@ import P from './preds.js';
 import Fn from './fns.js';
 import NS from './ns.js';
 import Spec from './spec.js';
-import './eq.js';
 
 let {defn, partial} = Fn;
-let {args, any, key, assoc, fn, symbol, seq, dict, or, tup, obj} = Spec;
-let {is_any, is_key, is_assoc, is_fn, has, is_sequence_of} = P;
-let {eq} = L;
+let {args, any, key, assoc, fn, seq, dict, tup, obj} = Spec;
+let {is_any, is_key, is_assoc, is_fn, is_sequence_of} = P;
 let {ns} = NS;
-
-let js_key = or(key, symbol);
 
 let get = defn({
   name: 'get',
@@ -33,7 +29,6 @@ let get = defn({
 let get_ = defn({
   name: 'get_',
   doc: 'Gets the value stored at a particular key in an object, traversing the JS prototype chain, and also allowing symbols to serve as keys. Returns `undefined` if an object is missing a key, or cannot store keys.',
-  pre: args([js_key], [js_key, any]),
   body: [
     (key) => partial(get_js, key),
     (key, obj) => {
@@ -88,6 +83,7 @@ let update = defn({
 });
 
 // TODO: actually write this function
+/*
 let update_in = defn({
   name: 'update_in',
   doc: 'Updates a nested property. Given a collection and a path to a nested property, update the value at that path using a function. Uses `undefined` as the value if there is nothing at the path. Allows for extra arguments to be passed.',
@@ -97,6 +93,7 @@ let update_in = defn({
     // do something here
   }
 });
+*/
 
 let update_with = defn({
   name: 'update_with',
@@ -172,7 +169,7 @@ let from = defn({
   body: (entries) => Object.fromEntries(entries)
 });
 
-export default NS.defmembers(L.Obj, {
+export default ns(L.Obj, {
   get, get_, get_in, 
   concat, update, update_with,
   merge, keys, values, entries,

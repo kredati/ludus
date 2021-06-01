@@ -28,14 +28,15 @@ import S from './spec.js';
 let {eq} = L;
 let {defn} = Fn;
 let {deftype, create} = T;
-let {record, maybe, string, any, args, type} = S;
+let {record, maybe, str, any, args, type, fn, arr, int} = S;
+let {ns} = NS;
 
-let Ref = deftype({name: 'Ref'});
+let ref_t = deftype({name: 'Ref'});
 
 let ref_descriptor = record('ref_descriptor', {
-  name: maybe(string), 
+  name: maybe(str), 
   value: any, 
-  doc: maybe(string)
+  doc: maybe(str)
 });
 
 let ref = defn({
@@ -43,28 +44,27 @@ let ref = defn({
   doc: 'Creates a ref',
   pre: args([ref_descriptor]),
   body: ({name, doc, value, ...attrs}) => 
-    create(Ref, {name, doc, value, pending: false, watchers: [], attrs})
+    create(ref_t, {name, doc, value, pending: false, watchers: [], attrs})
 });
 
 let show = defn({
   name: 'show',
   doc: 'Shows a ref.',
-  pre: args([type(Ref)]),
+  pre: args([type(ref_t)]),
   body: (ref) => `Ref${ref.name ? ': ' + ref.name : ''} { ${ref.value} }`
 });
-
 
 let deref = defn({
   name: 'deref',
   doc: 'Gets the value stored in a ref.',
-  pre: args([type(Ref)]),
+  pre: args([type(ref_t)]),
   body: ({value}) => value
 });
 
 let swap = defn({
   name: 'swap',
   doc: 'Updates the value in a ref, mutating its state. Returns undefined.',
-  pre: args([type(Ref), any]),
+  pre: args([type(ref_t), any]),
   body: (ref, new_value) => {
     if (!eq(ref.value, new_value)) {
       ref.value = new_value;
@@ -78,7 +78,7 @@ let swap = defn({
 let update = defn({
   name: 'update',
   doc: 'Updates the value in a ref, mutating its state, by applying the supplied function to its value. Returns the ref.',
-  pre: args([fn, type(Ref)]),
+  pre: args([fn, type(ref_t)]),
   body: (updater, ref) => {
     let new_value = updater(ref.value);
     swap(ref, new_value);
@@ -108,7 +108,7 @@ let watcher = defn({
 let watch = defn({
   name: 'watch',
   doc: 'Adds a watcher to a ref. The function (presumably with side effects) will be called whenever the ref changes value (i.e. somebody, somewhere `swap`ped the ref). It will call `fn` with any additional arguments passed to `watch`. Returns a Watcher, which you can then pass to `unwatch` to cancel the watcher.',
-  pre: args([type(Ref), S.function]),
+  pre: args([type(ref_t), fn]),
   body: (ref, fn, ...args) => {
     let w = watcher(ref, fn, args);
     ref.watchers.push(w);
@@ -138,9 +138,9 @@ let future = defn({
   name: 'future',
   doc: 'Schedules a function call in the future.',
   pre: args(
-    [S.function], 
-    [S.function, S.array], 
-    [S.function, S.array, S.integer]),
+    [fn], 
+    [fn, arr], 
+    [fn, arr, int]),
   body: [
     (fn) => future(fn, [], 0),
     (fn, args) => future(fn, args, 0),
@@ -148,8 +148,9 @@ let future = defn({
   ]
 });
 
-export default NS.defns({type: Ref,
-  members: {
-    Ref, ref, swap, watch, unwatch, future, show
+export default ns({
+  type: ref_t,
+  members: { 
+    ref, swap, watch, unwatch, future, show, update
   }
 });
