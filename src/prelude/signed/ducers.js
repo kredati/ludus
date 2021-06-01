@@ -164,5 +164,5 @@ let zip = defn({
 export default ns({
   name: 'Ducers', 
   members: {
-    every, filter, keep, map, none, some, zip
+    every, filter, keep, map, none, some, zip, take
 }});
