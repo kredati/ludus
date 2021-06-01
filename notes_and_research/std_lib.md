@@ -16,19 +16,19 @@ TODO:
     [ ] deftype
 [*] consider: should `assoc` be a method or an abstracted function?
 [*] are `Obj.update` and `Ref.update`  abstractable into a method? (yes)
-[ ] can we use `Seq.concat` as an abstracted concat, or should it be a method?
-[ ] standardize `count` vs `size`: which should we use?
+[*] can we use `Seq.concat` as an abstracted concat, or should it be a method? (method)
+[*] standardize `count` vs `size`: which should we use? (count)
 [ ] write methods
     [ ] assoc
     [ ] conj
-    [ ] empty
+    [ ] empty 
     [ ] index_of
     [ ] slice
     [ ] and
     [ ] or
     [ ] not
     [ ] update
-    [ ] concat?
+    [ ] concat
 [ ] standardize `from` across `Arr`, `Str`, `Obj`
 [ ] do some perf testing on `recur`
 [ ] determine what to include from `Num`
@@ -64,6 +64,7 @@ Ducers:
     + map
     + none
     + some
+    + take
     zip
     // and more
 
