@@ -74,8 +74,8 @@ let is_seq = defn({
   body: (x) => is(seq_t, x) 
 });
 
-let size = defn({
-  name: 'size',
+let count = defn({
+  name: 'count',
   doc: 'Determines the size of a collection.',
   pre: args([coll]),
   body: (x) => {
@@ -114,9 +114,9 @@ let seq_ = defn({
       // js: strings, arrays, Maps, and Sets are iterable
       // ld: vectors and lists are iterable
       if (is_iter(seqable)) 
-        return create_seq(seqable[Symbol.iterator](), size(seqable));
+        return create_seq(seqable[Symbol.iterator](), count(seqable));
       // if it's a record (object literal) return a seq over an object generator
-      if (is_assoc(seqable)) return create_seq(obj_gen(seqable), size(seqable));
+      if (is_assoc(seqable)) return create_seq(obj_gen(seqable), count(seqable));
       // otherwise we don't know what to do; throw your hands up
       // however, with our precondition, we should never get here.
       throw TypeError(`${seqable} is not seqable.`);
@@ -161,7 +161,7 @@ let concat = defn({
         yield* seq_(coll);
       }
     })();
-    let concat_size = seqables.reduce((acc, seq) => acc + size(seq), 0);
+    let concat_size = colls.reduce((acc, seq) => acc + count(seq), 0);
     concat_size = isNaN(concat_size) ? undefined : concat_size;
     return create_seq(generator, concat_size);
   }
@@ -206,11 +206,11 @@ let reduce = defn({
   name: 'reduce',
   pre: args([fn, coll], [fn, any, coll]),
   body: [
-    (f, coll) => reduce_loop(f, first(coll), rest(coll)),
+    (f, coll) => reduce(f, first(coll), rest(coll)),
     (f, accum, coll) => {
       for (let x of seq_(coll)) {
-        if (is_complete(accum)) return accum.value;
         accum = f(accum, x);
+        if (is_complete(accum)) return accum.value;
       }
       return accum;
     }
@@ -243,6 +243,6 @@ export default ns({
   type: seq_t,
   members: {
     concat, empty, first, is_empty, is_seq, 
-    iterate, rest, seq: seq_, show, size,
+    iterate, rest, seq: seq_, show, count,
     reduce, transduce, into, complete, is_complete
   }});
