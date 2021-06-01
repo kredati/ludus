@@ -9,12 +9,12 @@ TODO:
     [*] add speccing to `defmethod`
     [x] write these to dispatch to `Fn` or `Bool` but not `Spec` (not necessary)
 [ ] consider losing the `def` in:
-    [ ] defmethod
-    [ ] defspec
-    [ ] defn
+    [ ] defmethod -> method
+    [ ] defspec -> spec
+    [ ] defn -> fn
         [ ] consider collapsing `fn` and `defn`
-    [ ] deftype
-[*] consider: should `assoc` be a method or an abstracted function?
+    [ ] deftype -> type
+[*] consider: should `assoc` be a method or an abstracted function? (method)
 [*] are `Obj.update` and `Ref.update`  abstractable into a method? (yes)
 [*] can we use `Seq.concat` as an abstracted concat, or should it be a method? (method)
 [*] standardize `count` vs `size`: which should we use? (count)
@@ -31,12 +31,10 @@ TODO:
     [*] concat
     [ ] Write doc for all of the above
 [*] standardize `from` across `Arr`, `Str`, `Obj`
-[ ] do some perf testing on `recur`
 [ ] determine what to include from `Num`
 [ ] standardize across object predicates & specs: `is_obj`, `is_assoc`, etc.
 [ ] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
 [ ] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
-
 
 Arr:
     * arr
