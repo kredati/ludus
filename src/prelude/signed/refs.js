@@ -77,9 +77,9 @@ let swap = defn({
 
 let update = defn({
   name: 'update',
-  doc: 'Updates the value in a ref, mutating its state, by applying the supplied function to its value. Returns the ref.',
-  pre: args([fn, type(ref_t), any]),
-  body: (updater, ref, ...args) => {
+  doc: 'Updates the value in a ref, mutating its state, by applying the supplied function to its value.',
+  pre: args([type(ref_t), fn, any]),
+  body: (ref, updater, ...args) => {
     let new_value = updater(ref.value, ...args);
     swap(ref, new_value);
     return undefined;
