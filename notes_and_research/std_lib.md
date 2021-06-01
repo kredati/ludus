@@ -4,7 +4,7 @@
 & - method
 
 TODO:
-[ ] add `join` to Arr
+[x] add `join` to Arr
 [ ] `and`/`or`/`not` methods
     [ ] add speccing to `defmethod`
     [ ] write these to dispatch to `Fn` or `Bool` but not `Spec`
