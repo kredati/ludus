@@ -17,11 +17,11 @@ let spec_descriptor = Spec.record('spec_descriptor', {
   pred: spec_s
 });
 
-let defspec = defn({
+let spec = defn({
   name: 'defspec',
   doc: 'Defines a spec. Takes a spec descriptor: a string name and a predicate, which is either a spec or a function that is treated as a predicate.',
   pre: Spec.args([spec_descriptor]),
-  body: Spec.defspec
+  body: Spec.spec
 });
 
 let is_spec = defn({
@@ -133,7 +133,7 @@ let explain = defn({
 export default ns({
   type: Spec.t, 
   members: {
-    and, args, at, defspec, dict, explain,
+    and, args, at, spec, dict, explain,
     is_spec, is_valid, maybe, not, or, record, rename,
     iter_of, show, tup
 }});

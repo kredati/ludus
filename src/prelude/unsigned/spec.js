@@ -16,11 +16,11 @@ let spec_t = Type.deftype({name: 'Spec'});
 // Defines a Spec, taking at minimum a predicate. If no name is
 // specified in attrs, it pulls the name from the predicate, allowing
 // `def({pred: is_string})`.
-let defspec = (attrs) => {
+let spec_ = (attrs) => {
   let name = attrs.name != undefined 
     ? attrs.name 
     : attrs.pred && attrs.pred.name;
-  return Type.create(spec_t, {spec: defspec, ...attrs, name});
+  return Type.create(spec_t, {spec: spec_, ...attrs, name});
 }; 
 
 ///// Spec utils
@@ -60,9 +60,9 @@ let is_valid = (spec, value) => {
 let or = (...specs) => {
   let name = `or<${specs.map((s) => s.name)}>`;
   let specced = specs.map((s) => 
-    is_spec(s)? s : defspec({pred: s}));
+    is_spec(s)? s : spec_({pred: s}));
   let pred = P.or(...specced.map((s) => s.pred));
-  return defspec({name, pred, spec: or, members: specs});
+  return spec_({name, pred, spec: or, members: specs});
 };
 
 // and :: (...specs) => spec
@@ -70,9 +70,9 @@ let or = (...specs) => {
 let and = (...specs) => {
   let name = `and<${specs.map((s) => s.name)}>`;
   let specced = specs.map((s) => 
-    is_spec(s) ? s : defspec({pred: s}));
+    is_spec(s) ? s : spec_({pred: s}));
   let pred = P.and(...specced.map((s) => s.pred));
-  return defspec({name, pred, spec: and, members: specs});
+  return spec_({name, pred, spec: and, members: specs});
 };
 
 // not :: (...specs) => spec
@@ -80,7 +80,7 @@ let and = (...specs) => {
 let not = (spec) => {
   let name = `not<${spec.name}>`;
   let pred = P.not(is_spec(spec) ? s.pred : s);
-  return defspec({name, pred, spec: not, members: [spec]});
+  return spec_({name, pred, spec: not, members: [spec]});
 };
 
 // tup :: (...specs) => spec
@@ -96,7 +96,7 @@ let tup = (...specs) => {
     }
     return true;
   };
-  return defspec({name, pred, spec: tup, members: specs});
+  return spec_({name, pred, spec: tup, members: specs});
 };
 
 // iter_of :: (spec) => spec
@@ -110,7 +110,7 @@ let iter_of = (spec) => {
     }
     return true;
   }
-  return defspec({name, pred, spec: iter_of, members: spec});
+  return spec_({name, pred, spec: iter_of, members: spec});
 };
 
 // key :: (string, spec) => spec
@@ -119,7 +119,7 @@ let iter_of = (spec) => {
 let at = (key, spec) => {
   let name = `at<${key}: ${spec.name}>`;
   let pred = (obj) => obj != undefined && is_valid(spec, obj[key]);
-  return defspec({name, pred, spec: at, members: {key, spec}});
+  return spec_({name, pred, spec: at, members: {key, spec}});
 };
 
 // record :: (string, dict(specs)) => spec
@@ -137,12 +137,12 @@ let record = (name, map) => {
   return rename(name, spec);
 };
 
-let dict = (spec) => defspec({name: `dict<${spec.name}>`,
+let dict = (spec) => spec_({name: `dict<${spec.name}>`,
   pred: (x) => P.is_obj(x) && Object.values(x).every((v) => is_valid(spec, v)), 
   spec: dict,
   members: spec});
 
-let type = (t) => defspec({name: t.name, 
+let type = (t) => spec_({name: t.name, 
   pred: (x) => Type.is(t, x), 
   spec: type,
   members: t});
@@ -172,7 +172,7 @@ let args = (...tups) => {
       && iter_of(longest[longest.length - 1]).pred(rest);
   };
   // TODO: give this a nicer name?--or leave the plumbing exposed?
-  return defspec({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
+  return spec_({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
     pred, spec: args, members: arg_tuples});
 };
 
@@ -318,7 +318,7 @@ let explain = (spec, value, indent = 0) => {
 export default ns({
   type: spec_t,
   members: {
-    defspec, show, is_spec, is_valid, rename, // utils
+    spec: spec_, show, is_spec, is_valid, rename, // utils
     and, or, not, tup, iter_of, at, record, // combinators
     dict, type, maybe, args, // parametric
     explain // and explain

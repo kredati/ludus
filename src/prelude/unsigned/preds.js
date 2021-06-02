@@ -53,7 +53,8 @@ let is_num = (x) => typeof x === 'number';
 // tells if a value is a number that is also an integer
 let is_int = (x) => is_num(x) && (x | 0) === x;
 
-let is_key = (x) => is_int(x) || is_str(x);
+// tells if a value is a valid key in an object: an int or a non-empty string
+let is_key = (x) => is_int(x) || (is_str(x) && x !== '');
 
 // for now, Ludus doesn't have bigints
 // let is_bigint = (x) => typeof x === 'bigint';

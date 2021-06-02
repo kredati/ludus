@@ -29,7 +29,7 @@ let is_index = defn({
   }
 });
 
-let index = S.defspec({name: 'index', pred: is_index});
+let index = S.spec({name: 'index', pred: is_index});
 
 let empty = defn({
   name: 'empty',

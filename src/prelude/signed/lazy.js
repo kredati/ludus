@@ -14,11 +14,13 @@ import P from './preds.js';
 import Fn from './fns.js';
 import Spec from './spec.js';
 import NS from './ns.js';
+import Num from './nums.js';
 
 let {defn} = Fn;
 let {args, or} = Spec;
 let {is_any, is_fn, is_int, is_coll} = P;
 let {seq, is_empty, count, first, rest}= Seq;
+let {is_infinity} = Num;
 let {ns} = NS;
 
 let gen = defn({
@@ -64,12 +66,10 @@ let range = defn({
   ]
 });
 
-let infinite = Spec.defspec({name: 'infinite', pred: (x) => x === Infinity});
-
 let cycle = defn({
   name: 'cycle',
   doc: 'Creates a lazy, possibly infinite, sequence of values created by cycling through the members of a sequence. E.g., `cycle([1, 2, 3]); //=> 1, 2, 3, 1, 2, 3, 1, 2, ...`. With two arguments, the first argument specifies how many times to execute the cycle.',
-  pre: args([is_coll], [or(is_int, infinite), is_coll]),
+  pre: args([is_coll], [or(is_int, is_infinity), is_coll]),
   body: [
     (seqable) => cycle(Infinity, seqable),
     (size, seqable) => {
@@ -113,7 +113,7 @@ let interleave = defn({
 let repeat = defn({
   name: 'repeat',
   doc: 'Produces a possibly infinite `seq` that is just the same value, repeated over and over again. With two arguments, the first is the number of times to repeate `value`. E.g., `repeat(4, \'foo\'); //=> Seq( \'foo\', \'foo\', \'foo\', \'foo\' )`.',
-  pre: args([is_any], [or(is_int, infinite), is_any]),
+  pre: args([is_any], [or(is_int, is_infinity), is_any]),
   body: [
     (value) => repeat(Infinity, value),
     (count, value) => {
@@ -133,7 +133,7 @@ let repeat = defn({
 let repeatedly = defn({
   name: 'repeatedly',
   doc: 'Takes a nullary function, presumably with side effects, and calls that function over and over again. With one argument, it will call the fucntion infinitely. With two, it will call the function `count` times.',
-  pre: args([is_fn], [or(is_int, infinite), is_fn]),
+  pre: args([is_fn], [or(is_int, is_infinity), is_fn]),
   body: [
     (fn) => repeatedly(Infinity, fn),
     (count, fn) => {

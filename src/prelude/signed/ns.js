@@ -6,7 +6,7 @@ import T from './type.js';
 
 let {Fn, Spec, NS} = L;
 let {defn, partial} = Fn;
-let {args, at, or, and, defspec} = Spec;
+let {args, at, or, and, spec} = Spec;
 let {is_str, is_any, is_obj, is} = L.Pred;
 
 let is_ns = defn({
@@ -17,7 +17,7 @@ let is_ns = defn({
 
 let named_or_typed = or(at('name', is_str), at('type', is(T.t)));
 let with_members = at('members', is_obj);
-let ns_descriptor = defspec({name: 'ns_descriptor', pred: and(named_or_typed, with_members)});
+let ns_descriptor = spec({name: 'ns_descriptor', pred: and(named_or_typed, with_members)});
 
 let ns = defn({
   name: 'ns',
@@ -29,7 +29,7 @@ let ns = defn({
   ]
 });
 
-let ns_s = defspec({name: 'ns', pred: is_ns});
+let ns_s = spec({name: 'ns', pred: is_ns});
 
 let defmembers = defn({
   name: 'defmembers',
