@@ -40,13 +40,13 @@ import Fn from './fns.js';
 import L from './lazy.js';
 import NS from './ns.js';
 
-let {defn, defmethod} = Fn;
+let {defn, method} = Fn;
 let {bool} = P;
 let {into, complete} = Seq;
 let {interleave} = L;
 let {ns} = NS;
 
-let empty = defmethod({name: 'empty'});
+let empty = method({name: 'empty'});
 
 let map = defn({
   name: 'map',

@@ -18,7 +18,7 @@ import NS from './ns.js';
 import A from './arr.js';
 
 let {args} = S;
-let {defn, once, defmethod} = Fn;
+let {defn, once, method} = Fn;
 let {create, deftype} = T;
 let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str} = P;
 let {ns} = NS;
@@ -229,7 +229,7 @@ let transduce = defn({
   ]
 });
 
-let concat_m = defmethod({name: 'concat'});
+let concat_m = method({name: 'concat'});
 
 let into = defn({
   name: 'into',

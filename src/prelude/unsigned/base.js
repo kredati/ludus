@@ -76,11 +76,11 @@ let get_ns = (x) => {
   return _meta && _meta.ns;
 };
 
-// defmethod :: ({name: string, not_found: fn?}) -> fn
+// method :: ({name: string, not_found: fn?}) -> fn
 // defines a method: a function that dispatches to the ns associated
 // with the type of the first argument.
 // takes an optional 
-let defmethod = ({name, not_found, ...attrs}) => Object.assign(Object.defineProperty(
+let method = ({name, not_found, ...attrs}) => Object.assign(Object.defineProperty(
   (first, ...rest) => {
     let ns = get_ns(first);
     if (ns && name in ns) return ns[name](first, ...rest);
@@ -92,7 +92,7 @@ let defmethod = ({name, not_found, ...attrs}) => Object.assign(Object.defineProp
   {...attrs}
 );
 
-let show = defmethod({
+let show = method({
   name: 'show',
   not_found: (x) => {
     if (x == undefined) return 'undefined';
@@ -102,7 +102,7 @@ let show = defmethod({
   }
 });
 
-let iterate = defmethod({
+let iterate = method({
   name: 'iterate',
   not_found: () => undefined
 });
@@ -386,6 +386,6 @@ defmembers(Type, {types, ...types});
 //////////////////// 5. Exports
 export {NS, Type};
 export default ns({name: 'Ludus', members: {
-  ...Ludus, show, defmethod, iterate, // functions & props
+  ...Ludus, show, method, iterate, // functions & props
   NS, Type, Bool, Num, Str, Obj, Arr, Fn // namespaces
 }});

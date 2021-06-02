@@ -218,12 +218,12 @@ let method_descriptor = Spec.record('method_descriptor', {
   post: pre_post
 });
 
-let defmethod = defn({
-  name: 'defmethod',
+let method = defn({
+  name: 'method',
   pre: args([method_descriptor]),
   body: ({name, not_found, ...attrs}) => {
     return defn({name, not_found, ...attrs,
-      body: Ludus.defmethod({name, not_found})});
+      body: Ludus.method({name, not_found})});
   }
 });
 
@@ -235,5 +235,5 @@ let show = defn({
 
 export default ns(Fn, {
     defn, partial, loop, recur: Fn.recur, fn,
-    once, thread, thread_some, pipe, pipe_some, comp, comp_some, defmethod, show
+    once, thread, thread_some, pipe, pipe_some, comp, comp_some, method, show
 });

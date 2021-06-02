@@ -23,7 +23,7 @@ import L from './base.js';
 
 let {is_sequence, is_obj, is_some} = Pred;
 
-let eq_ = L.defmethod({
+let eq_ = L.method({
   name: 'eq',
   not_found: () => false
 });

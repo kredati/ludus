@@ -1,46 +1,46 @@
 import Fn from './fns.js';
 import NS from './ns.js';
 
-let {defmethod} = Fn;
+let {method} = Fn;
 let {ns} = NS;
 
-let assoc = defmethod({
+let assoc = method({
     name: 'assoc'
 });
 
-let conj = defmethod({
+let conj = method({
     name: 'conj'
 });
 
-let empty = defmethod({
+let empty = method({
     name: 'empty'
 });
 
-let index_of = defmethod({
+let index_of = method({
     name: 'index_of'
 });
 
-let slice = defmethod({
+let slice = method({
     name: 'slice'
 });
 
-let and = defmethod({
+let and = method({
     name: 'and'
 });
 
-let or = defmethod({
+let or = method({
     name: 'or'
 });
 
-let not = defmethod({
+let not = method({
     name: 'not'
 });
 
-let update = defmethod({
+let update = method({
     name: 'update'
 });
 
-let concat = defmethod({
+let concat = method({
     name: 'concat'
 });
 
