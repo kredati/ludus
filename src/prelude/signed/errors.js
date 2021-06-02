@@ -72,7 +72,7 @@ let handle_tup = defn({
 // in a strictly, statically typed language
 import Type from './type.js';
 
-let result_t = Type.deftype({name: 'Result'});
+let result_t = Type.type({name: 'Result'});
 
 let ok = (value) => Type.create(result_t, {value, result: ok});
 

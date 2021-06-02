@@ -14,7 +14,7 @@
     [*] defspec -> spec
     [ ] defn -> fn
         [ ] consider collapsing `fn` and `defn`
-    [ ] deftype -> type
+    [*] deftype -> type
 [*] consider: should `assoc` be a method or an abstracted function? (method)
 [*] are `Obj.update` and `Ref.update`  abstractable into a method? (yes)
 [*] can we use `Seq.concat` as an abstracted concat, or should it be a method? (method)

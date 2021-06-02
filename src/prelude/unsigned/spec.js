@@ -10,7 +10,7 @@ let {ns} = NS;
 
 ///// Spec definition
 // a Spec type
-let spec_t = Type.deftype({name: 'Spec'});
+let spec_t = Type.type({name: 'Spec'});
 
 // def :: ({name: string?, pred: function, ...rest}) => Spec
 // Defines a Spec, taking at minimum a predicate. If no name is
@@ -38,12 +38,6 @@ let is_spec = (x) => Type.is(spec_t, x);
 ///// Spec validation
 // is_valid :: (spec, value) => boolean
 // The equivalent of valid? in clj; tells whether a value passes a spec
-let is_valid_recursive = (spec, value) => is_spec(spec) 
-  ? is_valid(spec.pred, value)
-  : P.bool(spec(value));
-
-// since is_valid gets called over and over again
-// here's a faster, non-recursive version
 let is_valid = (spec, value) => {
   while (typeof spec !== 'function') {
     spec = spec.pred;
@@ -141,11 +135,6 @@ let dict = (spec) => spec_({name: `dict<${spec.name}>`,
   pred: (x) => P.is_obj(x) && Object.values(x).every((v) => is_valid(spec, v)), 
   spec: dict,
   members: spec});
-
-let type = (t) => spec_({name: t.name, 
-  pred: (x) => Type.is(t, x), 
-  spec: type,
-  members: t});
 
 let maybe = (spec) => rename(`maybe<${spec.name}>`, or(P.is_undef, spec));
 
@@ -320,7 +309,7 @@ export default ns({
   members: {
     spec: spec_, show, is_spec, is_valid, rename, // utils
     and, or, not, tup, iter_of, at, record, // combinators
-    dict, type, maybe, args, // parametric
+    dict, maybe, args, // parametric
     explain // and explain
   }
 });

@@ -5,7 +5,7 @@ import L from './deps.js';
 
 let {Type, Fn, NS, Pred, Spec} = L;
 let {defn, partial} = Fn;
-let {args, type, at} = Spec;
+let {args, at} = Spec;
 let {is_str, is_any, is_obj, is: is_} = Pred;
 
 let meta = defn({
@@ -21,11 +21,11 @@ let show = defn({
   body: Type.show
 });
 
-let deftype = defn({
-  name: 'deftype',
-  doc: 'Defines a type.',
+let type = defn({
+  name: 'type',
+  doc: 'Creates a new type.',
   pre: args([at('name', is_str)]),
-  body: Type.deftype
+  body: Type.type
 });
 
 let type_of = defn({
@@ -61,6 +61,6 @@ let types = Type.types;
 export default NS.ns({
   type: Type.t,
   members: {
-    meta, show, deftype, type_of, is, create, types, ...types
+    meta, show, type, type_of, is, create, types, ...types
   }
 });

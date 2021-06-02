@@ -28,12 +28,12 @@ import P from './preds.js';
 
 let {eq} = L;
 let {defn} = Fn;
-let {deftype, create} = T;
+let {type, create} = T;
 let {is_str, is_any, is, is_fn, is_arr, is_int} = P;
 let {record, maybe, args} = S;
 let {ns} = NS;
 
-let ref_t = deftype({name: 'Ref'});
+let ref_t = type({name: 'Ref'});
 
 let ref_descriptor = record('ref_descriptor', {
   name: maybe(is_str), 
@@ -99,12 +99,12 @@ let ping_watchers = (ref) => {
   return undefined;
 };
 
-let Watcher = deftype({name: 'Watcher'});
+let watcher_t = type({name: 'Watcher'});
 
 let watcher = defn({
   name: 'watcher',
   doc: 'Creates a watcher.',
-  body: (ref, fn, args) => create(Watcher, {ref, fn, args})
+  body: (ref, fn, args) => create(watcher_t, {ref, fn, args})
 });
 
 let watch = defn({
@@ -121,7 +121,7 @@ let watch = defn({
 let unwatch = defn({
   name: 'unwatch',
   doc: 'Removes a watcher from a ref, such that it will no longer be called when the ref\'s value changes.',
-  pre: args([is(Watcher)]),
+  pre: args([is(watcher_t)]),
   body: (watcher) => {
     let new_watchers = [];
     let {ref} = watcher;

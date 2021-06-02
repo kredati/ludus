@@ -158,9 +158,9 @@ let create = (
   return created;
 };
 
-// deftype :: (obj) -> type
+// type :: (obj) -> type
 // Defines a type. The `name` field is required
-let deftype = (attrs) => {
+let type = (attrs) => {
   let type = create(type_t, attrs);
   // a circular reference for type metadata
   type.type = type;
@@ -174,7 +174,7 @@ let deftype = (attrs) => {
 let show_type = (type) => `t:{${type.name}}`;
 
 // a special type for `undefined`.
-let undef_t = deftype({name: 'undefined'});
+let undef_t = type({name: 'undefined'});
 
 // type_of :: (any) -> type
 // a simple type_of function
@@ -235,7 +235,7 @@ let ns_handler = {
 };
 
 // a namespace type
-let ns_t = deftype({name: 'namespace'});
+let ns_t = type({name: 'namespace'});
 
 // show_ns :: (namespace) -> string
 // shows a namespace
@@ -321,7 +321,7 @@ let NS = ns({name: 'Namespace', type: ns_t,
 
 // type namespace
 let Type = ns({name: 'Type', type: type_t, 
-  members: {show: show_type, deftype, type_of, is, meta, create}});
+  members: {show: show_type, type, type_of, is, meta, create}});
 
 // undefined namespace
 //let Undef_ns = defns({name: 'Undefined', type: Undefined,
@@ -341,33 +341,33 @@ let Type = ns({name: 'Type', type: type_t,
 // the meta_tags, we won't get custom inspect or iteration behaviors
 // on builtins. This is probably for the best.
 
-let bool_t = deftype({name: 'Boolean'});
+let bool_t = type({name: 'Boolean'});
 let Bool = ns({type: bool_t, members: {}});
 Boolean.prototype[meta_tag] = bool_t;
 
-let num_t = deftype({name: 'Number'});
+let num_t = type({name: 'Number'});
 let Num = ns({type: num_t, members: {}})
 Number.prototype[meta_tag] = num_t;
 
-let str_t = deftype({name: 'String'});
+let str_t = type({name: 'String'});
 let Str = ns({type: str_t, members: {}});
 String.prototype[meta_tag] = str_t;
 
 /* we don't use symbols in Ludus
-let sym_t = deftype({name: 'Symbol'});
+let sym_t = type({name: 'Symbol'});
 let Sym = ns({type: sym_t, members: {}});
 Symbol.prototype[meta_tag] = sym_t;
 */
 
-let obj_t = deftype({name: 'Object'});
+let obj_t = type({name: 'Object'});
 let Obj = ns({type: obj_t, members: {}});
 Object.prototype[meta_tag] = obj_t;
 
-let arr_t = deftype({name: 'Array'});
+let arr_t = type({name: 'Array'});
 let Arr = ns({type: arr_t, members: {}});
 Array.prototype[meta_tag] = arr_t;
 
-let fn_t = deftype({name: 'Function'});
+let fn_t = type({name: 'Function'});
 let Fn = ns({type: fn_t, members: {}});
 Function.prototype[meta_tag] = fn_t;
 

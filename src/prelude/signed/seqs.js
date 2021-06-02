@@ -19,7 +19,7 @@ import A from './arr.js';
 
 let {args} = S;
 let {defn, once, method} = Fn;
-let {create, deftype} = T;
+let {create, type} = T;
 let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str} = P;
 let {ns} = NS;
 let {conj_} = A;
@@ -35,7 +35,7 @@ let obj_gen = function* (obj) {
   }
 };
 
-let seq_t = deftype({name: 'Seq'});
+let seq_t = type({name: 'Seq'});
 
 let is_seqable = or(is_coll, is_str);
 
