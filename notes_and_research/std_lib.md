@@ -42,7 +42,7 @@
 [-] replace concerete specs with predicate functions
     [*] delete concrete specs
     [*] replace them with predicate functions until everything runs
-    [ ] consider what to do with parametric preds, specs (e.g. should `at` be a spec or a pred?)
+    [*] consider what to do with parametric preds, specs (e.g. should `at` be a spec or a pred?)
 
 ### Arr:
     * arr
