@@ -10,8 +10,8 @@
     [*] add speccing to `defmethod`
     [x] write these to dispatch to `Fn` or `Bool` but not `Spec` (not necessary)
 [ ] consider losing the `def` in:
-    [ ] defmethod -> method
-    [ ] defspec -> spec
+    [*] defmethod -> method
+    [*] defspec -> spec
     [ ] defn -> fn
         [ ] consider collapsing `fn` and `defn`
     [ ] deftype -> type
