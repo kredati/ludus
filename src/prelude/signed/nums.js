@@ -525,6 +525,27 @@ let norm = defn({
   ]
 });
 
+// from mattdesl's canvas-utils
+let wrap = defn({
+  name: 'wrap',
+  doc: 'Wraps a value around a range described by `from` (inclusive) and `to` (exclusive). Particularly useful for wrapping angles around a circle.',
+  pre: args([is_num], [is_num, is_num], [is_num, is_num, is_num]),
+  body: [
+    (to) => partial(wrap, 0, to),
+    (from, to) => partial(wrap, from, to),
+    (from, to, x) => {
+      let range = to - from;
+      while (x >= to) {
+        x = x - range;
+      }
+      while (x < from) {
+        x = x + range;
+      }
+      return x;
+    }
+  ]
+});
+
 let deg_to_rad = defn({
   name: 'deg_to_rad',
   doc: 'Given an angle measurement in degrees, converts it to radians.',
@@ -547,11 +568,11 @@ let show = defn({
 });
 
 export default ns(L.Num, {
-  abs, add, ceil, dec, div, div_by, floor, gt, gte, hypot, inc,
+  abs, add, ceil, dec, div, div_by, floor, gt, gte, hypot, inc, is_between,
   is_natural, is_negative, is_nonzero, is_positive, is_positive_int, 
   is_even, is_odd, lt, lte, mod, mult, num: num_, pow, pow_by, precise, random, 
   random_int, round, sqrt, cbrt, sub, sub_by, sum_of_squares, trunc,
-  clamp, lerp, norm, rad_to_deg, deg_to_rad,
+  clamp, lerp, norm, wrap, rad_to_deg, deg_to_rad,
   cos, sin, tan, acos, asin, atan, ln, log2, log10,
   pi, e, sqrt2, sqrt1_2, ln2, ln10, log2e, log10e,
   show
