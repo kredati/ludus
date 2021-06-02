@@ -38,9 +38,9 @@ TODO:
     [ ] Consider Ludus nomenclature around collections, sequences, etc.
 [ ] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
 [ ] consider how to handle `Flow.repeat` vs. `Lazy.repeatedly` vs. `Lazy.repeat`
-[ ] replace concerete specs with predicate functions
-    [ ] delete concrete specs
-    [ ] replace them with predicate functions until everything runs
+[-] replace concerete specs with predicate functions
+    [*] delete concrete specs
+    [*] replace them with predicate functions until everything runs
     [ ] consider what to do with parametric preds, specs (e.g. should `at` be a spec or a pred?)
 
 Arr:
