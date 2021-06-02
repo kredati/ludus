@@ -65,7 +65,7 @@ let just = defn({
 
 let repeat = defn({
   name: 'repeat',
-  doc: 'Takes a number, `count`, and a function. Calls that function `count` times, passing the `count` into the function as an argument. Returns the result of the last call.',
+  doc: 'Takes a number, `count`, and a function with side effects. Calls that function `count` times, passing the `count` into the function as an argument. Returns the result of the last call. Note that this is eager; for lazy evaluation, use `Lazy.repeatedly`.',
   pre: args([is_int, is_fn]),
   body: (count, fn) => {
     let result = undefined;
