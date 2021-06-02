@@ -2,8 +2,9 @@
 + - to add to Ludus namespace
 - - to add to namespace & Ludus
 & - method
+! - naming collision
 
-TODO:
+### TODO:
 [x] add `join` to Arr
 [*] `and`/`or`/`not` methods
     [*] add speccing to `defmethod`
@@ -37,13 +38,13 @@ TODO:
 [*] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
     [*] Consider Ludus nomenclature around collections, sequences, etc.
 [*] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
-[ ] consider how to handle `Flow.repeat` vs. `Lazy.repeatedly` vs. `Lazy.repeat`
+[*] consider how to handle `Flow.repeat` vs. `Lazy.repeatedly` vs. `Lazy.repeat`
 [-] replace concerete specs with predicate functions
     [*] delete concrete specs
     [*] replace them with predicate functions until everything runs
     [ ] consider what to do with parametric preds, specs (e.g. should `at` be a spec or a pred?)
 
-Arr:
+### Arr:
     * arr
     & assoc
     & concat
@@ -60,13 +61,13 @@ Arr:
     sort
     unconj
 
-Bool:
+### Bool:
     & and
     & or
     & not
     * bool
 
-Ducers:
+### Ducers:
     * every
     * filter
     * keep
@@ -77,12 +78,12 @@ Ducers:
     zip
     // and more
 
-Err:
+### Err:
     * raise
     bound
     * handle
 
-Flow:
+### Flow:
     * when
     * cond
     * fcond
@@ -90,7 +91,7 @@ Flow:
     repeat
     * always
 
-Fn:
+### Fn:
     rename,
     * partial,
     n_ary,
@@ -109,7 +110,7 @@ Fn:
     + defmethod,
     & show
 
-Lazy:
+### Lazy:
     * cycle,
     gen,
     interleave,
@@ -118,7 +119,7 @@ Lazy:
     ? repeat,
     ? repeatedly
 
-NS:
+### NS:
     * is_ns,
     * ns,
     defmembers,
@@ -127,7 +128,7 @@ NS:
     get_ns,
     & show
 
-Num:
+### Num:
     abs,
     add,
     ceil,
@@ -187,7 +188,7 @@ Num:
     log10e,
     & show
 
-Obj:
+### Obj:
     * get,
     get_,
     * get_in,
@@ -205,7 +206,7 @@ Obj:
     & assoc,
     assoc_
 
-Preds:
+### Preds:
     bool,
     * is_any,
     * is_undef,
@@ -230,7 +231,7 @@ Preds:
     ? has,
     ? dict
 
-Ref:
+### Ref:
     * ref,
     * swap,
     * watch,
@@ -239,7 +240,7 @@ Ref:
     & show,
     &? update
 
-Seq:
+### Seq:
     concat,
     & empty,
     * first,
@@ -256,7 +257,25 @@ Seq:
     complete,
     is_complete
 
-Str:
+### Spec:
+    + defspec,
+    + is_spec,
+    & show,
+    + is_valid,
+    & and,
+    & or,
+    & not,
+    tup,
+    ! seq,
+    ? at,
+    record,
+    rename,
+    ? dict,
+    ? maybe,
+    + args,
+    + explain
+
+### Str:
     * capitalize,
     * chars,
     code_at,
@@ -290,7 +309,7 @@ Str:
     & conj,
     & show
 
-Type:
+### Type:
     + meta,
     & show,
     + deftype,
