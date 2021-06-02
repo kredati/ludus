@@ -32,11 +32,11 @@ TODO:
     [ ] Write doc for all of the above
 [*] standardize `from` across `Arr`, `Str`, `Obj`
 [ ] determine what to include from `Num`
-[ ] standardize across object predicates & specs: `is_obj`, `is_assoc`, etc.
-    [ ] Consider Ludus nomenclature around objects, associative maps, etc.
-[ ] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
-    [ ] Consider Ludus nomenclature around collections, sequences, etc.
-[ ] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
+[*] standardize across object predicates & specs: `is_obj`, `is_assoc`, etc.
+    [*] Consider Ludus nomenclature around objects, associative maps, etc.
+[*] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
+    [*] Consider Ludus nomenclature around collections, sequences, etc.
+[*] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
 [ ] consider how to handle `Flow.repeat` vs. `Lazy.repeatedly` vs. `Lazy.repeat`
 [-] replace concerete specs with predicate functions
     [*] delete concrete specs
