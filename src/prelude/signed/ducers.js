@@ -29,16 +29,17 @@
 // [ ] consider how to instrument the transducers, if at all
 // [ ] consider moving zip, etc. to another namespace
 // [ ] improve transducers/reduce/etc. to clj interface (0, 1, and 2-arity)
+//    [ ] consider the behavior of common reducing functions, e.g. `add`
+//        ^ in Clj: (+) //=> 0, (+ 1) //=> 1, (+ 1 1 ) //=> 2
+//        ^ not partial application but work with identities
 
 import P from './preds.js';
 import Seq from './seqs.js';
-import Spec from './spec.js';
 import A from './arr.js';
 import Fn from './fns.js';
 import L from './lazy.js';
 import NS from './ns.js';
 
-let {args, fn, coll, any, int} = Spec;
 let {defn, defmethod} = Fn;
 let {bool} = P;
 let {into, complete} = Seq;

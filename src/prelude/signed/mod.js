@@ -61,7 +61,7 @@ let ctx = {
     is_any: Preds.is_any, is_undef: Preds.is_undef, is_some: Preds.is_some,
     is_str: Preds.is_str, is_num: Preds.is_num, is_int: Preds.is_int,
     is_bool: Preds.is_bool, is_fn: Preds.is_fn, is_obj: Preds.is_obj,
-    is_assoc: Preds.is_assoc, is_iter: Preds.is_iter, is_sequence: Preds.is_sequence,
+    is_js_obj: Preds.is_js_obj, is_iter: Preds.is_iter, is_sequence: Preds.is_sequence,
     is_arr: Preds.is_arr, is_key: Preds.is_key,
     // from Ref
     swap: Ref.swap, watch: Ref.watch, unwatch: Ref.unwatch, future: Ref.future,

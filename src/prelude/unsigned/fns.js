@@ -9,6 +9,7 @@ import Pred from './preds.js';
 import {copy_attrs} from './util.js';
 
 let {raise, handle} = Err;
+let {is_arr, is_fn} = Pred;
 
 // rename :: (fn) -> fn
 // `rename`s a function
@@ -23,7 +24,7 @@ let rename = (name, fn) => copy_attrs(fn, {name});
 // one argument.
 let partial = (fn, ...args) => {
   let partial_name = 
-    `${fn.name}<partial (${args.map(Ludus.show).join(', ')})>`;
+    `${fn.name}<partial (${args.map((x) => Ludus.show(x)).join(', ')})>`;
   return rename(partial_name, 
     (...args2) => args2.length > 0
       ? fn(...args, ...args2) 
@@ -201,8 +202,8 @@ let fn = n_ary('fn',
 // TODO: reconsider short-circuiting: accumulate all failures?
 // TODO: conditional instrumentation based on environment, as `fn`, above
 let pre_post = (pre, post, body) => rename(body.name, (...args) => {
-  if (!Pred.is_array(pre)) pre = [pre];
-  if (!Pred.is_array(post)) post = [post];
+  if (!is_arr(pre)) pre = [pre];
+  if (!is_arr(post)) post = [post];
   let pass_pre = true;
   for (let spec of pre) {
     let result = Spec.is_valid(spec, args);
@@ -242,7 +243,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
 // `attrs` also includes a `clauses` field that contains an array of the
 // function literals passed to `defn`.
 let defn = ({name, body, pre = [], post = [], ...attrs}) => {
-  let clauses = Pred.is_fn(body) ? [body] : body;
+  let clauses = is_fn(body) ? [body] : body;
   let out = pre_post(pre, post, fn(name, clauses));
   return copy_attrs(out, {name, clauses, ...attrs});
 };

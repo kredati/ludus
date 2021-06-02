@@ -21,7 +21,7 @@
 import Pred from './preds.js';
 import L from './base.js';
 
-let {is_sequence, is_assoc, is_some} = Pred;
+let {is_sequence, is_obj, is_some} = Pred;
 
 let eq_ = L.defmethod({
   name: 'eq',
@@ -32,7 +32,7 @@ let eq = (x, y) => {
   if (x === y) return true;
   if (x == undefined) return y == undefined;
   if (is_sequence(x) && is_sequence(y)) return eq_iter(x, y);
-  if (is_assoc(x) && is_assoc(y)) return eq_assoc(x, y);
+  if (is_obj(x) && is_obj(y)) return eq_assoc(x, y);
   return eq_(x, y);
 };
 

@@ -258,6 +258,9 @@ let def = (ns, key, value) => {
   if (!is_capitalized(key) && is(ns_t, value)) {
     throw `Names of namespaces must be capitalized. You attempted to give ${show(ns)} the name ${key}.`
   }
+  if (typeof value === 'function') {
+    value.in_ns = ns;
+  }
   ns[members_tag][key] = value; 
   return value;
 };

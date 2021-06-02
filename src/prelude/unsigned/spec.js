@@ -49,7 +49,7 @@ let is_valid = (spec, value) => {
     spec = spec.pred;
   }
   return P.bool(spec(value));
-}
+};
 
 ///// Spec combinators
 // Note that spec combinators combine *specs*, not their predicates.
@@ -136,33 +136,17 @@ let record = (name, map) => {
   return rename(name, spec);
 };
 
-///// Useful specs
-let any = defspec({name: 'any', pred: (_) => true});
-let bool = defspec({name: 'bool', pred: P.is_bool});
-let str = defspec({name: 'str', pred: P.is_string});
-let num = defspec({name: 'num', pred: P.is_number});
-let int = defspec({name: 'int', pred: P.is_int});
-let key = defspec({name: 'key', pred: P.or(P.is_string, P.is_number)});
-//let symbol = def({name: 'symbol', pred: P.is_symbol});
-let undef = defspec({name: 'undef', pred: P.is_undef});
-let arr = defspec({name: 'arr', pred: P.is_array});
-let some = defspec({name: 'some', pred: P.is_some});
-let fn = defspec({name: 'fn', pred: P.is_fn});
-let obj = defspec({name: 'obj', pred: P.is_obj});
-let assoc = defspec({name: 'assoc', pred: P.is_assoc});
-let iter = defspec({name: 'iter', pred: P.is_iter});
-let coll = rename('coll', or(assoc, iter));
-let sequence = defspec({name: 'sequence', pred: P.is_sequence});
 let dict = (spec) => defspec({name: `dict<${spec.name}>`,
-  pred: (x) => P.is_assoc(x) && Object.values(x).every((v) => is_valid(spec, v)), 
+  pred: (x) => P.is_obj(x) && Object.values(x).every((v) => is_valid(spec, v)), 
   spec: dict,
   members: spec});
-let not_empty = defspec({name: 'not_empty', pred: P.is_not_empty});
+
 let type = (t) => defspec({name: t.name, 
   pred: (x) => Type.is(t, x), 
   spec: type,
   members: t});
-let maybe = (spec) => rename(`maybe<${spec.name}>`, or(undef, spec));
+
+let maybe = (spec) => rename(`maybe<${spec.name}>`, or(P.is_undef, spec));
 
 ///// Function speccing
 let args = (...tups) => {
@@ -218,7 +202,7 @@ let explain = (spec, value, indent = 0) => {
       let mems = spec.members;
       let length = mems.length;
       let msg = `${shown} failed ${spec.name}:\n`;
-      if (!P.is_array(value)) {
+      if (!P.is_arr(value)) {
         return msg + pad + `${shown} is not an array. Tuples must be arrays.`
       }
       if (value.length !== length) {
@@ -270,8 +254,8 @@ let explain = (spec, value, indent = 0) => {
     }
     case dict: {
       let msg = `${shown} failed ${spec.name}:`;
-      if (!P.is_assoc(value)) {
-        return msg + `Dicts must be associative.`;
+      if (!P.is_obj(value)) {
+        return msg + `Dicts must be objects.`;
       }
       let s = spec.members;
       let msgs = [];
@@ -333,8 +317,6 @@ export default ns({
   members: {
     defspec, show, is_spec, is_valid, rename, // utils
     and, or, not, tup, seq, at, record, // combinators
-    any, bool, str, num, int, key, arr, some, undef, fn, obj,
-    assoc, iter, coll, not_empty, sequence, // useful
     dict, type, maybe, args, // parametric
     explain // and explain
   }

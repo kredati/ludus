@@ -17,10 +17,10 @@ import T from './type.js';
 import NS from './ns.js';
 import A from './arr.js';
 
-let {args, seq, type, fn, coll, any} = S;
-let {defn, once, defmethod, recur} = Fn;
-let {create, deftype, is} = T;
-let {has, is_iter, is_assoc, bool} = P;
+let {args, seq} = S;
+let {defn, once, defmethod} = Fn;
+let {create, deftype} = T;
+let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is} = P;
 let {ns} = NS;
 let {conj_} = A;
 
@@ -44,7 +44,7 @@ let seq_t = deftype({name: 'Seq'});
 let iterate = defn({
   name: 'iterate',
   doc: 'Creates an iterator over a `seq`.',
-  pre: args([type(seq_t)]),
+  pre: args([is(seq_t)]),
   body: (seq) => () => {
     let first = seq.first();
     let rest = seq.rest();
@@ -64,7 +64,7 @@ let iterate = defn({
 let show = defn({
   name: 'show',
   doc: 'Shows a `seq`.',
-  pre: args([type(seq_t)]),
+  pre: args([is(seq_t)]),
   body: (seq) => seq.size != undefined ? `Seq(${seq.size})` : 'Seq(...)'
 });
 
@@ -77,11 +77,11 @@ let is_seq = defn({
 let count = defn({
   name: 'count',
   doc: 'Determines the size of a collection.',
-  pre: args([coll]),
+  pre: args([is_coll]),
   body: (x) => {
     if (x.length != undefined) return x.length;
     if (x.size != undefined) return x.size;
-    if (is_assoc(x)) return Reflect.ownKeys(x).length;
+    if (is_obj(x)) return Reflect.ownKeys(x).length;
     return undefined;
   }
 });
@@ -103,7 +103,7 @@ let create_seq = (iterator, size) => {
 let seq_ = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
-  pre: args([coll], [fn, coll]),
+  pre: args([is_coll], [is_fn, is_coll]),
   body: [
     (seqable) => {
       // if it's already a seq, just return it
@@ -116,7 +116,7 @@ let seq_ = defn({
       if (is_iter(seqable)) 
         return create_seq(seqable[Symbol.iterator](), count(seqable));
       // if it's a record (object literal) return a seq over an object generator
-      if (is_assoc(seqable)) return create_seq(obj_gen(seqable), count(seqable));
+      if (is_obj(seqable)) return create_seq(obj_gen(seqable), count(seqable));
       // otherwise we don't know what to do; throw your hands up
       // however, with our precondition, we should never get here.
       throw TypeError(`${seqable} is not seqable.`);
@@ -154,7 +154,7 @@ let empty = defn({
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates `seq`s, placing one after the other.',
-  pre: seq(coll),
+  pre: seq(is_coll),
   body: (...colls) => {
     let generator = (function*(){
       for (let coll of colls) {
@@ -170,21 +170,21 @@ let concat = defn({
 let first = defn({
   name: 'first',
   doc: 'Gets the first element of any `seq`able.',
-  pre: args([coll]),
+  pre: args([is_coll]),
   body: (coll) => seq_(coll).first()
 });
 
 let rest = defn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
-  pre: args([coll]),
+  pre: args([is_coll]),
   body: (coll) => seq_(coll).rest() || empty_seq
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
-  pre: args([coll]),
+  pre: args([is_coll]),
   body: (coll) => rest(seq_(coll)) === empty_seq
 });
 
@@ -204,7 +204,7 @@ let is_complete = defn({
 
 let reduce = defn({
   name: 'reduce',
-  pre: args([fn, coll], [fn, any, coll]),
+  pre: args([is_fn, is_coll], [is_fn, is_any, is_coll]),
   body: [
     (f, coll) => reduce(f, first(coll), rest(coll)),
     (f, accum, coll) => {
@@ -220,7 +220,7 @@ let reduce = defn({
 let transduce = defn({
   name: 'transduce',
   doc: 'Transduce is a transforming reducer. (Again, explaining this? Ugh.)',
-  pre: args([fn, fn, coll], [fn, fn, any, coll]),
+  pre: args([is_fn, is_fn, is_coll], [is_fn, is_fn, is_any, is_coll]),
   body: [
     (xform, reducer, coll) => reduce(xform(reducer), coll),
     (xform, reducer, accum, coll) => reduce(xform(reducer), accum, coll)
@@ -232,7 +232,7 @@ let concat_m = defmethod({name: 'concat'});
 let into = defn({
   name: 'into',
   doc: 'Takes the contents of one collection and puts them into another, working across types. Takes an optional transducer.',
-  pre: args([coll, coll], [coll, fn, coll]),
+  pre: args([is_coll, is_coll], [is_coll, is_fn, is_coll]),
   body: [
     (to, from) => concat_m(to, seq_(from)),
     (to, xform, from) => concat_m(to, transduce(xform, A.conj_, [], from))

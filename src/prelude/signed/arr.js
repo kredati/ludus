@@ -15,7 +15,8 @@ import A from './arr_immutable.js';
 
 let {ns} = NS;
 let {defn} = L.Fn;
-let {args, seq, arr, int, any, iter, fn} = S;
+let {args, seq} = S;
+let {is_arr, is_int, is_any, is_iter, is_fn} = P;
 let {is_natural, num} = L.Num;
 let {eq} = L;
 
@@ -51,14 +52,14 @@ let _arr = defn({
 let from = defn({
   name: 'from',
   doc: 'Takes an iterable and returns an array containing the iterable\'s elements.',
-  pre: seq(iter),
+  pre: seq(is_iter),
   body: A.from
 });
 
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates an array with zero or more iterables.',
-  pre: args([arr], [arr, iter]),
+  pre: args([is_arr], [is_arr, is_iter]),
   body: (...iters) => {
     let out = [];
     for (let xs of iters) {
@@ -73,7 +74,7 @@ let concat = defn({
 let conj = defn({
   name: 'conj',
   doc: 'Takes an array and a list of elements and adds those elements to the array.',
-  pre: args([arr, any]),
+  pre: args([is_arr, is_any]),
   body: [
     (arr, x) => A.from(arr).conj(x),
     (arr, x, y, ...more) => A.from(arr).conj(x).conj(y).concat(more)
@@ -83,21 +84,21 @@ let conj = defn({
 let conj_ = defn({
   name: 'conj_',
   doc: 'Mutating `conj`: takes a JS array and adds an element to it, mutating it. Returns the mutated array.',
-  pre: args([Array.isArray, any]),
+  pre: args([Array.isArray, is_any]),
   body: (arr, x) => (arr.push(x), arr)
 });
 
 let unconj = defn({
   name: 'unconj',
   doc: 'Takes an array and returns a new array that omits the last element of the original array. Given an empty array, returns an empty array.',
-  pre: args([arr]),
+  pre: args([is_arr]),
   body: (arr) => A.from(arr).unconj()
 });
 
 let slice = defn({
   name: 'slice',
   doc: 'Takes an array, a starting index, and an optional stopping index. Returns a new array that contains the elements of the original array from the start index (inclusive) to the stop index (exclusive).',
-  pre: args([arr, index], [arr, index, int]),
+  pre: args([is_arr, index], [is_arr, index, is_int]),
   body: [
     (arr, start) => A.from(arr).slice(start),
     (arr, start, stop) => A.from(arr).slice(start, stop)
@@ -107,14 +108,14 @@ let slice = defn({
 let assoc = defn({
   name: 'assoc',
   doc: 'Takes an array, an index, and a value, and sets the element at the index to the value. If the index is out of range (i.e., greater than or equal to the size of the array), it returns the array unchanged.',
-  pre: args([arr, index, any]),
+  pre: args([is_arr, index, is_any]),
   body: (arr, index, value) => A.from(arr).update(index, value)
 });
 
 let index_of = defn({
   name: 'index_of',
   doc: 'Takes an array and a value and returns the first index where the element `eq`s the value. If the value is not in the array, returns `undefined`.',
-  pre: args([arr, any]),
+  pre: args([is_arr, is_any]),
   body: (arr, value) => {
     let size = arr.length || arr.size;
     for (let i = 0; i < size; i++) {
@@ -127,7 +128,7 @@ let index_of = defn({
 let last_index_of = defn({
   name: 'last_index_of',
   doc: 'Takes an array and a value and returns the last index where the element `eq`s the value. If the value is not in the array, returns `undefined`.',
-  pre: args([arr, any]),
+  pre: args([is_arr, is_any]),
   body: (arr, value) => {
     let size = arr.length || arr.size;
     for (let i = size - 1; i >= 0; i--) {
@@ -140,7 +141,7 @@ let last_index_of = defn({
 let reverse = defn({
   name: 'reverse',
   doc: 'Reverses the order of an array.',
-  pre: args([arr]),
+  pre: args([is_arr]),
   body: (arr) => {
     let out = [];
     let size = arr.length || arr.size;
@@ -157,7 +158,7 @@ let reverse = defn({
 let sort = defn({
   name: 'sort',
   doc: 'Sorts the elements of the array, returning a new array with elements sorted. Takes an optional comparison function. The sorting, `compare(x, y)` should return a numerical value less than zero if x is less than y; 0 if they are equal; and a value greater than 0 if x is greater than y. E.g., to sort numbers in ascending order, `sort([2, 1, 4, 0], sub) //=> [0, 1, 2, 4]`. To sort numbers in descending order: `sort([2, 1, 4, 0], (x, y) => y - x) //=> [4, 2, 1, 0]`. If no function is passed, all elements are converted to strings and compared according to Unicode values, which can lead to some unexpected results. E.g., `sort([10, 9, 1, 32]) //=> [1, 10, 32, 9]`.', 
-  pre: args([arr], [arr, fn]),
+  pre: args([is_arr], [is_arr, is_fn]),
   body: [
     (arr) => from([...arr].sort()),
     (arr, compare) => from([...arr].sort(compare))

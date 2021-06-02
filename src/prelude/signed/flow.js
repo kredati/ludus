@@ -10,8 +10,8 @@ import NS from './ns.js';
 import Fn from './fns.js';
 
 let {defn} = Fn;
-let {bool} = P;
-let {rename, tup, fn, args, seq, any, int} = S;
+let {bool, is_fn, is_any, is_int} = P;
+let {rename, tup, args, seq} = S;
 let {ns} = NS;
 
 let when = defn({
@@ -20,12 +20,12 @@ let when = defn({
   body: x => x == undefined || x === false ? false : true
 });
 
-let clause = rename('clause', tup(fn, fn));
+let clause = rename('clause', tup(is_fn, is_fn));
 
 let cond = defn({
   name: 'cond',
   doc: '`cond` takes value and a series of clauses (at least one). Each clause is an array of two items, a predicate function and an executive function. If the predicate returns a truthy value when passed to the predicate, the executive function is called with the predicate. Note that both predicate and executive functions must be unary. E.g. `cond(1, [eq(0), inc(1)], [eq(1), inc(2)]); //=> 3`.',
-  pre: args([any, clause]), 
+  pre: args([is_any, clause]), 
   body: (value, ...clauses) => {
     for (let [pred, exec] of clauses) {
       if (bool(pred(value))) return exec(value);
@@ -66,7 +66,7 @@ let just = defn({
 let repeat = defn({
   name: 'repeat',
   doc: 'Takes a number, `count`, and a function. Calls that function `count` times, passing the `count` into the function as an argument. Returns the result of the last call.',
-  pre: args([int, fn]),
+  pre: args([is_int, is_fn]),
   body: (count, fn) => {
     let result = undefined;
     for (let i = 0; i < count; i++) {

@@ -10,20 +10,21 @@ let Fn = Ludus.Fn;
 let {report} = Ludus;
 let {ns} = NS;
 
-let {record, maybe, str, seq, or, and, any, some, type, args, not_empty} = Spec;
+let {record, maybe, seq, or, and, args} = Spec;
+let {is_str, is_any, is_some, is, is_not_empty, is_fn} = Ludus.Pred;
 
-let func = Spec.fn;
 
-let test = or(func, type(Spec.t)); // specs valid tests: a function or a spec
+
+let test = or(is_fn, is(Spec.t)); // specs valid tests: a function or a spec
 let pre_post = maybe(or(test, seq(test))); // pre or post tests are optional, and either tests or sequences of tests
 
 // spec a function descriptor
 let fn_descriptor = record('fn_descriptor', {
-  name: str,
-  doc: maybe(str),
+  name: is_str,
+  doc: maybe(is_str),
   pre: pre_post,
   post: pre_post,
-  body: or(func, and(not_empty, seq(func))) 
+  body: or(is_fn, and(is_not_empty, seq(is_fn))) 
 });
 
 // finally, a signed (and therefore safe-ish) `defn`
@@ -38,14 +39,14 @@ let defn = Fn.defn({
 let partial = defn({
   name: 'partial',
   doc: 'Partially applies a function. Takes a function and at least one argument to apply against the function when subsequent arguments are specified.',
-  pre: args([func, any]),
+  pre: args([is_fn, is_any]),
   body: Fn.partial
 });
 
 let loop = defn({
   name: 'loop', 
   doc: 'Takes a function that is in tail-recursive form and eliminates tail calls, if the recursive calls are made using `recur` instead of the function name. Also allows for looping of anonymous functions.',
-  pre: args([func]),
+  pre: args([is_fn]),
   body: Fn.loop
 });
 
@@ -56,7 +57,7 @@ Fn.recur.doc = '`recur` is used within functions wrapped by `loop` to eliminate 
 let fn = defn({
   name: 'fn', 
   doc: '`fn` is a convnience form of `defn`. It takes a string name and a function body or sequence of body clauses. It does not offer provisions for docstrings, nor for pre/post condition testing.',
-  pre: args([str, func]),
+  pre: args([is_str, is_fn]),
   body: Fn.fn
 });
 
@@ -67,7 +68,7 @@ let never = Symbol('ludus/never');
 let once = defn({
   name: 'once',
   doc: 'A function wrapped in `once` is run once, caches its result, and returns that result forever. It is useful for managing stateful constructs in a purely functional environment. (E.g., it is used in a crucial place in \'./seqs.js\' to make iterators "stateless.")',
-  pre: args([func]),
+  pre: args([is_fn]),
   body: (fn) => {
     let result = never;
     return Fn.fn(fn.name, (...args) => {
@@ -86,7 +87,7 @@ let once = defn({
 let thread = defn({
   name: 'thread',
   doc: '`thread`s a value through a series of functions, i.e. the value is passed to the first function, the return value is then passed ot the second,then the third, etc. Each fn must have an arity of 1. The passed value must not be `undefined`.',
-  pre: args([some, func]),
+  pre: args([is_some, is_fn]),
   body: (value, ...fns) => {
     let init = value;
     for (let fn of fns) {
@@ -108,7 +109,7 @@ let thread = defn({
 let thread_some = defn({
   name: 'thread_some',
   doc: 'As `thread`, threading a value through a series of functions, but short-circuits on the first `undefined` return value, and returns `undefined`.',
-  pre: args([some, func]),
+  pre: args([is_some, is_fn]),
   body: (value, ...fns) => {
     let init = value;
     for (let fn of fns) {
@@ -130,11 +131,11 @@ let thread_some = defn({
 let pipe = defn({
   name: 'pipe',
   doc: 'Creates a pipeline of unary functions, returning a unary function. Passes the argument to the first function, and then passes the return value of the first to the second function, and so on. The first value must not be undefined. Handles errors reasonably gracefully.',
-  pre: seq(func),
+  pre: seq(is_fn),
   body: (...fns) => defn({
     name: 'pipeline',
     pipe: fns,
-    pre: args([some]),
+    pre: args([is_some]),
     body: (value) => {
       let init = value;
       for (let fn of fns) {
@@ -157,11 +158,11 @@ let pipe = defn({
 let pipe_some = defn({
   name: 'pipe_some',
   doc: 'Builds a function pipeline, as `pipe`, but short-circuits on the first undefined return value, and returns undefined.',
-  pre: seq(func),
+  pre: seq(is_fn),
   body: (...fns) => defn({
     name: 'pipeline/some',
     pipe: fns,
-    pre: args([some]),
+    pre: args([is_some]),
     body: (value) => {
       let init = value;
       for (let fn of fns) {
@@ -182,12 +183,12 @@ let pipe_some = defn({
 let comp = defn({
   name: 'comp',
   doc: 'Composes functions, e.g. `comp(f, g)` is the same as `f(g(x))`. In other words, it builds a pipeline in reverse.',
-  pre: seq(func),
+  pre: seq(is_fn),
   body: (...fns) => {
     fns.reverse();
     return defn({
       name: 'composed',
-      pre: args([some]),
+      pre: args([is_some]),
       pipe: fns,
       body: pipe(...fns)
     });
@@ -197,12 +198,12 @@ let comp = defn({
 let comp_some = defn({
   name: 'comp_some',
   doc: 'Composes functions, as `comp`, but short-circuits on the first `undefined` value.',
-  pre: seq(func),
+  pre: seq(is_fn),
   body: (...fns) => {
     fns.reverse();
     return defn({
       name: 'composed/some',
-      pre: args([some]),
+      pre: args([is_some]),
       pipe: fns,
       body: pipe_some(...fns)
     })
@@ -210,9 +211,9 @@ let comp_some = defn({
 });
 
 let method_descriptor = Spec.record('method_descriptor', {
-  name: str,
-  not_found: maybe(Spec.fn),
-  doc: maybe(str),
+  name: is_str,
+  not_found: maybe(is_fn),
+  doc: maybe(is_str),
   pre: pre_post,
   post: pre_post
 });
@@ -228,7 +229,7 @@ let defmethod = defn({
 
 let show = defn({
   name: 'show',
-  pre: args([Spec.fn]),
+  pre: args([is_fn]),
   body: (fn) => fn.name ? `[λ: ${fn.name}]` : '[λ]'
 });
 

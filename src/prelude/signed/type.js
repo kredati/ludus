@@ -3,9 +3,10 @@
 
 import L from './deps.js';
 
-let {Type, Fn, NS, Spec} = L;
+let {Type, Fn, NS, Pred, Spec} = L;
 let {defn, partial} = Fn;
-let {args, type, str, any, assoc, at} = Spec;
+let {args, type, at} = Spec;
+let {is_str, is_any, is_obj, is: is_} = Pred;
 
 let meta = defn({
   name: 'meta',
@@ -16,14 +17,14 @@ let meta = defn({
 let show = defn({
   name: 'show',
   doc: 'Shows a type.',
-  pre: args([type(Type.t)]),
+  pre: args([is_(Type.t)]),
   body: Type.show
 });
 
 let deftype = defn({
   name: 'deftype',
   doc: 'Defines a type.',
-  pre: args([at('name', str)]),
+  pre: args([at('name', is_str)]),
   body: Type.deftype
 });
 
@@ -36,7 +37,7 @@ let type_of = defn({
 let is = defn({
   name: 'is',
   doc: 'Tells if something is of a given type. With one argument, returns a predicate function. With two arguments, acts as a predicate function.',
-  pre: args([type(Type.t)], [type(Type.t), any]),
+  pre: args([is_(Type.t)], [is_(Type.t), is_any]),
   body: [
     (type) => partial(is, type),
     (type, x) => type_of(x) === type
@@ -46,7 +47,7 @@ let is = defn({
 let create = defn({
   name: 'create',
   doc: 'Creates an object of a specified type. Copies all the attributes from the optional second argument onto the created object.',
-  pre: args([type(Type.t)], [type(Type.t), assoc]),
+  pre: args([is_(Type.t)], [is_(Type.t), is_obj]),
   body: [
     (type) => Type.create(type),
     (type, attrs) => Type.create(type, attrs)

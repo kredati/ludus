@@ -6,7 +6,8 @@ import T from './type.js';
 
 let {Fn, Spec, NS} = L;
 let {defn, partial} = Fn;
-let {args, str, type, any, obj, at, or, and, defspec} = Spec;
+let {args, at, or, and, defspec} = Spec;
+let {is_str, is_any, is_obj, is} = L.Pred;
 
 let is_ns = defn({
   name: 'is_ns',
@@ -14,14 +15,14 @@ let is_ns = defn({
   body: NS.is_ns
 });
 
-let named_or_typed = or(at('name', str), at('type', type(T.t)));
-let with_members = at('members', obj);
+let named_or_typed = or(at('name', is_str), at('type', is(T.t)));
+let with_members = at('members', is_obj);
 let ns_descriptor = defspec({name: 'ns_descriptor', pred: and(named_or_typed, with_members)});
 
 let ns = defn({
   name: 'ns',
   doc: 'Defines a namespace. With one argument, takes a namespace descriptor, which must have a either string `name` or a `type`. With two arguments, takes a namespace and an object describing new namespace members, and modifies the namespace by adding or replacing members. Returns the namespace. Note that `ns` is a special form: it may only be used after `export default`.',
-  pre: args([ns_descriptor], [type(NS.t), obj]),
+  pre: args([ns_descriptor], [is(NS.t), is_obj]),
   body: [
     (descriptor) => NS.ns(descriptor),
     (type, members) => defmembers(type, members)
@@ -33,7 +34,7 @@ let ns_s = defspec({name: 'ns', pred: is_ns});
 let defmembers = defn({
   name: 'defmembers',
   doc: 'Takes a namespace and an object, adding the key/value pairs to the namespace. Any values in the members object overwrite the namespace. Be careful with this; you should only use `defmembers` when the namespace is under your control, and if you are certain that changing members will not lead to subtle bugs.',
-  pre: args([ns_s, obj]),
+  pre: args([ns_s, is_obj]),
   body: NS.defmembers
 });
 
@@ -47,7 +48,7 @@ let members = defn({
 let def = defn({
   name: 'def',
   doc: 'Defines a member of a namespace. If the member already exists, overwrites it.',
-  pre: args([ns_s, str, any]),
+  pre: args([ns_s, is_str, is_any]),
   body: NS.def
 });
 
@@ -67,7 +68,7 @@ let show = defn({
 let has = defn({
   name: 'has',
   doc: 'Tells if a namespace has a value associated with a particular name.',
-  pre: args([str], [str, ns_s]),
+  pre: args([is_str], [is_str, ns_s]),
   body: [
     (name) => partial(has, name),
     (name, ns) => name in ns

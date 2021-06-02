@@ -5,10 +5,12 @@ import L from './deps.js';
 import Fn from './fns.js';
 import Spec from './spec.js';
 import NS from './ns.js';
+import Pred from './preds.js';
 
 let {ns} = NS;
 let {defn} = Fn;
-let {args, fn} = Spec;
+let {args} = Spec;
+let {is_fn} = Pred;
 
 // We can't wrap `raise` in a `defn`, because it won't throw errors properly (they gety `handle`d)
 // Add `doc` metadata to raise.
@@ -18,7 +20,7 @@ L.Err.raise.doc = 'Raises an error: stops execution and sends a report. You may 
 let bound = defn({
   name: 'bound',
   doc: 'Converts a function that raises an error to one that returns any errors.',
-  pre: args([fn]),
+  pre: args([is_fn]),
   body: (fn) => Fn.fn(fn.name + '<bounded>', 
     (...args) => {
       try {
@@ -37,7 +39,7 @@ let bound = defn({
 let handle_f = defn({
   name: 'handle',
   doc: 'Execute a computation, and handle any errors arising from it (presumably gracefully). Takes two functions: `attempt`, a nullary function that includes the computation that might raise an error; and `on_error`, a unary function that receives (and presumably, handles) any errors. If the computation succeeds, returns the return value of `attempt`; if it fails, returns the return value of `on_error`.',
-  pre: args([fn, fn]),
+  pre: args([is_fn, is_fn]),
   body: (attempt, on_error) => {
     try {
       return attempt();
@@ -51,7 +53,7 @@ let handle_f = defn({
 // then you do `let [res, err] = handle(() => {...}); when(err) ? ...;`
 let handle_tup = defn({
   name: 'handle',
-  pre: args([fn]),
+  pre: args([is_fn]),
   body: (attempt) => {
     let result;
     let error;
