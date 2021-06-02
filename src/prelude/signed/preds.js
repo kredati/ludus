@@ -167,7 +167,7 @@ let is = defn({
   pre: args([P.is(Type.t)], [P.is(Type.t), is_any]),
   body: [
     (type) => partial(is, type),
-    (type, value) => P.is(type, value)
+    (type, value) => P.is(type)(value)
   ]
 });
 
