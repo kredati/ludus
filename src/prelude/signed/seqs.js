@@ -20,7 +20,7 @@ import A from './arr.js';
 let {args, seq} = S;
 let {defn, once, defmethod} = Fn;
 let {create, deftype} = T;
-let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is} = P;
+let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str} = P;
 let {ns} = NS;
 let {conj_} = A;
 
@@ -36,6 +36,8 @@ let obj_gen = function* (obj) {
 };
 
 let seq_t = deftype({name: 'Seq'});
+
+let is_seqable = or(is_coll, is_str);
 
 // iterate: creates an iterator over a seq
 // uses a closure to get JS iterator behavior on something that
@@ -70,14 +72,14 @@ let show = defn({
 
 let is_seq = defn({
   name: 'is_seq',
-  doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, use `coll`.',
+  doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, use `is_seqable`.',
   body: (x) => is(seq_t, x) 
 });
 
 let count = defn({
   name: 'count',
   doc: 'Determines the size of a collection.',
-  pre: args([is_coll]),
+  pre: args([is_seqable]),
   body: (x) => {
     if (x.length != undefined) return x.length;
     if (x.size != undefined) return x.size;
@@ -103,7 +105,7 @@ let create_seq = (iterator, size) => {
 let seq_ = defn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
-  pre: args([is_coll], [is_fn, is_coll]),
+  pre: args([is_seqable], [is_fn, is_seqable]),
   body: [
     (seqable) => {
       // if it's already a seq, just return it
@@ -153,8 +155,8 @@ let empty = defn({
 
 let concat = defn({
   name: 'concat',
-  doc: 'Concatenates `seq`s, placing one after the other.',
-  pre: seq(is_coll),
+  doc: 'Concatenates `seqable`s, placing one after the other.',
+  pre: seq(is_seqable),
   body: (...colls) => {
     let generator = (function*(){
       for (let coll of colls) {
@@ -170,21 +172,21 @@ let concat = defn({
 let first = defn({
   name: 'first',
   doc: 'Gets the first element of any `seq`able.',
-  pre: args([is_coll]),
+  pre: args([is_seqable]),
   body: (coll) => seq_(coll).first()
 });
 
 let rest = defn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
-  pre: args([is_coll]),
+  pre: args([is_seqable]),
   body: (coll) => seq_(coll).rest() || empty_seq
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
-  pre: args([is_coll]),
+  pre: args([is_seqable]),
   body: (coll) => rest(seq_(coll)) === empty_seq
 });
 
@@ -204,7 +206,7 @@ let is_complete = defn({
 
 let reduce = defn({
   name: 'reduce',
-  pre: args([is_fn, is_coll], [is_fn, is_any, is_coll]),
+  pre: args([is_fn, is_seqable], [is_fn, is_any, is_seqable]),
   body: [
     (f, coll) => reduce(f, first(coll), rest(coll)),
     (f, accum, coll) => {
@@ -220,7 +222,7 @@ let reduce = defn({
 let transduce = defn({
   name: 'transduce',
   doc: 'Transduce is a transforming reducer. (Again, explaining this? Ugh.)',
-  pre: args([is_fn, is_fn, is_coll], [is_fn, is_fn, is_any, is_coll]),
+  pre: args([is_fn, is_fn, is_seqable], [is_fn, is_fn, is_any, is_seqable]),
   body: [
     (xform, reducer, coll) => reduce(xform(reducer), coll),
     (xform, reducer, accum, coll) => reduce(xform(reducer), accum, coll)
@@ -231,8 +233,8 @@ let concat_m = defmethod({name: 'concat'});
 
 let into = defn({
   name: 'into',
-  doc: 'Takes the contents of one collection and puts them into another, working across types. Takes an optional transducer.',
-  pre: args([is_coll, is_coll], [is_coll, is_fn, is_coll]),
+  doc: 'Takes the contents of a seqable and puts them into a collection (NB: the first argument to `into` may not be a string). Takes an optional transducer.',
+  pre: args([is_coll, is_seqable], [is_coll, is_fn, is_seqable]),
   body: [
     (to, from) => concat_m(to, seq_(from)),
     (to, xform, from) => concat_m(to, transduce(xform, A.conj_, [], from))
@@ -242,7 +244,7 @@ let into = defn({
 export default ns({
   type: seq_t,
   members: {
-    concat, empty, first, is_empty, is_seq, 
+    concat, empty, first, is_empty, is_seq, is_seqable,
     iterate, rest, seq: seq_, show, count,
     reduce, transduce, into, complete, is_complete
   }});
