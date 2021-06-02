@@ -4,6 +4,8 @@
 // TODO: add "nil punning" for undefined? [Why?]
 //        [ ] Change is_number to maybe(is_number) everywhere
 //        [ ] Figure out how to coerce undefined to 0 gracefully
+// TODO: add additional numeric functions
+//        [ ] ping_pong
 
 import L from './deps.js';
 import F from './fns.js';
