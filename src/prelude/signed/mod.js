@@ -15,7 +15,7 @@ import Seq from './seqs.js';
 import Spec from './spec.js';
 import Str from './strings.js';
 import Type from './type.js';
-import Mthd from './methods.js';
+import Method from './methods.js';
 
 import './eq.js';
 import './globals.js';
@@ -34,7 +34,7 @@ let ctx = {
     arr: Arr.arr, bool: Bool.bool, num: Num.num, ref: Ref.ref, seq: Seq.seq,
     str: Str.str,
     // methods
-    ...NS.members(Mthd),
+    ...NS.members(Method),
     // from Arr
     is_index: Arr.is_index,
     // from Bool

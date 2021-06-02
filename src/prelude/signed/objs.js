@@ -10,7 +10,7 @@ import Pred from './preds.js';
 
 let {defn, partial} = Fn;
 let {is_any, is_key, is_obj, is_fn, is_js_obj} = Pred;
-let {args, seq, dict, tup} = Spec;
+let {args, dict, tup, iter_of} = Spec;
 let {ns} = NS;
 
 let get = defn({
@@ -43,7 +43,7 @@ let get_in = defn({
   doc: 'Nested property access. Given a collection, take a path to a particular value represented by a sequence of keys. Returns `undefined` if there is nothing at that path. E.g. `get_in({a: [1, 2, 3]}, [\'a\', 1]); //=> 2`.',
   // TODO: partial application with one argument?
   // TODO: enforce a requirement that the path be non-empty?
-  pre: args([is_any, seq(is_key)]),
+  pre: args([is_any, iter_of(is_key)]),
   body: (obj, path) => {
     if (obj == undefined) return undefined;
     let result = obj;
@@ -71,6 +71,30 @@ let _assoc_ = defn({
   body: (obj, key, value) => {
     obj[key] = value;
     return obj;
+  }
+});
+
+let dissoc = defn({
+  name: 'dissoc',
+  doc: 'Returns a new object with the specified key removed. The opposite of `assoc`. E.g., `dissoc({a: 1, b: 2}, \'b\'); //=> {a: 1}',
+  pre: args([is_obj, is_key]),
+  body: (obj, key) => {
+    let out = {};
+    for (let k in obj) {
+      if (k === key) continue;
+      out[k] = obj[k];
+    }
+    return out;
+  }
+});
+
+let dissoc_ = defn({
+  name: 'dissoc_',
+  doc: 'Deletes a key on an object, mutating the object.',
+  pre: args([is_js_obj, is_key]),
+  body: (obj, key) => {
+    delete obj[key];
+    return obj
   }
 });
 
@@ -113,14 +137,14 @@ let kv = tup(is_key, is_any);
 let concat = defn({
   name: 'concat',
   doc: 'Creates a new object, combining the object as the first argument with a sequence of key-value tuples. If the key-value pairs duplicate a key, silently overwrites the value; later pairs take precedence. E.g., `concat({a: 1}, [[\'b\', 2], [\'c\', 3]]; //=> {a: 1, b: 2, c: 3}`.',
-  pre: args([is_obj, seq(kv)]),
+  pre: args([is_obj, iter_of(kv)]),
   body: (obj, kvs) => Object.assign(obj, Object.fromEntries(kvs))
 });
 
 let merge = defn({
   name: 'merge',
   doc: 'Creates a new object, combining the objects passed in. If objects duplicate a key, silently overwrites the value; later objects take precedence.E.g. `assign({a: 1, b: 2}, {b: 3, c: 4}); //=> {a: 1, b: 3, c: 4}`.',
-  pre: seq(is_obj),
+  pre: args([is_obj]),
   body: (...objs) => Object.assign({}, ...objs)
 });
 
@@ -165,7 +189,7 @@ let conj_ = defn({
 let from = defn({
   name: 'from',
   doc: 'Creates an object from an iterable containing `[key, value]` tuples.',
-  pre: args([seq(tup(is_key, is_any))]),
+  pre: args([iter_of(kv)]),
   body: (entries) => Object.fromEntries(entries)
 });
 
@@ -174,5 +198,6 @@ export default ns(L.Obj, {
   concat, update, update_with,
   merge, keys, values, entries,
   empty, conj, conj_, from,
-  assoc: _assoc, assoc_: _assoc_
+  assoc: _assoc, assoc_: _assoc_, 
+  dissoc, dissoc_
 });

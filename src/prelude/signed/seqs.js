@@ -17,7 +17,7 @@ import T from './type.js';
 import NS from './ns.js';
 import A from './arr.js';
 
-let {args, seq} = S;
+let {args} = S;
 let {defn, once, defmethod} = Fn;
 let {create, deftype} = T;
 let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str} = P;
@@ -156,7 +156,7 @@ let empty = defn({
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates `seqable`s, placing one after the other.',
-  pre: seq(is_seqable),
+  pre: args([is_seqable]),
   body: (...colls) => {
     let generator = (function*(){
       for (let coll of colls) {

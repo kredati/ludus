@@ -13,7 +13,7 @@ import P from './preds.js';
 import S from './spec.js';
 import NS from './ns.js';
 
-let {args, seq} = S;
+let {args} = S;
 let {is_num, is_int} = P;
 let {defn, partial, fn} = F;
 let {ns} = NS;
@@ -35,7 +35,7 @@ let dec = defn({
 let add = defn({
   name: 'add',
   doc: 'Adds numbers. With two or more arguments, sums all the arguments together. With one argument, partially applies `add`, returning a function that will add that will sum all its arguments, and then add the first. E.g., `add(1, 2, 3); //=> 6`, and `add(1)(2); //=> 3`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => partial(add, x),
     (x, y, ...more) => {
@@ -52,7 +52,7 @@ let add = defn({
 let mult = defn({
   name: 'mult',
   doc: 'Multiplies numbers. With two or more arguments, multiplies all the arguments together. With one argument, partially applies `mult`, returning a function that will multiply all its arguments, and then multiply that product by the first. E.g., `mult(2, 3, 4); //=> 24` and `mult(2)(4); //=> 8`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => partial(mult, x),
     (x, y, ...more) => {
@@ -69,7 +69,7 @@ let mult = defn({
 let sub = defn({
   name: 'sub',
   doc: 'Subtracts numbers. With two arguments, subtracts the second from the first. E.g. `sub(10, 4); //=> 6`. With three or more arguments, subtracts from the first argument the sum of the remaining arguments. E.g., `sub(10, 2,3); //=> 5`. With a single argument, returns `sub` partially applied, which will subtract the sum of any arguments from the original first argument. E.g. `sub(10)(1, 2, 3); //=> 4`. Note that this is perhaps unintuitive behavior. If you want a function that will subtract a given amount from its argument, see `sub_by`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => partial(sub, x),
     (x, y) => x - y,
@@ -184,7 +184,7 @@ let abs = defn({
 let random_int = defn({
   name: 'random_int',
   doc: 'Returns a random integer. Given one argument, returns a random integer between `0` (inclusive) and that value (exclusive). Given two arguments, returns a random integer between them (inclusive of the first argument, exclusive of the second argument). Arguments must be integers. E.g. `random_int(3); //=> 0, 1, or 2` and `random_int(1, 4); //=> 1, 2, or 3`.',
-  pre: seq(is_int),
+  pre: args([is_int]),
   body: [
     (x) => (Math.random() * x) | 0,
     (x, y) => ((Math.random() * (y - x)) | 0) + x 
@@ -201,7 +201,7 @@ let mod = defn({
 let pow = defn({
   name: 'pow',
   doc: 'Exponentiation operation. When given two numbers, raises the first argument to the second. When given three or more numbers, raises the first to the second, and then raises the result of that to the third, and so on. When given one number, returns `pow` partially applied: a function that raises that first number to the power of the argument, e.g. `pow(3)(4); //=> 81` (and not 64). If you want a function that raises its argument to the power of a particular number, see `pow_by`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => partial(pow, x),
     (x, y, ...more) => {
@@ -228,7 +228,7 @@ let pow_by = defn({
 let gt = defn({
   name: 'gt',
   doc: 'Greater than comparator, `>`. When given two numbers, returns `true` if the first is greater than the second. When given three or more numbers, returns `true` if the numbers are in decreasing order. When given one number, `gt` returns itself partially applied. Note that partial application is meant to be intuitive rather than rigorous: `gt(4)` returns a function that tests if its argument is greater than 4: `gte(4, 3); //=> true`, but `gte(4)(3); //=> false`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => fn(`gt<partial (${x})>`, (y) => gt(y, x)),
     (x, y, ...more) => {
@@ -246,7 +246,7 @@ let gt = defn({
 let gte = defn({
   name: 'gte',
   doc: 'Greater than or equal comparator, `>=`. With one argument, partially applies itself. With two, returns `true` if the first is greater than or equal to the second. With three or more, returns `true` if the numbers are in decreasing or flat order, e.g. `gte(3, 2, 1, 1, 1); //=> true`. Note that partial application is meant to be intuitive rather than rigorous: `gte(4)` returns a function that tests if its argument is greater than or equal to 4: `gte(4, 3); //=> true`, but `lte(4)(3); //=> false`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => fn(`gte<partial (${x})>`, (y) => gte(y, x)),
     (x, y, ...more) => {
@@ -264,7 +264,7 @@ let gte = defn({
 let lt = defn({
   name: 'lt',
   doc: 'Less than comparator, `<`. With one argument, partially applies itself. With two, returns `true` if the first is less than the second. With three or more, returns `true` if the numbers are in increasing order. Note that partial application is meant to be intuitive rather than rigorous: `lt(3)` returns a function that tests if its argument is less than 3: `lt(3, 4); //=> true`, but `lt(3)(4); //=> false`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => fn(`lt<partial (${x})>`, (y) => lt(y, x)),
     (x, y, ...more) => {
@@ -282,7 +282,7 @@ let lt = defn({
 let lte = defn({
   name: 'lte',
   doc: 'Less than or equal to comparator, `<=`. With one argument, partially applies itself. With two, returns `true` if the first is less than or equal to the second. With three or more, returns `true` if the numbers are in increasing or flat order, e.g. `lte(1, 2, 3, 3); //=> true`. Note that partial application is meant to be intuitive rather than rigorous: `lte(3)` returns a function that tests if its argument is less than or equal to 3: `lte(3, 4); //=> true`, but `lte(3)(4); //=> false`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (x) => fn(`lte<partial (${x})>`, (y) => lte(y, x)),
     (x, y, ...more) => {
@@ -389,14 +389,14 @@ let num_ = defn({
 let sum_of_squares = defn({
   name: 'sum_of_squares',
   doc: 'Returns the sum of the squares of the numbers passed in. To compare the magnitude of vectors quickly, use `sum_of_squares`: it avoids the costly `sqrt` step in `hypot`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: (...xs) => add(...xs.map((x) => x ** 2))
 });
 
 let hypot = defn({
   name: 'hypot',
   doc: 'Returns the "hypoteneuse" of a list of numbers: the square root of the sum of their squares. This will calculate the distance between the origin and a point in n-dimensional space (where n is the number of arguments passed in). Note that this can be slow, and to compare, e.g. the magnitude of vectors, you should probably use `sum_of_squares`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: (...xs) => Math.hypot(...xs)
 });
 
@@ -483,7 +483,7 @@ let log10e = Math.LOG10E;
 let clamp = defn({
   name: 'clamp',
   doc: '`clamp` constrains the range of a number. With one argument, `max`, it returns a function that clamps its argument between `0` and `max`. With two arguments, `min` and `max`, it returns a function that clamps its argument between `min` and `max`. Given three arguments, `min`, `max`, and `x`, it returns the value of `x` clamped between `min` and `max`.',
-  pre: seq(is_num), //TODO: add additional predicate so min < max?
+  pre: args([is_num]), //TODO: add additional predicate so min < max?
   body: [
     (max) => clamp(0, max),
     (min, max) => partial(clamp, min, max),
@@ -495,7 +495,7 @@ let clamp = defn({
 let lerp = defn({
   name: 'lerp',
   doc: 'Linear interpolatiion between two values. Given a `start` value, a `stop` value, and a `ratio`, calculates the number that is the ratio of the difference between them. E.g., `lerp(0, 4, 0.75); //=> 3`.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (stop) => lerp(0, stop),
     (start, stop) => partial(lerp, start, stop),
@@ -515,7 +515,7 @@ let norm = defn({
   \`norm(100)(33); //=> 0.33\` (This maps percentages to decimals.)
   \`norm(10, 20)(12.5); //=> 0.25\`
   \`norm(0, 10, 50, 100, 5); //=> 75\``,
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: [
     (source_end) => norm(0, source_end, 0, 1),
     (source_start, source_end) => norm(source_start, source_end, 0, 1),

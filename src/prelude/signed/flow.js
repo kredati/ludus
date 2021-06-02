@@ -11,7 +11,7 @@ import Fn from './fns.js';
 
 let {defn} = Fn;
 let {bool, is_fn, is_any, is_int} = P;
-let {rename, tup, args, seq} = S;
+let {rename, tup, args} = S;
 let {ns} = NS;
 
 let when = defn({
@@ -37,7 +37,7 @@ let cond = defn({
 let fcond = defn({
   name: 'fcond',
   doc: '`fcond` takes a series of clauses, and returns a unary function that passes its value to the clauses, as `cond`.',
-  pre: seq(clause),
+  pre: args([clause]),
   body: (...clauses) => Fn.fn('fcond<...>', (x) => cond(x, ...clauses))
 });
 
@@ -52,7 +52,7 @@ Leave this in for posterity, though?
 let make = defn({
   name: 'make',
   doc: 'The Ludus equivalent of a `let` expression in Lisp. (`make` is the Logo name for this operation.) Allows for fully functional programming. In place of `let` and `return` statements, takes a function literal with default paramters as the bindings, and returns the value of the expression after the arrow. Commas may be used put expressions together, returning the value of the last one. E.g. `make((x = 2, y = 3) => mult(x, y)) //=> 6.`',
-  pre: seq(fn),
+  pre: args([is_fn]),
   body: (fn) => fn()
 });
 */

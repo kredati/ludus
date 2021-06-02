@@ -9,13 +9,13 @@ import NS from './ns.js';
 
 let {defn, partial} = Fn;
 let {is_str, is_num, is_iter} = Pred;
-let {args, seq} = Spec;
+let {args} = Spec;
 let {ns} = NS;
 
 let concat = defn({
   name: 'concat',
   doc: 'Concatenates strings togheter, returning a new string made up of each argument in order.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     () => '',
     (x) => x,
@@ -27,7 +27,7 @@ let concat = defn({
 let str_ = defn({
   name: 'str',
   doc: 'Produces a quick and dirty string representation of any arguments it is given, concatenating the resulting strings. It returns strings unharmed. With zero arguments, it returns the empty string. Note that these string representations dispatch to JS\'s `toString` method on a value, which may not produce lovely or especially informative results: `string({}); //=> \'[object Object]\'` and `string([1, 2, 3]); //=> \'1,2,3\'`. For prettier (and slower) output, see `show`.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     () => '',
     (x) => x.toString(),
@@ -51,14 +51,14 @@ let from = defn({
 let count = defn({
   name: 'count',
   doc: 'Tells the length of a string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => [...str].length //NB: use spread syntax for better unicode counting
 });
 
 let split = defn({
   name: 'split',
   doc: 'Splits a string into substrings, using a separator that is also a string. Returns an array of strings. With one argument, returns a function that splits strings using the argument as a separator. With two arguments, splits the second string using the first as the separator.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (sep) => partial(split, sep),
     // NB: use spread syntax for character splitting to avoid unicode bugs
@@ -69,7 +69,7 @@ let split = defn({
 let chars = defn({
   name: 'chars',
   doc: 'Splits a string into "characters," strings of size 1. Returns an array of "chars." E.g., `chars(\'abc\'); //=> [\'a\', \'b\', \'c\']`.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => [...str]
 });
 
@@ -82,35 +82,35 @@ let is_char = defn({
 let is_blank = defn({
   name: 'is_blank',
   doc: 'Tells if a string is nothing but whitespace (spaces, newlines, tabs, etc.).',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str.trim() === ''
 });
 
 let is_empty = defn({
   name: 'is_empty',
   doc: 'Tells if a string is the empty string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str === ''
 });
 
 let trim = defn({
   name: 'trim',
   doc: 'Trims all preceding and trailing whitespace from a string. E.g., `trim(\'    foo  \'); //=>  \'foo\'`.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str.trim()
 });
 
 let trim_left = defn({
   name: 'trim_left',
   doc: 'Trims whitespace from the beginning of a string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str.trimStart()
 });
 
 let trim_right = defn({
   name: 'trim_right',
   doc: 'Trims whitespace from the end of a string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str.trimEnd()
 });
 
@@ -118,7 +118,7 @@ let index_of = defn({
   name: 'index_of',
   doc: 'Takes a search string and a target string, and returns the index of the first character of the search string in the target string, if indeed the target string includes the whole search string. Returns `undefined` if the target string does not include the search string. If there are multiple matches, returns only the first instance.',
   // TODO: consider if the second argument should be a char, not a string.
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (search) => partial(index_of, search),
     (search, target) => {
@@ -131,7 +131,7 @@ let index_of = defn({
 let last_index_of = defn({
   name: 'last_index_of',
   doc: 'Takes a search string and a target string, and returns the index of the first character of the search string in the target string, if indeed the target string includes the whole search string. Returns `undefined` if the target string does not include the search string. If there are multiple matches, returns the last instance.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (search) => partial(last_index_of, search),
     (search, target) => {
@@ -144,21 +144,21 @@ let last_index_of = defn({
 let upcase = defn({
   name: 'upcase',
   doc: 'Uppercases all characters in a string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str.toUpperCase()
 });
 
 let lowcase = defn({
   name: 'lowcase',
   doc: 'Lowercases all characters in a string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str.toLowerCase()
 });
 
 let capitalize = defn({
   name: 'capitalize',
   doc: 'Capitalizes the first character of a string, lowercasing the rest. Does not test whether the first character is a letter; if the first character cannot be capitalized, returns the string unharmed.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => 
     str[0].toUpperCase() + str.slice(1, str.length).toLowerCase()
 });
@@ -166,7 +166,7 @@ let capitalize = defn({
 let words = defn({
   name: 'words',
   doc: 'Splits a string into "words," by splitting and removing any whitespace, and stripping common punctuation marks. Numbers, emoji, other characters, etc., remain.', 
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: (str) => str
     .trim()
     // thanks StackOverflow for this regex:
@@ -178,7 +178,7 @@ let words = defn({
 let replace = defn({
   name: 'replace',
   doc: 'Replaces all instances of a search string in a target string with a replacement string. If no instances of the search are found, returns the original string. Case-sensitive.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (search, replace_with) => partial(replace, search, replace_with),
     (search, replace_with, target) => {
@@ -191,7 +191,7 @@ let replace = defn({
 let replace_first = defn({
   name: 'replace_first',
   doc: 'Replaces the first instance of a search string in a target string with a replacement string. If no instances of the search are found, returns the original string Case-sensitive.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (search, replace_with) => partial(replace_first, search, replace_with),
     (search, replace_with, target) => target.replace(search, replace_with)
@@ -201,7 +201,7 @@ let replace_first = defn({
 let from_code = defn({
   name: 'from_code',
   doc: 'Creates a 1-character string from its unicode representation.',
-  pre: seq(is_num),
+  pre: args([is_num]),
   body: (code) => String.fromCodePoint(code)
 });
 
@@ -220,7 +220,7 @@ let code_at = defn({
 let starts_with = defn({
   name: 'starts_with',
   doc: 'Given a test string and a target string to test, returns `true` if the target string starts with the test string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (test) => partial(starts_with, test),
     (test, target) => target.startsWith(test)
@@ -230,7 +230,7 @@ let starts_with = defn({
 let ends_with = defn({
   name: 'ends_with',
   doc: 'Given a test string and a target to test, returns `true` if the target string ends with the test string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (test) => partial(ends_with, test),
     (test, target) => target.endsWith(test)
@@ -240,7 +240,7 @@ let ends_with = defn({
 let includes = defn({
   name: 'includes',
   doc: 'Given a test string and a target to test, returns `true` if the target string includes the test string.',
-  pre: seq(is_str),
+  pre: args([is_str]),
   body: [
     (test) => partial(includes, test),
     (test, target) => target.includes(test)

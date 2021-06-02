@@ -10,13 +10,13 @@ let Fn = Ludus.Fn;
 let {report} = Ludus;
 let {ns} = NS;
 
-let {record, maybe, seq, or, and, args} = Spec;
+let {record, maybe, or, and, args, iter_of} = Spec;
 let {is_str, is_any, is_some, is, is_not_empty, is_fn} = Ludus.Pred;
 
 
 
 let test = or(is_fn, is(Spec.t)); // specs valid tests: a function or a spec
-let pre_post = maybe(or(test, seq(test))); // pre or post tests are optional, and either tests or sequences of tests
+let pre_post = maybe(or(test, iter_of(test))); // pre or post tests are optional, and either tests or sequences of tests
 
 // spec a function descriptor
 let fn_descriptor = record('fn_descriptor', {
@@ -24,7 +24,7 @@ let fn_descriptor = record('fn_descriptor', {
   doc: maybe(is_str),
   pre: pre_post,
   post: pre_post,
-  body: or(is_fn, and(is_not_empty, seq(is_fn))) 
+  body: or(is_fn, and(is_not_empty, iter_of(is_fn))) 
 });
 
 // finally, a signed (and therefore safe-ish) `defn`
@@ -131,7 +131,7 @@ let thread_some = defn({
 let pipe = defn({
   name: 'pipe',
   doc: 'Creates a pipeline of unary functions, returning a unary function. Passes the argument to the first function, and then passes the return value of the first to the second function, and so on. The first value must not be undefined. Handles errors reasonably gracefully.',
-  pre: seq(is_fn),
+  pre: args([is_fn]),
   body: (...fns) => defn({
     name: 'pipeline',
     pipe: fns,
@@ -158,7 +158,7 @@ let pipe = defn({
 let pipe_some = defn({
   name: 'pipe_some',
   doc: 'Builds a function pipeline, as `pipe`, but short-circuits on the first undefined return value, and returns undefined.',
-  pre: seq(is_fn),
+  pre: args([is_fn]),
   body: (...fns) => defn({
     name: 'pipeline/some',
     pipe: fns,
@@ -183,7 +183,7 @@ let pipe_some = defn({
 let comp = defn({
   name: 'comp',
   doc: 'Composes functions, e.g. `comp(f, g)` is the same as `f(g(x))`. In other words, it builds a pipeline in reverse.',
-  pre: seq(is_fn),
+  pre: args([is_fn]),
   body: (...fns) => {
     fns.reverse();
     return defn({
@@ -198,7 +198,7 @@ let comp = defn({
 let comp_some = defn({
   name: 'comp_some',
   doc: 'Composes functions, as `comp`, but short-circuits on the first `undefined` value.',
-  pre: seq(is_fn),
+  pre: args([is_fn]),
   body: (...fns) => {
     fns.reverse();
     return defn({

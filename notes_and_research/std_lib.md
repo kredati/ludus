@@ -226,10 +226,10 @@
     & and,
     & or,
     ? maybe,
-    ? at,
+    ~~? at,~~
     * is_key,
     ? has,
-    ? dict
+    ~~? dict~~
 
 ### Ref:
     * ref,
@@ -265,13 +265,14 @@
     & and,
     & or,
     & not,
-    tup,
-    ! seq,
-    ? at,
-    record,
+    + tup,
+    ~~! seq,~~
+    + iter_of,
+    + at,
+    + record,
     rename,
-    ? dict,
-    ? maybe,
+    + dict,
+    ~~? maybe,~~
     + args,
     + explain
 

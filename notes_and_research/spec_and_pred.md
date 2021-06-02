@@ -10,3 +10,15 @@ One of the design flaws in this current iteration of Ludus is the duplication be
     - Yank the concrete specs.
     - Make sure we have all the predicate functions we need.
     - Replace all specs with predicate functions in place of concrete specs.
+
+### Complex (combined or parametric) preds and specs
+The key difference between specs and predicate functions is that specs are able to offer feedback about *why* something didn't pass: you can use `explain` and see why a thing didn't do what it was supposed to. Predicate functions simply return true or false, and you have to be able to reason from their name and the return value what happened.
+
+Thus, `tup` and `record` (`rec`?---`tuple` is a shorter word than `record`) are absolutely necessarily specs. I believe that `dict` is probably best a spec.
+
+`has` is probably simple enough for a predicate: if you know what it is, you can figure out what went wrong (especially if its partially applied self has a descriptive name). But `at` is actually usefully a spec, since it will want to know what key it's interrogating.
+
+### Args vs seq
+`args([foo])` and `seq(foo)` are identical; we don't really need `seq` in most cases. I've removed `seq` in the `pre`conditions of all functions, replacing it with `args`.
+
+That said, `args` actually calls `seq`. But we definitely should not have it shadow `seq`. So: I've renamed it `iter_of`, since it takes any iterable.

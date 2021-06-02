@@ -99,9 +99,9 @@ let tup = (...specs) => {
   return defspec({name, pred, spec: tup, members: specs});
 };
 
-// seq :: (spec) => spec
-// Tests if every element of a seq matches a spec.
-let seq = (spec) => {
+// iter_of :: (spec) => spec
+// Tests if every element of an iterable matches a spec.
+let iter_of = (spec) => {
   let name = `seq<${spec.name}>`;
   let pred = (seq) => {
     if (!P.is_iter(seq)) return false;
@@ -110,7 +110,7 @@ let seq = (spec) => {
     }
     return true;
   }
-  return defspec({name, pred, spec: seq, members: spec});
+  return defspec({name, pred, spec: iter_of, members: spec});
 };
 
 // key :: (string, spec) => spec
@@ -133,6 +133,7 @@ let record = (name, map) => {
   );
   let keys = Object.values(key_map);
   let spec = and(...keys);
+  spec.spec = record;
   return rename(name, spec);
 };
 
@@ -168,7 +169,7 @@ let args = (...tups) => {
     let explicit = args.slice(0, max_arity);
     let rest = args.slice(max_arity);
     return arg_spec.pred(explicit)
-      && seq(longest[longest.length - 1]).pred(rest);
+      && iter_of(longest[longest.length - 1]).pred(rest);
   };
   // TODO: give this a nicer name?--or leave the plumbing exposed?
   return defspec({name: `args<${arg_tuples.map((t) => t.members.map((m) => m.name).join(', ')).join(' | ')}>`,
@@ -176,6 +177,8 @@ let args = (...tups) => {
 };
 
 // TODO: review, improve, simplify this
+// TODO: make this a method, dispatching to the explain methods on each function
+//       ^ this will allow for better explanations later with better functions
 let explain = (spec, value, indent = 0) => {
   let shown = L.show(value);
   let pad = ' '.repeat(indent);
@@ -220,7 +223,7 @@ let explain = (spec, value, indent = 0) => {
       }
       return msg + msgs.join('\n');
     }
-    case seq: {
+    case iter_of: {
       let msg = `${shown} fails ${spec.name}: `;
       if (!P.is_sequence(value)) {
         return msg + `${shown} is not a sequence.`;
@@ -316,7 +319,7 @@ export default ns({
   type: spec_t,
   members: {
     defspec, show, is_spec, is_valid, rename, // utils
-    and, or, not, tup, seq, at, record, // combinators
+    and, or, not, tup, iter_of, at, record, // combinators
     dict, type, maybe, args, // parametric
     explain // and explain
   }

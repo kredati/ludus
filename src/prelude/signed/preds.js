@@ -8,9 +8,9 @@ import Fn from './fns.js';
 import NS from './ns.js';
 import Type from './type.js';
 
-let {defn, partial} = Fn;
+let {defn, partial, fn} = Fn;
 let P = L.Pred;
-let {args, seq} = S;
+let {args} = S;
 let {ns} = NS;
 
 ///// Signed versions of old functions
@@ -131,7 +131,7 @@ let not = defn({
 let and = defn({
   name: 'and',
   doc: 'Takes a single function, or a list of two or more functions. With a list of functions, it returns a function that passes its args to each of the list of functions, and returns `true` only if every result is truthy. With a single function, it returns a function that takes a list of functions, and is the `and` of that function and the passed list.',
-  pre: seq(is_fn),
+  pre: args([is_fn]),
   body: [
     (x) => partial(and, x),
     (x, y, ...z) => P.and(x, y, ...z) 
@@ -141,7 +141,7 @@ let and = defn({
 let or = defn({
   name: 'or',
   doc: 'Takes one or more functions. Returns a function that passes its args to each of the list of functions, and returns `true` if any result is truthy.',
-  pre: seq(is_fn),
+  pre: args([is_fn]),
   body: [
     (x) => partial(or, x),
     (x, y, ...z) => P.or(x, y, ...z)
@@ -152,7 +152,7 @@ let maybe = defn({
   name: 'maybe',
   doc: 'Takes a predicate function and returns a predicate function that returns true if the value passed passes the predicate function, or if the value is undefined.',
   pre: args([is_fn]),
-  body: (fn) => P.fn(`maybe<${fn.name || 'anon.'}>`, or(is_undef, fn))
+  body: (fn) => fn(`maybe<${fn.name || 'anon.'}>`, or(is_undef, fn))
 });
 
 let is_key = defn({
@@ -176,11 +176,17 @@ let has = defn({
   doc: 'Tells if an object has some value set at a particular key. Note that it will return `true` if a particular object has had a key explicitly set to `undefined`. Only tests own properties.',
   pre: args([is_key], [is_key, is_any]),
   body: [
-    (key) => L.fn(`has<${key}>`, (obj) => has(key, obj)),
-    (key, obj) => obj != undefined && obj.hasOwnProperty(key)
+    (key) => fn(`has<${key}>`, (obj) => has(key, obj)),
+    (key, obj) => 
+      obj != undefined 
+      && obj.hasOwnProperty(key) 
+      && obj[key] != undefined
   ]
 });
 
+/*
+Make these specs, not predicates.
+Note the presence of "explain"; these really do have to be specs.
 let at = defn({
   name: 'at',
   doc: 'Returns a predicate function that tests if particular property of an object passes a predicate. Takes a key and a predicate, and returns a predicate function that will return true if the value passed in has a value that passes the predicate at the specified key. `at` tests properties on anything that may hold properties, including `string`s and `sequence`s.',
@@ -208,7 +214,7 @@ let dict = defn({
     }
   })
 });
-
+*/
 export default ns({
   name: 'Pred',
   members: {
@@ -216,6 +222,6 @@ export default ns({
     is_str, is_num, is_int, is_bool,
     is_fn, is_js_obj, is_obj, is_iter, is_sequence, is_coll,
     is_sequence_of, is_arr,
-    not, and, or, maybe, at, is_key, has, dict, is
+    not, and, or, maybe, is_key, has, is
   }
 });

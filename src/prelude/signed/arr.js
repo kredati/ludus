@@ -15,7 +15,7 @@ import A from './arr_immutable.js';
 
 let {ns} = NS;
 let {defn} = L.Fn;
-let {args, seq} = S;
+let {args} = S;
 let {is_arr, is_int, is_any, is_iter, is_fn} = P;
 let {is_natural, num} = L.Num;
 let {eq} = L;
@@ -52,7 +52,7 @@ let _arr = defn({
 let from = defn({
   name: 'from',
   doc: 'Takes an iterable and returns an array containing the iterable\'s elements.',
-  pre: seq(is_iter),
+  pre: args([is_iter]),
   body: A.from
 });
 

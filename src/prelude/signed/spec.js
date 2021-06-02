@@ -75,11 +75,11 @@ let tup = defn({
   body: Spec.tup
 });
 
-let seq = defn({
+let iter_of = defn({
   name: 'seq',
   doc: 'Creates a spec that validates every element of an iterable with the passed spec.',
   pre: Spec.args([spec_s]),
-  body: Spec.seq
+  body: Spec.iter_of
 });
 
 let at = defn({
@@ -119,7 +119,7 @@ let args = defn({
   name: 'args',
   doc: 'A function to validate function arguments. Takes one or more arrays that are essentially tuples, validating arrays that match any of these tuples. Will not allow multiple tuples of the same length. Also, to allow for "rest" arguments, if the array to validate is longer than the longest tuple, it applies the last spec to all arguments after the length of the tuple.', 
   // TODO: fix this docstring to make it suck less
-  pre: Spec.args([Spec.seq(spec_s)]),
+  pre: Spec.args([Spec.iter_of(spec_s)]),
   body: Spec.args
 });
 
@@ -130,12 +130,10 @@ let explain = defn({
   body: Spec.explain
 });
 
-NS.members(Spec);
-
 export default ns({
   type: Spec.t, 
   members: {
-    ...NS.members(Spec), and, args, at, defspec, dict, explain,
+    and, args, at, defspec, dict, explain,
     is_spec, is_valid, maybe, not, or, record, rename,
-    seq, show, tup
+    iter_of, show, tup
 }});
