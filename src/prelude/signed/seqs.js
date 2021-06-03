@@ -18,9 +18,9 @@ import NS from './ns.js';
 import A from './arr.js';
 
 let {args} = S;
-let {defn, once, method} = Fn;
+let {fn, once, method} = Fn;
 let {create, type} = T;
-let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str} = P;
+let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str, is_sequence} = P;
 let {ns} = NS;
 let {conj_} = A;
 
@@ -37,13 +37,11 @@ let obj_gen = function* (obj) {
 
 let seq_t = type({name: 'Seq'});
 
-let is_seqable = or(is_coll, is_str);
-
 // iterate: creates an iterator over a seq
 // uses a closure to get JS iterator behavior on something that
 // implements first/rest semantics.
 // in a seq
-let iterate = defn({
+let iterate = fn({
   name: 'iterate',
   doc: 'Creates an iterator over a `seq`.',
   pre: args([is(seq_t)]),
@@ -63,20 +61,22 @@ let iterate = defn({
   }
 });
 
-let show = defn({
+let show = fn({
   name: 'show',
   doc: 'Shows a `seq`.',
   pre: args([is(seq_t)]),
   body: (seq) => seq.size != undefined ? `Seq(${seq.size})` : 'Seq(...)'
 });
 
-let is_seq = defn({
+let is_seq = fn({
   name: 'is_seq',
   doc: 'Tells if something is a `seq`. Note that this means it is an actual instance of `seq`--lazy and abstract--and not something that is seqable. For that, use `is_seqable`.',
   body: (x) => is(seq_t, x) 
 });
 
-let count = defn({
+let is_seqable = or(is_coll, is_str, is_seq);
+
+let count = fn({
   name: 'count',
   doc: 'Determines the size of a collection.',
   pre: args([is_seqable]),
@@ -102,7 +102,7 @@ let create_seq = (iterator, size) => {
   return out;
 };
 
-let seq_ = defn({
+let seq_ = fn({
   name: 'seq',
   doc: 'Generates a `seq` over any `iterable` thing: `list` & `vector`, but also `string` and `object`. `seq`s are lazy iterables, and they can be infinite.',
   pre: args([is_seqable], [is_fn, is_seqable]),
@@ -145,13 +145,13 @@ let xform_seq = function* (xform, coll) {
 
 let empty_seq = seq_([]);
 
-let empty = defn({
+let empty = fn({
   name: 'empty',
   doc: 'Returns an empty seq.',
   body: () => empty_seq
 });
 
-let concat = defn({
+let concat = fn({
   name: 'concat',
   doc: 'Concatenates `seqable`s, placing one after the other.',
   pre: args([is_seqable]),
@@ -167,21 +167,21 @@ let concat = defn({
   }
 });
 
-let first = defn({
+let first = fn({
   name: 'first',
   doc: 'Gets the first element of any `seq`able.',
   pre: args([is_seqable]),
   body: (coll) => seq_(coll).first()
 });
 
-let rest = defn({
+let rest = fn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
   pre: args([is_seqable]),
   body: (coll) => seq_(coll).rest() || empty_seq
 });
 
-let is_empty = defn({
+let is_empty = fn({
   name: 'is_empty',
   doc: 'Tells if a seqable is empty.',
   pre: args([is_seqable]),
@@ -190,19 +190,19 @@ let is_empty = defn({
 
 let completed = Symbol('ludus/completed');
 
-let complete = defn({
+let complete = fn({
   name: 'complete',
   doc: 'Short-circuits `reduce`, returning the value and halting the reduction. Used to optimize transducers that do not traverse a whole collection.',
   body: (value) => ({value, [completed]: true})
 });
 
-let is_complete = defn({
+let is_complete = fn({
   name: 'is_complete',
   doc: 'Tells if a value, presumably passed to a reducing function, has completed the reduction.',
   body: (x) => x != undefined && bool(x[completed])
 });
 
-let reduce = defn({
+let reduce = fn({
   name: 'reduce',
   pre: args([is_fn, is_seqable], [is_fn, is_any, is_seqable]),
   body: [
@@ -217,7 +217,7 @@ let reduce = defn({
   ]
 });
 
-let transduce = defn({
+let transduce = fn({
   name: 'transduce',
   doc: 'Transduce is a transforming reducer. (Again, explaining this? Ugh.)',
   pre: args([is_fn, is_fn, is_seqable], [is_fn, is_fn, is_any, is_seqable]),
@@ -229,7 +229,7 @@ let transduce = defn({
 
 let concat_m = method({name: 'concat'});
 
-let into = defn({
+let into = fn({
   name: 'into',
   doc: 'Takes the contents of a seqable and puts them into a collection (NB: the first argument to `into` may not be a string). Takes an optional transducer.',
   pre: args([is_coll, is_seqable], [is_coll, is_fn, is_seqable]),
@@ -239,10 +239,28 @@ let into = defn({
   ]
 });
 
+
+
+let flatten = fn({
+  name: 'flatten',
+  doc: 'Takes any nested combination of sequences and returns their contents as a single, flat, lazy sequence.',
+  body: (seqs) => seq_((function*() {
+    while(!is_empty(seqs)) {
+      let el = first(seqs);
+      if (is_sequence(el)) {
+        yield* flatten(el);
+      } else {
+        yield el;
+      }
+      seqs = rest(seqs);
+    }
+  })())
+});
+
 export default ns({
   type: seq_t,
   members: {
     concat, empty, first, is_empty, is_seq, is_seqable,
-    iterate, rest, seq: seq_, show, count,
+    iterate, rest, seq: seq_, show, count, flatten,
     reduce, transduce, into, complete, is_complete
   }});
