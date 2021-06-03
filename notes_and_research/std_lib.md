@@ -33,10 +33,11 @@
     [*] concat
     [ ] Write doc for all of the above
 [*] standardize `from` across `Arr`, `Str`, `Obj`
-[ ] determine what to include from `Num`
-    [ ] all the things?
+[*] determine what to include from `Num`
+    [*] all the things? --yes, all the things
 [*] standardize across object predicates & specs: `is_obj`, `is_assoc`, etc.
     [*] Consider Ludus nomenclature around objects, associative maps, etc.
+        ^ No "associative maps"; it's all objects.
 [*] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
     [*] Consider Ludus nomenclature around collections, sequences, etc.
 [*] consider how to handle shadowed Preds/Specs (e.g. `dict`, `at`)
@@ -261,7 +262,8 @@
     is_complete
 
 ### Spec:
-    + defspec,
+    ~~defspec,~~
+    * spec,
     + is_spec,
     & show,
     + is_valid,

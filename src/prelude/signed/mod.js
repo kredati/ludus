@@ -20,16 +20,21 @@ import Method from './methods.js';
 import './eq.js';
 import './globals.js';
 
+let {ns} = NS;
+
 let ctx = {
-    L: Ludus, Ludus, Arr, Bool, Ducers, Err, Flow, Fn, Lazy, NS, Num, Obj,
-    Preds, Ref, Seq, Spec, S: Spec, Str, Type,
+    Arr, Bool, Ducers, Err, Flow, Fn, Lazy, NS, Num, Obj,
+    Preds, Ref, Seq, Spec, Str, Type,
     // core Ludus language functions (special forms + absolute core)
     when: Flow.when, cond: Flow.cond, fcond: Flow.fcond,
-    ns: NS.ns, raise: Err.raise, eq: Ludus.eq,
+    ns: NS.ns, raise: Err.raise, eq: Ludus.eq, is_identical: Ludus.is_identical,
     loop: Fn.loop, recur: Fn.recur,
     // Ludus util functions,
     print: Ludus.print, warn: Ludus.warn, report: Ludus.report, 
-    show: Ludus.show,
+    show: Ludus.show, iterate: Ludus.iterate, globalize: Ludus.globalize,
+    context: Ludus.context,
+    // Ludus environment information,
+    runtime: Ludus.runtime,
     // basic type constructors
     arr: Arr.arr, bool: Bool.bool, fn: Fn.fn, num: Num.num, ref: Ref.ref, 
     seq: Seq.seq, spec: Spec.spec, str: Str.str, type: Type.type,
@@ -38,10 +43,11 @@ let ctx = {
     // from Arr
     is_index: Arr.is_index,
     // from Bool
+    // nothing
     // from Ducers
     every: Ducers.every, filter: Ducers.filter, keep: Ducers.keep,
     map: Ducers.map, none: Ducers.none, some: Ducers.some,
-    take: Ducers.take,
+    take: Ducers.take, // and others
     // from Err
     handle: Err.handle,
     // from Flow
@@ -53,7 +59,8 @@ let ctx = {
     // from NS
     is_ns: NS.is_ns, members: NS.members,
     // from Num
-        // TODO
+    // just throw everything in but the type
+    ...Obj.dissoc(NS.members(Num), 't'), 
     // from Obj
     get: Obj.get, get_in: Obj.get_in, merge: Obj.merge, keys: Obj.keys,
     values: Obj.values, entries: Obj.entries,
@@ -69,10 +76,30 @@ let ctx = {
     first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
     into: Seq.into,
     // from Spec
-
+    is_spec: Spec.is_spec, is_valid: Spec.is_valid, tup: Spec.tup, 
+    iter_of: Spec.iter_of, at: Spec.at, record: Spec.record,
+    dict: Spec.dict, args: Spec.args, explain: Spec.explain,
     // from Str
     capitalize: Str.capitalize, chars: Str.chars, is_char: Str.is_char, lowcase: Str.lowcase, split: Str.split, join: Str.from, trim: Str.trim,
     upcase: Str.upcase, words: Str.words,
     // from Type
     meta: Type.meta, type_of: Type.type_of, is: Type.is, create: Type.create
 };
+
+Ludus.context(ctx);
+
+export default ns({
+    name: 'Ludus',
+    members: {
+        // other namespaces
+        Arr, Bool, Ducers, Err, Flow, Fn, Lazy, NS, Num, Obj,
+        Preds, Ref, Seq, Spec, Str, Type,
+        // Ludus core functions
+        // Ludus util functions,
+        print: Ludus.print, warn: Ludus.warn, report: Ludus.report, 
+        show: Ludus.show, iterate: Ludus.iterate, globalize: Ludus.globalize,
+        context: Ludus.context,
+        // Ludus environment information,
+        runtime: Ludus.runtime
+    }
+});

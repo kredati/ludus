@@ -582,13 +582,6 @@ let rad_to_deg = defn({
   body: norm(0, 2 * pi, 0, 360)
 });
 
-let show = defn({
-  name: 'show',
-  doc: 'Shows a number.',
-  pre: args([is_num]),
-  body: (x) => `${x}`
-});
-
 export default ns(L.Num, {
   abs, add, ceil, dec, div, div_by, floor, gt, gte, hypot, inc, is_between,
   is_infinity,
@@ -597,7 +590,6 @@ export default ns(L.Num, {
   random_int, round, sqrt, cbrt, sub, sub_by, sum_of_squares, trunc,
   clamp, lerp, norm, wrap, rad_to_deg, deg_to_rad,
   cos, sin, tan, acos, asin, atan, ln, log2, log10,
-  pi, e, sqrt2, sqrt1_2, ln2, ln10, log2e, log10e,
-  show
+  pi, e, sqrt2, sqrt1_2, ln2, ln10, log2e, log10e
 });
 

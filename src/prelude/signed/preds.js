@@ -152,7 +152,7 @@ let maybe = fn({
   name: 'maybe',
   doc: 'Takes a predicate function and returns a predicate function that returns true if the value passed passes the predicate function, or if the value is undefined.',
   pre: args([is_fn]),
-  body: (fn) => fn(`maybe<${fn.name || 'anon.'}>`, or(is_undef, fn))
+  body: (pred) => fn(`maybe<${pred.name || 'anon.'}>`, or(is_undef, pred))
 });
 
 let is_key = fn({
