@@ -386,6 +386,9 @@ let Arr = {
   [Symbol.isConcatSpreadable]: true,
   [Symbol.for('nodejs.util.inspect.custom')] () {
     return this.is_empty() ? [] : `[ ${[...this].join(', ')} ]`;
+  },
+  get length () {
+    return this.size;
   }
 };
 
