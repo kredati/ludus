@@ -14,132 +14,127 @@
 
 // TODO: Rewrite this in Ludus.
 
-import Lazy from './lazy.js';
-import Fn from './fns.js';
-import Spec from './spec.js';
-import Type from './type.js';
-import NS from './ns.js';
+import '../prelude/prelude.js';
 
-let {defn} = Fn;
-let {create, deftype, is} = Type;
-let {args, type, any, maybe, iter} = Spec;
+let list_t = type({name: 'List'});
 
-let List = deftype({name: 'List'});
+let is_list = fn({
+  name: 'is_list',
+  doc: 'Tells if something is a list.',
+  body: is(list_t)
+});
 
-let iterate = defn({
+let iterate = fn({
   name: 'iterate',
   doc: 'Iterates through a List.',
-  pre: args([type(List)]),
+  pre: args([is_list]),
   body: (list) => Lazy.gen(list, rest, is_empty, first)
 });
 
-let show = defn({
-  name: 'show',
-  doc: 'Shows a list',
-  pre: args([type(List)]),
-  body: (list) => is_empty(list)
-  ? '()'
-  : `( ${[...list].join(', ')} )` // can easily be rewritten using Arr functions
-});
+let empty_list = create(list_t, {size: 0});
 
-let is_list = defn({
-  name: 'is_list',
-  doc: 'Tells if something is a list.',
-  body: (x) => is(List, x)
-});
-
-let empty_list = create(List, {size: 0});
-
-let empty = defn({
+let empty = fn({
   name: 'empty',
   doc: 'Returns an empty list.',
   body: () => empty_list
 });
 
-let is_empty = (list) => list === empty_list;
-
-let cons = defn({
-  name: 'cons',
-  doc: 'Adds a value to a list, value first. This is the classical lisp way, and included for historical reasons. Short for "construct".',
-  pre: args([any], [any, maybe(type(List))]),
-  body: (value, list = empty()) => 
-    create(List, {first: value, rest: list, size: list.size + 1})
+let is_empty = fn({
+  name: 'is_empty',
+  doc: 'Tells if a list is empty.',
+  body: is_identical(empty_list)
 });
 
-let conj = defn({
+
+let cons = fn({
+  name: 'cons',
+  doc: 'Adds a value to a list, value first. This is the classical lisp way, and included for historical reasons. Short for "construct".',
+  pre: args([is_any], [is_any, is_list]),
+  body: [
+    (x) => cons(x, empty_list),
+    (x, list) => create(list_t, {first: x, rest: list, size: list.size + 1})
+  ] 
+});
+
+let conj = fn({
   name: 'conj',
   doc: 'Adds a value to a list, list first. `conj` is thus a reducer, and is the Ludus-preferred way. Short for "conjoin".',
-  pre: args([], [any], [type(List), any]),
+  pre: args([], [is_any], [is_list, is_any]),
   body: [
     () => empty(),
     (value) => cons(value),
-    (list, value) => cons(value, list)
+    (list, x) => create(list_t, {first: x, rest: list, size: list.size + 1})
   ]
 });
 
-let from = defn({
+let conj_ = (list, el) => 
+  create(list_t, {first: el, rest: list, size: list.size + 1});
+
+let from = fn({
   name: 'from',
   doc: 'Creates a list from an iterable.',
-  pre: args([iter]),
-  body: (xs) => list(...xs)
+  pre: args([is_iter]),
+  body: (xs) => when(is_list(xs)) ? xs : list(...xs)
 });
 
-let list = defn({
+let list = fn({
   name: 'list',
   doc: 'Creates a list of the arguments, in order. E.g., `list(1, 2, 3); //=> ( 1, 2, 3 )`.',
-  body: (...elements) => elements.reduceRight(conj, empty())
+  body: (...elements) => Arr.reduce_right(conj_, empty_list, elements)
 });
 
-let first = defn({
+let first = fn({
   name: 'first',
   doc: 'Returns the first element of a list.',
-  pre: args([type(List)]),
-  body: (list) => list.first
+  pre: args([is_list]),
+  body: get('first')
 });
 
-let car = defn({
+let car = fn({
   name: 'car',
   doc: 'Returns the first element of a list. This is the classical lisp name for this operation. Short for "contents of the address register," which refers to the hardware operations underlying the first implementations of lisp in the 1950s. An alias for `first`.',
-  pre: args([type(List)]),
-  body: (list) => list.first
+  pre: args([is_list]),
+  body: get('first')
 });
 
-let rest = defn({
+let rest = fn({
   name: 'rest',
   doc: 'Returns the contents of a list, excepting the first element, e.g. `rest(list(1, 2, 3)); //=> ( 2, 3 )`.',
-  pre: args([type(List)]),
-  body: (list) => list.rest ? list.rest : empty_list
+  pre: args([is_list]),
+  body: (list) => get('rest', list, empty_list)
 });
 
-let cdr = defn({
+let cdr = fn({
   name: 'cdr',
   doc: 'Returns the contents of a list, excepting the first element, e.g. `cdr(list(1, 2, 3)); //=> ( 2, 3 )`. This is the classical lisp name for this operation. Short for "contents of the decrement register," which refers to the hardware operations underlying the first implementations of lisp in the 1950s. An alias for `rest`.',
-  pre: args([type(List)]),
-  body: (list) => list.rest ? list.rest : empty_list
+  pre: args([is_list]),
+  body: (list) => get('rest', list, empty_list)
 });
 
-let concat = defn({
+let show = fn({
+  name: 'show',
+  doc: 'Shows a list',
+  pre: args([is_list]),
+  body: (list) => when(is_empty(list))
+    ? '()'
+    : `( ${Str.from(into([], map(Ludus.show), list), ', ')} )`
+});
+
+let concat = fn({
   name: 'concat',
   doc: 'Concatenates lists (or any iterable).',
-  pre: args([], [iter]),
+  pre: args([], [is_iter]),
   body: [
     () => empty(),
     (xs) => from(xs),
-    (xs, ys, ...more) => {
-      let iters = [xs, ys, ...more];
-      let arr = []; 
-      for (let iter of iters) {
-        for (let value of iter) {
-          arr.push(value);
-        }
-      }
-      return from(arr);
-    }
+    (xs, ys, ...more) => from(Ludus.concat(seq(xs), ys, ...more))
   ]
 });
 
-export default NS.defns({type: List, members: {
-  show, empty, iterate,
-  cons, car, cdr,
-  conj, first, rest, list, is_list, from, concat
+export default ns({
+  type: list_t, 
+  members: {
+    show, empty, iterate,
+    cons, car, cdr,
+    conj, first, rest, list, is_list, from, concat
 }});
