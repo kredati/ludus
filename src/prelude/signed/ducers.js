@@ -153,7 +153,7 @@ let mapcat = fn({
   name: 'mapcat',
   doc: 'First it maps, then it cats: applies map to a sequence of collections, and then cats those all together.',
   body: [
-    (f) => Fn.comp(map(f), cat),
+    (f) => Fn.comp(cat, map(f)),
     (f, colls) => into(empty(colls), mapcat(f), colls)
   ]
 });
@@ -166,7 +166,6 @@ let zip = fn({
 
 ///// Transduers to add
 // mapcat
-// flat
 // unique
 // dedupe
 // interpose
