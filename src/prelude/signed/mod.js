@@ -95,11 +95,13 @@ export default ns({
         Arr, Bool, Ducers, Err, Flow, Fn, Lazy, NS, Num, Obj,
         Preds, Ref, Seq, Spec, Str, Type,
         // Ludus core functions
-        // Ludus util functions,
+        // Ludus util functions
         print: Ludus.print, warn: Ludus.warn, report: Ludus.report, 
         show: Ludus.show, iterate: Ludus.iterate, globalize: Ludus.globalize,
         context: Ludus.context,
-        // Ludus environment information,
-        runtime: Ludus.runtime
+        // Ludus environment information
+        runtime: Ludus.runtime,
+        // and methods
+        ...NS.members(Method)
     }
 });
