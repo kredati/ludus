@@ -129,7 +129,6 @@ let seq_ = defn({
 
 let xform_seq = function* (xform, coll) {
   let seq = seq_(coll);
-  console.log([...seq]);
   let queue = [];
   while (!is_empty(seq) && queue.length === 0) {
     queue = xform(conj_)([], first(seq));
@@ -137,7 +136,6 @@ let xform_seq = function* (xform, coll) {
       queue = queue.value;
     }
     for (let x of queue) {
-      console.log(x);
       yield x;
     }
     seq = rest(seq);
