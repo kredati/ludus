@@ -76,7 +76,7 @@ let chars = defn({
 let is_char = defn({
   name: 'is_char',
   doc: 'Tells if something is a char, i.e. a string of length 1. Returns false if the input is not a string.',
-  body: (x) => P.is_string && count(x) === 1
+  body: (x) => is_str(x) && count(x) === 1
 });
 
 let is_blank = defn({
