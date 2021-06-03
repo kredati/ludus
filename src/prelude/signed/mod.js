@@ -47,7 +47,8 @@ let ctx = {
     // from Ducers
     every: Ducers.every, filter: Ducers.filter, keep: Ducers.keep,
     map: Ducers.map, none: Ducers.none, some: Ducers.some,
-    take: Ducers.take, // and others
+    take: Ducers.take, cat: Ducers.cat, mapcat: Ducers.mapcat, 
+        // and others
     // from Err
     handle: Err.handle,
     // from Flow
@@ -74,7 +75,7 @@ let ctx = {
     swap: Ref.swap, watch: Ref.watch, unwatch: Ref.unwatch, future: Ref.future,
     // from Seq
     first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
-    into: Seq.into,
+    into: Seq.into, flatten: Seq.flatten,
     // from Spec
     is_spec: Spec.is_spec, is_valid: Spec.is_valid, tup: Spec.tup, 
     iter_of: Spec.iter_of, at: Spec.at, record: Spec.record,

@@ -184,5 +184,5 @@ export default ns({
   name: 'Ducers', 
   members: {
   every, filter, keep, map, none, some, zip, take,
-  cat
+  cat, mapcat
 }});
