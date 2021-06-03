@@ -21,7 +21,13 @@ let get = defn({
     (key) => partial(get, key),
     (key, obj) => {
       if (obj == undefined) return undefined;
-      return obj.hasOwnProperty(key) ? obj[key] : undefined;
+      return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
+    },
+    (key, obj, not_found) => {
+      let value = get(key, obj);
+      return value == undefined
+        ? not_found
+        : value
     }
   ]
 });
