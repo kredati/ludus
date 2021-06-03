@@ -52,6 +52,13 @@ let def = defn({
   body: NS.def
 });
 
+let del = defn({
+  name: 'del',
+  doc: 'Deletes a member of a namespace. If the member does not exist, it does nothing.',
+  pre: args([ns_s]),
+  body: NS.del
+});
+
 let get_ns = defn({
   name: 'get_ns',
   doc: 'Given any value, return the namespace that corresponds to its type. Returns undefined if either a type or a namespace are undefined. (Note: this should only happen with a type that has not been associated with a namespace.)',
@@ -80,5 +87,5 @@ let has = defn({
 export default ns({
   type: NS.t, 
   members: 
-    {is_ns, ns, defmembers, members, def, get_ns, show}
+    {is_ns, ns, defmembers, members, def, del, get_ns, show}
   });

@@ -15,7 +15,7 @@ import Seq from './seqs.js';
 import Spec from './spec.js';
 import Str from './strings.js';
 import Type from './type.js';
-import Mthd from './methods.js';
+import Method from './methods.js';
 
 import './eq.js';
 import './globals.js';
@@ -30,11 +30,11 @@ let ctx = {
     // Ludus util functions,
     print: Ludus.print, warn: Ludus.warn, report: Ludus.report, 
     show: Ludus.show,
-    // basic types
-    arr: Arr.arr, bool: Bool.bool, num: Num.num, ref: Ref.ref, seq: Seq.seq,
-    str: Str.str,
+    // basic type constructors
+    arr: Arr.arr, bool: Bool.bool, fn: Fn.fn, num: Num.num, ref: Ref.ref, 
+    seq: Seq.seq, spec: Spec.spec, str: Str.str, type: Type.type,
     // methods
-    ...NS.members(Mthd),
+    ...NS.members(Method),
     // from Arr
     is_index: Arr.is_index,
     // from Bool
@@ -61,13 +61,15 @@ let ctx = {
     is_any: Preds.is_any, is_undef: Preds.is_undef, is_some: Preds.is_some,
     is_str: Preds.is_str, is_num: Preds.is_num, is_int: Preds.is_int,
     is_bool: Preds.is_bool, is_fn: Preds.is_fn, is_obj: Preds.is_obj,
-    is_js_obj: Preds.is_js_obj, is_iter: Preds.is_iter, is_sequence: Preds.is_sequence,
-    is_arr: Preds.is_arr, is_key: Preds.is_key,
+    is_js_obj: Preds.is_js_obj, is_iter: Preds.is_iter, 
+    is_sequence: Preds.is_sequence, is_arr: Preds.is_arr, is_key: Preds.is_key,
     // from Ref
     swap: Ref.swap, watch: Ref.watch, unwatch: Ref.unwatch, future: Ref.future,
     // from Seq
     first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
     into: Seq.into,
+    // from Spec
+
     // from Str
     capitalize: Str.capitalize, chars: Str.chars, is_char: Str.is_char, lowcase: Str.lowcase, split: Str.split, join: Str.from, trim: Str.trim,
     upcase: Str.upcase, words: Str.words,

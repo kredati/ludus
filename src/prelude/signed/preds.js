@@ -8,92 +8,92 @@ import Fn from './fns.js';
 import NS from './ns.js';
 import Type from './type.js';
 
-let {defn, partial, fn} = Fn;
+let {partial, fn} = Fn;
 let P = L.Pred;
 let {args} = S;
 let {ns} = NS;
 
 ///// Signed versions of old functions
 
-let bool = defn({
+let bool = fn({
   name: 'bool',
   doc: 'Coerces a value to boolean `true` or `false`: returns false if a value is `false` or `undefined`. Otherwise returns true.',
   body: P.bool
 });
 
-let is_any = defn({
+let is_any = fn({
   name: 'is_any',
   doc: 'Always returns true: could be anything. Otherwise returns false.',
   body: P.is_any
 });
 
-let is_undef = defn({
+let is_undef = fn({
   name: 'is_undef',
   doc: 'Returns true if the passed value is undefined. Otherwise returns false.',
   body: P.is_undef
 });
 
-let is_some = defn({
+let is_some = fn({
   name: 'is_some',
   doc: 'Returns true if the passed value is *not* undefined. Otherwise returns false.',
   body: P.is_some
 });
 
-let is_str = defn({
+let is_str = fn({
   name: 'is_str',
   doc: 'Returns true if the passed value is a string. Otherwise returns false.',
   body: P.is_str
 });
 
-let is_num = defn({
+let is_num = fn({
   name: 'is_num',
   doc: 'Returns true if the passed value is a number. Otherwise returns false.',
   body: P.is_num
 });
 
-let is_int = defn({
+let is_int = fn({
   name: 'is_int',
   doc: 'Returns true if the value passed is an integer. Otherwise returns false.',
   body: P.is_int
 });
 
-let is_bool = defn({
+let is_bool = fn({
   name: 'is_bool',
   doc: 'Returns true if the value passed is a boolean. Otherwise returns false.',
   body: P.is_bool
 });
 
-let is_fn = defn({
+let is_fn = fn({
   name: 'is_fn',
   doc: 'Returns true if the value passed is a function. Otherwise returns false.',
   body: P.is_fn
 });
 
-let is_js_obj = defn({
+let is_js_obj = fn({
   name: 'is_js_obj',
   doc: 'Returns true if the value passed is an object, according to JavaScript. Otherwise returns false. NB: All collections are objects: object literals, but also arrays, vectors, lists, etc.',
   body: P.is_js_obj
 });
 
-let is_obj = defn({
+let is_obj = fn({
   name: 'is_obj',
   doc: 'Tells if a value is an object in Ludus. For the most part, this means object literals: it excludes any JS objects that are constructed using `new`. Typed Ludus constructs (e.g., specs, types, lists, and so on) are not objects.',
   body: P.is_obj
 });
 
-let is_iter = defn({
+let is_iter = fn({
   name: 'is_iter',
   doc: 'Returns true if the value passed in conforms to the JS iterable protocoP. Otherwise returns false. It does not do this check relentlessly: it returns true if the value has a `function` at `[Symbol.iterator]`.',
   body: P.is_iter
 });
 
-let is_sequence = defn({
+let is_sequence = fn({
   name: 'is_sequence',
   doc: 'Returns true if the value passed in is a sequence: an iterable collection. (Strings are iterable, but they are not sequences.) Otherwise returns false.',
   body: P.is_sequence
 });
 
-let is_sequence_of = defn({
+let is_sequence_of = fn({
   name: 'is_sequence_of',
   doc: 'Takes a predicate and a value and returns true if the value is a sequence and each member of the sequence passes the preidcate. (Strings are iterable but not sequences.) Otherwise returns false.',
   pre: args([is_fn], [is_fn, is_any]),
@@ -109,26 +109,26 @@ let is_sequence_of = defn({
   ]
 });
 
-let is_arr = defn({
+let is_arr = fn({
   name: 'is_arr',
   doc: 'Tells if something is an array.',
   body: P.is_arr
 });
 
-let is_coll = defn({
+let is_coll = fn({
   name: 'is_coll',
   doc: 'Tells if something is a collection: an object or anything iterable that is not a string.',
   body: P.is_coll
 });
 
-let not = defn({
+let not = fn({
   name: 'not',
   doc: 'Takes a function, and returns a function that is the negation of its boolean value.',
   pre: args([is_fn]),
   body: P.not
 });
 
-let and = defn({
+let and = fn({
   name: 'and',
   doc: 'Takes a single function, or a list of two or more functions. With a list of functions, it returns a function that passes its args to each of the list of functions, and returns `true` only if every result is truthy. With a single function, it returns a function that takes a list of functions, and is the `and` of that function and the passed list.',
   pre: args([is_fn]),
@@ -138,7 +138,7 @@ let and = defn({
   ]
 });
 
-let or = defn({
+let or = fn({
   name: 'or',
   doc: 'Takes one or more functions. Returns a function that passes its args to each of the list of functions, and returns `true` if any result is truthy.',
   pre: args([is_fn]),
@@ -148,20 +148,20 @@ let or = defn({
   ]
 });
 
-let maybe = defn({
+let maybe = fn({
   name: 'maybe',
   doc: 'Takes a predicate function and returns a predicate function that returns true if the value passed passes the predicate function, or if the value is undefined.',
   pre: args([is_fn]),
   body: (fn) => fn(`maybe<${fn.name || 'anon.'}>`, or(is_undef, fn))
 });
 
-let is_key = defn({
+let is_key = fn({
   name: 'is_key',
   doc: 'Tells if a value is a valid key for a property on an object.',
   body: P.is_key
 });
 
-let is = defn({
+let is = fn({
   name: 'is',
   doc: 'Tells if a value is of a particular type. Partially applied, it returns a unary function that tests if its argument conforms to type.',
   pre: args([P.is(Type.t)], [P.is(Type.t), is_any]),
@@ -171,7 +171,7 @@ let is = defn({
   ]
 });
 
-let has = defn({
+let has = fn({
   name: 'has',
   doc: 'Tells if an object has some value set at a particular key. Note that it will return `true` if a particular object has had a key explicitly set to `undefined`. Only tests own properties.',
   pre: args([is_key], [is_key, is_any]),

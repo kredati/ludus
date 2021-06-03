@@ -257,9 +257,6 @@ let explain = (spec, value, indent = 0) => {
       }
       return msg + '\n' + msgs.join('\n');
     }
-    case type: {
-      return `${shown} failed ${spec.name}: Expected ${spec.members} but received ${Type.type_of(value)}.`;
-    }
     case args: {
       let max_arity = 0;
       let arity_map = {};

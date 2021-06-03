@@ -9,11 +9,12 @@
 [*] `and`/`or`/`not` methods
     [*] add speccing to `defmethod`
     [x] write these to dispatch to `Fn` or `Bool` but not `Spec` (not necessary)
-[ ] consider losing the `def` in:
+[*] consider losing the `def` in:
     [*] defmethod -> method
     [*] defspec -> spec
-    [ ] defn -> fn
-        [ ] consider collapsing `fn` and `defn`
+    [*] defn -> fn
+        [*] consider collapsing `fn` and `defn`
+        Caveat: Fn.defn still exists, and is used throughout prelude; it just points to Fn.fn
     [*] deftype -> type
 [*] consider: should `assoc` be a method or an abstracted function? (method)
 [*] are `Obj.update` and `Ref.update`  abstractable into a method? (yes)
@@ -33,6 +34,7 @@
     [ ] Write doc for all of the above
 [*] standardize `from` across `Arr`, `Str`, `Obj`
 [ ] determine what to include from `Num`
+    [ ] all the things?
 [*] standardize across object predicates & specs: `is_obj`, `is_assoc`, etc.
     [*] Consider Ludus nomenclature around objects, associative maps, etc.
 [*] standardize across sequence predicats & specs: `P.is_sequence` vs. `S.coll`, etc.
@@ -92,28 +94,28 @@
     * always
 
 ### Fn:
-    rename,
+    ? rename,
     * partial,
-    n_ary,
+    ? n_ary,
     * loop,
     * recur,
-    fn,
-    pre_post,
-    defn,
-    once,
+    * fn,
+    ? pre_post,
+    ~~defn,~~
+    + once,
     * thread,
-    thread_some,
+    + thread_some,
     * pipe,
-    pipe_some,
+    + pipe_some,
     * comp,
-    comp_some,
+    + comp_some,
     + defmethod,
     & show
 
 ### Lazy:
     * cycle,
     gen,
-    interleave,
+    ? interleave,
     * lazy,
     * range,
     ? repeat,
@@ -125,6 +127,7 @@
     defmembers,
     * members,
     def,
+    del,
     get_ns,
     & show
 

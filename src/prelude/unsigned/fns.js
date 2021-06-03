@@ -75,7 +75,7 @@ let n_ary = (name, ...clauses) => {
 
     return match 
       ? match(...args) 
-      : raise(ArgumentError, `Wrong number of arguments to ${name}. It takes ${Object.keys(arity_map).join(' or ')} argument(s), but received ${args.length}: (${args.map(Ludus.show).join(', ')}).`) 
+      : raise(`Wrong number of arguments to ${name}. It takes ${Object.keys(arity_map).join(' or ')} argument(s), but received ${args.length}: (${args.map((x) => Ludus.show(x)).join(', ')}).`) 
   };
 
   return rename(name, match_arity);
@@ -98,6 +98,7 @@ let n_ary = (name, ...clauses) => {
 // having to do any compiling or parsing.
 // TODO: investigate if this is fast enough?--the proxy slows things down
 //   and `recur` is going to be used in tight loops
+//   ^ I think it might not be // it might be better to 
 let recur_tag = Symbol('ludus/recur'); // not exported
 let recur_args = Symbol('ludus/recur/args'); // not exported
 let recur_handler = { // not exported
@@ -110,7 +111,10 @@ let recur_handler = { // not exported
   }
 };
 
-let recur = (...args) => new Proxy(Object.assign(() => {}, 
+// This seems like too much indirection for now
+// The one place I tried to use this `recur`, it was an order of magnitude
+// slower than the loop-based version (in Seq.reduce)
+let recur_slow = (...args) => new Proxy(Object.assign(() => {}, 
   // note that technically recur returns a proxy around a function;
   // this lets us use the `apply` proxy handler to throw when
   // the call to recur is used as a function.
@@ -123,6 +127,8 @@ let recur = (...args) => new Proxy(Object.assign(() => {},
       raise('`recur` must only be used in the tail position inside of `loop`.');
   }
 }), recur_handler);
+
+let recur = (...args) => ({[recur_tag]: true, [recur_args]: args});
 
 // loop :: (fn, number?) -> fn
 // `loop` wraps a function with a handler so that `recur` can be used as a proxy
@@ -182,10 +188,10 @@ let fn = n_ary('fn',
     switch (typeof body) {
       case 'function':
         return rename(name,
-          loop(handle(name, n_ary(name, body))));
+          handle(name, loop(n_ary(name, body))));
       case 'object':
         return body[Symbol.iterator]
-          ? rename(name, loop(handle(name, n_ary(name, ...body))))
+          ? rename(name, handle(name, loop(n_ary(name, ...body))))
           : raise(`Body clauses must be contained in an iterable.`)
     }
   }
@@ -204,6 +210,7 @@ let fn = n_ary('fn',
 let pre_post = (pre, post, body) => rename(body.name, (...args) => {
   if (!is_arr(pre)) pre = [pre];
   if (!is_arr(post)) post = [post];
+  // TODO: move the above into a closure for caching
   let pass_pre = true;
   for (let spec of pre) {
     let result = Spec.is_valid(spec, args);

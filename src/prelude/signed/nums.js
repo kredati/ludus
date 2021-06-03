@@ -297,6 +297,20 @@ let lte = defn({
   ]
 });
 
+let max = defn({
+  name: 'max',
+  doc: 'Returns the largest of the one or more numbers passed as arguments.',
+  pre: args([is_num]),
+  body: (...args) => Math.max(...args)
+});
+
+let min = defn({
+  name: 'min',
+  doc: 'Returns the smallest of the one or more numbers passed as arguments.',
+  pre: args([is_num]),
+  body: (...args) => Math.min(...args)
+});
+
 let is_positive = defn({
   name: 'is_positive',
   doc: 'Tells if a number is positive, i.e. greater than `0`. Note that `0` is not itself positive. Returns `false` for non-numbers.',
@@ -579,7 +593,7 @@ export default ns(L.Num, {
   abs, add, ceil, dec, div, div_by, floor, gt, gte, hypot, inc, is_between,
   is_infinity,
   is_natural, is_negative, is_nonzero, is_positive, is_positive_int, 
-  is_even, is_odd, lt, lte, mod, mult, num: num_, pow, pow_by, precise, random, 
+  is_even, is_odd, lt, lte, max, min, mod, mult, num: num_, pow, pow_by, precise, random, 
   random_int, round, sqrt, cbrt, sub, sub_by, sum_of_squares, trunc,
   clamp, lerp, norm, wrap, rad_to_deg, deg_to_rad,
   cos, sin, tan, acos, asin, atan, ln, log2, log10,

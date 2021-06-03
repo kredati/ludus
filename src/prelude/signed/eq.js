@@ -4,10 +4,10 @@
 
 import L from './deps.js';
 import NS from './ns.js';
-import './fns.js';
+import Fn from './fns.js';
 
 let eq_ = L.eq;
-let {defn, partial} = L.Fn;
+let {defn, partial} = Fn;
 let {ns} = NS;
 
 let is_identical = defn({

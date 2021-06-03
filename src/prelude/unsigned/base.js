@@ -259,7 +259,7 @@ let def = (ns, key, value) => {
     throw `Names of namespaces must be capitalized. You attempted to give ${show(ns)} the name ${key}.`
   }
   if (typeof value === 'function') {
-    value.in_ns = ns;
+    Object.defineProperty(value, 'in_ns', {value: ns, configurable: true});
   }
   ns[members_tag][key] = value; 
   return value;
@@ -275,7 +275,12 @@ let defmembers = (ns, members) => {
   return ns;
 };
 
-let members = (ns) => ns[members_tag];
+let members = (ns) => ({...ns[members_tag]});
+
+// del :: (namespace, string) -> undef
+let del = (ns, key) => {
+  delete ns[members_tag][key]
+};
 
 // defns :: ({name: string, type: type?, members: obj}) -> namespace
 // `defns` defines a namespace
@@ -317,7 +322,7 @@ let is_ns = (x) => is(ns_t, x);
 ///// Some namespaces to go with our existing types
 // namespace namespace
 let NS = ns({name: 'Namespace', type: ns_t,
-  members: {is_ns, ns, defmembers, members, def, get_ns, show: show_ns}});
+  members: {is_ns, ns, defmembers, members, def, del, get_ns, show: show_ns}});
 
 // type namespace
 let Type = ns({name: 'Type', type: type_t, 
