@@ -76,6 +76,7 @@ let ctx = {
     // from Seq
     first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
     into: Seq.into, flatten: Seq.flatten,
+    nth: Seq.nth, second: Seq.second, third: Seq.third, fourth: Seq.fourth,
     // from Spec
     is_spec: Spec.is_spec, is_valid: Spec.is_valid, tup: Spec.tup, 
     iter_of: Spec.iter_of, at: Spec.at, record: Spec.record,
