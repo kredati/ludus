@@ -18,9 +18,9 @@ import NS from './ns.js';
 import A from './arr.js';
 
 let {args} = S;
-let {fn, once, method} = Fn;
+let {fn, once, method, partial} = Fn;
 let {create, type} = T;
-let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str, is_sequence} = P;
+let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str, is_sequence, is_int} = P;
 let {ns} = NS;
 let {conj_} = A;
 
@@ -174,6 +174,44 @@ let first = fn({
   body: (coll) => seq_(coll).first()
 });
 
+let nth = fn({
+  name: 'nth',
+  doc: 'Gets the nth element of any `seq`able. With one argument, returns itself partially applied. Note that this runs in linear time, and if you frequently use this, you should consider using an indexed data structure (an array).',
+  pre: args([is_int], [is_int, is_seqable]),
+  body: [
+  (n) => partial(nth, n),
+  (n, coll) => {
+    let seq = seq_(coll);
+    for (let i = 0; i < n; i++) {
+      seq = seq.rest();
+    }
+    return first(seq);
+  }
+  ]
+});
+
+let second = fn({
+  name: 'second',
+  doc: 'Gets the second element of any `seq`able.',
+  pre: args([is_seqable]),
+  body: nth(1)
+});
+
+let third = fn({
+  name: 'third',
+  doc: 'Gets the third element of any `seq`able.',
+  pre: args([is_seqable]),
+  body: nth(2)
+});
+
+let fourth = fn({
+  name: 'fourth',
+  doc: 'Gets the fourth element of any `seq`able.',
+  pre: args([is_seqable]),
+  body: nth(3)
+});
+
+
 let rest = fn({
   name: 'rest',
   doc: 'Returns a `seq` containing all elements but the first of a `seq`able.',
@@ -239,8 +277,6 @@ let into = fn({
   ]
 });
 
-
-
 let flatten = fn({
   name: 'flatten',
   doc: 'Takes any nested combination of sequences and returns their contents as a single, flat, lazy sequence.',
@@ -262,5 +298,6 @@ export default ns({
   members: {
     concat, empty, first, is_empty, is_seq, is_seqable,
     iterate, rest, seq: seq_, show, count, flatten,
-    reduce, transduce, into, complete, is_complete
+    reduce, transduce, into, complete, is_complete,
+    nth, second, third, fourth
   }});
