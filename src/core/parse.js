@@ -135,7 +135,12 @@ let map_parser = fn({
   body: [
   (f) => partial(map_parser, f),
   (f, parser) => partial(map_parser, f, parser),
-  (f, parser, input) => update(parser(input), 'result', f)
+  (f, parser, input) => {
+    let result = parser(input);
+    return when(get('ok', result))
+      ? update(result, 'result', f)
+      : result
+  }
   ]
 });
 
@@ -145,7 +150,7 @@ let many = fn({
   (parser) => partial(many, parser),
   (parser, input) => {
     let result = parser(input);
-    return cond(result
+    return cond(result,
     [get('ok'), () => {
       let next = many(parser, result);
       return ok(conj(get('result', next), get('result', result)), get('input', next))
@@ -158,12 +163,101 @@ let many = fn({
 });
 
 let many1 = fn({
+  name: 'many1',
+  body: [
+  (parser) => partial(many1, parser),
+  (parser, input) => map_parser(
+    flatten, 
+    and_then(parser, many(parser)), input)
+  ]
 });
 
-let big_h = parse_char('H');
-let smol_h = parse_char('h');
-let smol_f = parse_char('f');
-let hs = or_else(big_h, smol_h);
-let hf = or_else(smol_h, smol_f);
+let opt = fn({
+  name: 'opt',
+  body: [
+  (parser) => partial(opt, parser),
+  (parser, input) => {
+    let result = parser(input);
+    return when(get('ok', result))
+      ? result
+      : ok(undefined, get('input', result));
+  }
+  ]
+});
 
-run(hf, 'fello'); //?
+let keep_first = fn({
+  name: 'keep_first',
+  body: (fst, snd) => map_parser(first, and_then(fst, snd))
+});
+
+let keep_second = fn({
+  name: 'keep_second',
+  body: (fst, snd) => map_parser(second, and_then(fst, snd))
+});
+
+let between = fn({
+  name: 'between',
+  body: [
+  (open, close) => partial(between, open, close),
+  (open, close, body) => 
+    keep_second(open, keep_first(body, close))]
+});
+
+let sep_by1 = fn({
+  name: 'sep_by',
+  body: (separator, parser) => {
+    let sep_then_p = keep_second(separator, parser);
+    return map_parser(
+      flatten, 
+      and_then(parser, many(sep_then_p)));
+  }
+});
+
+let no_op = fn({
+  name: 'no_op',
+  body: ({input}) => ok(undefined, input)
+});
+
+let any_of = fn({
+  name: 'any_of',
+  body: [
+  (parsers) => reduce(or_else, parsers),
+  (parser1, parser2, ...parsers) => 
+    any_of([parser1, parser2, ...parsers])
+  ]
+});
+
+let sep_by = fn({
+  name: 'sep_by',
+  body: (separator, parser) =>
+    or_else(sep_by1(separator, parser), no_op)
+});
+
+let string = fn({
+  name: 'string',
+  pre: args([is_str]),
+  body: (s) => map_parser(
+    flatten,
+    and_then(map(parse_char, [...s])))
+});
+
+let char_in_range = fn({
+  name: 'char_in_range',
+  pre: args([is_char]),
+  body: [
+  (start, end) => partial(char_in_range, start, end),
+  (start, end, char) => {
+    let start_code = Str.code_at(0, start);
+    let end_code = Str.code_at(0, end);
+    let char_code = Str.code_at(0, char);
+    return and(
+      gte(char_code, start_code),
+      lte(char_code, end_code)
+    );
+  }
+  ]
+});
+
+let lowercase = satisfy('lowercase', char_in_range('a', 'z'));
+
+
