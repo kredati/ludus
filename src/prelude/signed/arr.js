@@ -61,7 +61,6 @@ let concat = fn({
   doc: 'Concatenates an array with zero or more iterables.',
   pre: args([is_arr], [is_arr, is_iter]),
   body: (...iters) => {
-    console.log('hello from Arr.concat');
     let out = [];
     for (let xs of iters) {
       for (let x of xs) {
