@@ -1,5 +1,6 @@
 import Fn from './fns.js';
 import NS from './ns.js';
+import Bool from './bools.js';
 
 let {method} = Fn;
 let {ns} = NS;
@@ -25,15 +26,18 @@ let slice = method({
 });
 
 let and = method({
-    name: 'and'
+    name: 'and',
+    not_found: Bool.and
 });
 
 let or = method({
-    name: 'or'
+    name: 'or',
+    not_found: Bool.or
 });
 
 let not = method({
-    name: 'not'
+    name: 'not',
+    not_found: Bool.not
 });
 
 let update = method({
