@@ -11,7 +11,7 @@ let {report} = Ludus;
 let {ns} = NS;
 
 let {record, maybe, or, and, args, iter_of} = Spec;
-let {is_str, is_any, is_some, is, is_not_empty, is_fn} = Ludus.Pred;
+let {is_str, is_any, is_some, is, is_not_empty, is_fn, is_sequence} = Ludus.Pred;
 
 let {fn: fn_, defn: defn_} = Fn;
 
