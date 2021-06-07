@@ -19,7 +19,7 @@ let str_to_state = fn({
   col: 0,
   lines: Str.split('\n', str)
   // for now we use an eager strategy
-  // TODO: maybe make this lazy?
+  // TODO: make this lazy
   })
 });
 
@@ -32,8 +32,8 @@ let current_char = fn({
   return when(current_char) 
     ? current_char 
     : when(current_line) 
-    ? '\n'
-    : undefined
+      ? '\n'
+      : undefined
   }
 });
 
@@ -61,11 +61,14 @@ let satisfy = fn({
   (label, pred) => partial(satisfy, label, pred),
   (label, pred, {input: xs}) => {
     let next = current_char(xs);
-    let remaining = next_state(xs);
-    return cond(next,
-    [is_undef,  () => fail(`Error parsing ${label}: unexpected end of input`, xs)],
-    [pred,      () => ok(next, remaining)],
-    [always,    () => fail(`Error parsing ${label}: unexpected ${next}`, xs)]);
+    let success = when(pred(next))
+      ? ok(next, next_state(xs))
+      : undefined;
+    return when(success)
+      ? success
+      : when(next)
+        ? fail(`Error parsing ${label}: unexpected ${next}`, xs)
+        : fail(`Error parsing ${label}: unexpected end of input`, xs);
   }
   ]
 });
@@ -77,8 +80,8 @@ let label = fn({
   (name, parser, input) => {
     let result = parser(input);
     return when(get('ok', result))
-    ? result
-    : assoc(result, 'message', `Error parsing ${name}`)
+      ? result
+      : assoc(result, 'message', `Error parsing ${name}`);
   }
   ]
 });
@@ -102,16 +105,17 @@ let and_then = fn({
   (parser1, parser2) => partial(and_then, parser1, parser2),
   (parser1, parser2, input) => {
     let result1 = parser1(input);
-    return cond(result1,
-    [get('ok'), () => {
-      let result2 = parser2(result1);
-      return when(get('ok', result2))
-      ? ok([get('result', result1), get('result', result2)],
-      get('input', result2))
-      : fail(get('message', result2), get('input', result2))}],
-    [always,    () => fail(get('message', result1),
-          get('input', result1))]
-    );
+    let result2 = when(get('ok', result1))
+      ? parser2(result1)
+      : undefined;
+    let failure_message = or(
+      get('message', result1),
+      get('message', result2));
+    let remaining_input = or(get('input', result2), get('input', result1));
+    let result_tuple = [get('result', result1), get('result', result2)];
+    return when(get('ok', result2))
+      ? ok(result_tuple, remaining_input)
+      : fail(failure_message, remaining_input);
   }
   ]
 });
@@ -150,14 +154,12 @@ let many = fn({
   (parser) => partial(many, parser),
   (parser, input) => {
     let result = parser(input);
-    return cond(result,
-    [get('ok'), () => {
-      let next = many(parser, result);
-      return ok(conj(get('result', next), get('result', result)), get('input', next))
-    }],
-    [always,    () =>
-      ok([], get('input', input))]
-    );
+    return when(get('ok', result))
+      ? call(() => {
+        let next = many(parser, result);
+        return ok(conj(get('result', next), get('result', result)), get('input', next));
+      })
+      : ok([], get('input', input));
   }
   ]
 });
@@ -238,7 +240,7 @@ let string = fn({
   pre: args([is_str]),
   body: (s) => map_parser(
     flatten,
-    and_then(map(parse_char, [...s])))
+    label(s, and_then(map(parse_char, [...s]))))
 });
 
 let char_in_range = fn({
@@ -252,12 +254,29 @@ let char_in_range = fn({
     let char_code = Str.code_at(0, char);
     return and(
       gte(char_code, start_code),
-      lte(char_code, end_code)
-    );
+      lte(char_code, end_code));
   }
   ]
 });
 
 let lowercase = satisfy('lowercase', char_in_range('a', 'z'));
 
+let uppercase = satisfy('uppercase', char_in_range('A', 'Z'));
 
+let digit = satisfy('digit', char_in_range('0', '9'));
+
+let whitespace = satisfy('whitespace', any_of('\t', '\s'));
+
+let line_break = satisfy('line_break', any_of('\n', '\r'));
+
+export default ns({
+  name: 'Parse',
+  members: {
+    ok, fail, current_char, next_state,
+    satisfy, label, run, parse_char, and_then,
+    or_else, map_parser, many, many1, opt, keep_first,
+    keep_second, between, sep_by1, no_op, any_of,
+    seb_by, string, char_in_range, uppercase, lowercase,
+    digit, whitespace, line_break
+  }
+});
