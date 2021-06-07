@@ -3,6 +3,9 @@
 // Largely cribbed from https://fsharpforfunandprofit.com/parser/
 // thank you Scott Wlaschin
 
+// TODO: give better names to the partially applied functions
+// TODO: make str_to_state lazy
+
 import '../prelude/prelude.js';
 
 let parser_state = record('parser_state',{
@@ -15,11 +18,9 @@ let str_to_state = fn({
   name: 'str_to_state',
   pre: args([is_str]),
   body: (str) => ({
-  line: 0,
-  col: 0,
-  lines: Str.split('\n', str)
-  // for now we use an eager strategy
-  // TODO: make this lazy
+    line: 0,
+    col: 0,
+    lines: Str.split('\n', str)
   })
 });
 
@@ -49,10 +50,10 @@ let next_state = fn({
 });
 
 let ok = fn('ok', 
-  (result, remaining) => ({ok: true, input: remaining, result}));
+  (result, input) => ({ok: true, result, input}));
 
 let fail = fn('fail',
-  (message, input) => ({ok: false, input, message}));
+  (message, input) => ({ok: false, message, input}));
 
 let satisfy = fn({
   name: 'satisfy',
@@ -128,8 +129,8 @@ let or_else = fn({
   (parser1, parser2, input) => {
     let result1 = parser1(input);
     return when(get('ok', result1))
-    ? result1
-    : parser2(input)
+      ? result1
+      : parser2(input)
   }
   ]
 });
@@ -157,7 +158,9 @@ let many = fn({
     return when(get('ok', result))
       ? call(() => {
         let next = many(parser, result);
-        return ok(conj(get('result', next), get('result', result)), get('input', next));
+        return ok(
+          conj(get('result', next), get('result', result)), 
+          get('input', next));
       })
       : ok([], get('input', input));
   }
