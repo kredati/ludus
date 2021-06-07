@@ -276,7 +276,7 @@ export default ns({
     satisfy, label, run, parse_char, and_then,
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
-    seb_by, string, char_in_range, uppercase, lowercase,
+    sep_by, string, char_in_range, uppercase, lowercase,
     digit, whitespace, line_break
   }
 });
