@@ -55,6 +55,7 @@ let ctx = {
     just: Flow.just, always: Flow.always,
     // from Fn
     partial: Fn.partial, thread: Fn.thread, pipe: Fn.pipe, comp: Fn.comp,
+    apply: Fn.apply, call: Fn.call, ap: Fn.ap, thunk: Fn.thunk,
     // from Lazy
     cycle: Lazy.cycle, lazy: Lazy.lazy, range: Lazy.range,
     // from NS
