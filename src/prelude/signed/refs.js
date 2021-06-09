@@ -153,6 +153,6 @@ let future = defn({
 export default ns({
   type: ref_t,
   members: { 
-    ref, swap, watch, unwatch, future, show, update
+    ref, deref, swap, watch, unwatch, future, show, update
   }
 });
