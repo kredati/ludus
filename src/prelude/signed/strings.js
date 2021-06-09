@@ -8,7 +8,7 @@ import Pred from './preds.js';
 import NS from './ns.js';
 
 let {defn, partial} = Fn;
-let {is_str, is_num, is_iter} = Pred;
+let {is_str, is_num, is_iter, is_undef, or} = Pred;
 let {args} = Spec;
 let {ns} = NS;
 
@@ -41,9 +41,9 @@ let str_ = defn({
 let from = defn({
   name: 'from',
   doc: 'Produces a string from any iterable. Takes an optional separator argument.',
-  pre: args([is_iter], [is_iter, is_str]),
+  pre: args([or(is_iter, is_undef)], [or(is_iter, is_undef), is_str]),
   body: [
-    (iter) => [...iter].join(''),
+    (iter) => iter == undefined ? '' : [...iter].join(''),
     (iter, separator) => [...iter].join(separator)
   ]
 });
