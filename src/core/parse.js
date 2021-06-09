@@ -155,6 +155,23 @@ let or_else = fn({
   ]
 });
 
+let tup_flat = [1, 2];
+let tup_left = [[[1, 2], 3], 4];
+let tup_right = [1, [2, [3, [4, []]]]];
+
+let is_tup = and(is_arr, pipe(
+  count,
+  eq(2)
+));
+
+let unpack_left = ([fst, snd]) => when(is_tup(fst))
+  ? [...unpack_left(fst), snd]
+  : [fst, snd];
+
+let unpack_right = ([fst, snd]) => when((is_tup(snd)))
+  ? [fst, ...unpack_right(snd)]
+  : [fst];
+
 let map_parser = fn({
   name: 'map_parser',
   pre: args([is_fn], [is_fn, is_fn], [is_fn, is_fn, parser_input]),
@@ -196,9 +213,7 @@ let many1 = fn({
   (parser) => Fn.rename(
     `many1<${get('name', parser)}>`, 
     partial(many1, parser)),
-  (parser, input) => map_parser(
-    flatten, 
-    and_then(parser, many(parser)), input)
+  (parser, input) => and_then(parser, many(parser))(input)
   ]
 });
 
@@ -251,7 +266,7 @@ let sep_by1 = fn({
     return label(
       `sep_by<${get('name', separator)}, ${get('name', parser)}>`,
       map_parser(
-        flatten, 
+        unpack_right,
         and_then(parser, many(sep_then_p))));
   }
 });
@@ -284,9 +299,10 @@ let sep_by = fn({
 let string = fn({
   name: 'string',
   pre: args([is_str]),
-  body: (s) => label(`parse<'${s}'>`, map_parser(
-    flatten,
-    and_then(map(parse_char, [...s]))))
+  body: (s) => label(`string<'${s}'>`,
+    map_parser(
+      pipe(unpack_left, Str.from), 
+      and_then(map(parse_char, [...s]))))
 });
 
 let char_in_range = fn({
