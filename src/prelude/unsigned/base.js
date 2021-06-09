@@ -97,7 +97,7 @@ let show = method({
   not_found: (x) => {
     if (x == undefined) return 'undefined';
     if (Object.getPrototypeOf(x) === null) return `{.}`;
-    if (Object.getPrototypeOf(x) === ludus_proto) return `{{${meta(x).name}}}`;
+    if (Object.getPrototypeOf(x) === ludus_proto) return `${meta(x).name}{${Object.entries(x).map(([k, v]) => `${k}: ${show(v)}`).join(', ')}}`;
     return x;
   }
 });
