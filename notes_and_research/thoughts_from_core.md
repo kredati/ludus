@@ -23,4 +23,5 @@ What makes them awkward?
 
 ### Other additional thoughts
 * I find `get` cumbersome; I'm tempted to write `let get_result = get('result');`, which is fine, but feels like it's information. I'm avoiding that for now to see if the format for `get` might begin to feel more natural.
+* But when you can use it partially applied, it feels great. So.
 * 
