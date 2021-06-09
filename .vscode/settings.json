@@ -1,3 +1,6 @@
 {
-    "javascript.suggest.autoImports": false
+    "javascript.suggest.autoImports": false,
+    "javascript.suggest.names": false,
+    "javascript.format.semicolons": "insert",
+    "javascript.suggest.enabled": false
 }
