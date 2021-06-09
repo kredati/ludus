@@ -49,18 +49,26 @@ let next_state = fn({
   }
 });
 
-let ok = fn('ok', 
-  (result, input) => ({ok: true, result, input}));
+let ok = fn({
+  name: 'ok', 
+  pre: args([is_any, parser_state]),
+  body: (result, input) => ({ok: true, result, input})
+});
 
-let fail = fn('fail',
-  (message, input) => ({ok: false, message, input}));
+let fail = fn({
+  name: 'fail',
+  pre: args([is_str, parser_state]),
+  body: (message, input) => ({ok: false, message, input})
+});
+
+let parser_input = at('input', parser_state);
 
 let satisfy = fn({
   name: 'satisfy',
-  pre: args([is_str, is_fn], [is_str, is_fn, at('input', parser_state)]),
+  pre: args([is_str, is_fn], [is_str, is_fn, parser_input]),
   body: [
-  (label, pred) => partial(satisfy, label, pred),
-  (label, pred, {input: xs}) => {
+  (name, pred) => Fn.rename(name, partial(satisfy, name, pred)),
+  (name, pred, {input: xs}) => {
     let next = current_char(xs);
     let success = when(pred(next))
       ? ok(next, next_state(xs))
@@ -68,16 +76,17 @@ let satisfy = fn({
     return when(success)
       ? success
       : when(next)
-        ? fail(`Error parsing ${label}: unexpected ${next}`, xs)
-        : fail(`Error parsing ${label}: unexpected end of input`, xs);
+        ? fail(`Error parsing ${name}: unexpected ${next}`, xs)
+        : fail(`Error parsing ${name}: unexpected end of input`, xs);
   }
   ]
 });
 
 let label = fn({
   name: 'label',
+  pre: args([is_str, is_fn], [is_str, is_fn, parser_input]),
   body: [
-  (name, parser) => partial(label, name, parser),
+  (name, parser) => Fn.rename(name, partial(label, name, parser)),
   (name, parser, input) => {
     let result = parser(input);
     return when(get('ok', result))
@@ -101,9 +110,17 @@ let parse_char = fn({
 
 let and_then = fn({
   name: 'and_then',
+  pre: args(
+    [iter_of(is_fn)], // TODO: enforce minimum length? 
+    [is_fn, is_fn], 
+    [is_fn, is_fn, parser_input]),
   body: [
-  (parsers) => reduce(and_then, parsers),
-  (parser1, parser2) => partial(and_then, parser1, parser2),
+  (parsers) => Fn.rename(
+    `and_then<${Str.from(map(get('name'), parsers), ', ')}>`, 
+    reduce(and_then, parsers)),
+  (parser1, parser2) => Fn.rename(
+    `and_then<${get('name', parser1)}, ${get('name', parser2)}>`, 
+    partial(and_then, parser1, parser2)),
   (parser1, parser2, input) => {
     let result1 = parser1(input);
     let result2 = when(get('ok', result1))
@@ -123,9 +140,12 @@ let and_then = fn({
 
 let or_else = fn({
   name: 'or_else',
+  pre: args([iter_of(is_fn)], [is_fn, is_fn], [is_fn, is_fn, parser_input]),
   body: [
-  (parsers) => reduce(or_else, parsers),
-  (parser1, parser2) => partial(or_else, parser1, parser2),
+  (parsers) => Fn.rename(
+    `or_else<${Str.from(map(get('name'), parsers), ', ')}>`, 
+    reduce(or_else, parsers)),
+  (parser1, parser2) => Fn.rename(`or_else<${get('name', parser1)}, ${get('name', parser2)}>`, partial(or_else, parser1, parser2)),
   (parser1, parser2, input) => {
     let result1 = parser1(input);
     return when(get('ok', result1))
@@ -137,6 +157,7 @@ let or_else = fn({
 
 let map_parser = fn({
   name: 'map_parser',
+  pre: args([is_fn], [is_fn, is_fn], [is_fn, is_fn, parser_input]),
   body: [
   (f) => partial(map_parser, f),
   (f, parser) => partial(map_parser, f, parser),
@@ -151,15 +172,16 @@ let map_parser = fn({
 
 let many = fn({
   name: 'many',
+  pre: args([is_fn], [is_fn, parser_input]),
   body: [
-  (parser) => partial(many, parser),
+  (parser) => Fn.rename(`many<${get('name', parser)}>`, partial(many, parser)),
   (parser, input) => {
     let result = parser(input);
     return when(get('ok', result))
       ? call(() => {
         let next = many(parser, result);
         return ok(
-          conj(get('result', next), get('result', result)), 
+          [get('result', result), get('result', next)], 
           get('input', next));
       })
       : ok([], get('input', input));
@@ -169,8 +191,11 @@ let many = fn({
 
 let many1 = fn({
   name: 'many1',
+  pre: args([is_fn], [is_fn, parser_input]),
   body: [
-  (parser) => partial(many1, parser),
+  (parser) => Fn.rename(
+    `many1<${get('name', parser)}>`, 
+    partial(many1, parser)),
   (parser, input) => map_parser(
     flatten, 
     and_then(parser, many(parser)), input)
@@ -179,8 +204,9 @@ let many1 = fn({
 
 let opt = fn({
   name: 'opt',
+  pre: args([is_fn], [is_fn, parser_input]),
   body: [
-  (parser) => partial(opt, parser),
+  (parser) => Fn.rename(`opt<${get('name', parser)}>`, partial(opt, parser)),
   (parser, input) => {
     let result = parser(input);
     return when(get('ok', result))
@@ -192,58 +218,75 @@ let opt = fn({
 
 let keep_first = fn({
   name: 'keep_first',
-  body: (fst, snd) => map_parser(first, and_then(fst, snd))
+  pre: args([is_fn, is_fn]),
+  body: (fst, snd) => label(
+    `keep_first<${get('name', fst)}, ${get('name', snd)}>`,
+    map_parser(first, and_then(fst, snd)))
 });
 
 let keep_second = fn({
   name: 'keep_second',
-  body: (fst, snd) => map_parser(second, and_then(fst, snd))
+  pre: args([is_fn, is_fn]),
+  body: (fst, snd) => label(
+    `keep_second<${get('name', fst)}, ${get('name', snd)}>`,
+    map_parser(second, and_then(fst, snd)))
 });
 
 let between = fn({
   name: 'between',
+  pre: args([is_fn, is_fn], [is_fn, is_fn, is_fn]),
   body: [
   (open, close) => partial(between, open, close),
-  (open, close, body) => 
-    keep_second(open, keep_first(body, close))]
+  (open, close, body) => label(
+    `between<${get('name', open)}, ${get('name', close)}>`,
+    keep_second(open, keep_first(body, close)))
+  ]
 });
 
 let sep_by1 = fn({
   name: 'sep_by',
+  pre: args([is_fn, is_fn], [is_fn, is_fn, parser_input]),
   body: (separator, parser) => {
     let sep_then_p = keep_second(separator, parser);
-    return map_parser(
-      flatten, 
-      and_then(parser, many(sep_then_p)));
+    return label(
+      `sep_by<${get('name', separator)}, ${get('name', parser)}>`,
+      map_parser(
+        flatten, 
+        and_then(parser, many(sep_then_p))));
   }
 });
 
 let no_op = fn({
   name: 'no_op',
+  pre: args([parser_input]),
   body: ({input}) => ok(undefined, input)
 });
 
 let any_of = fn({
   name: 'any_of',
+  pre: args([is_char]),
   body: [
-  (parsers) => reduce(or_else, parsers),
-  (parser1, parser2, ...parsers) => 
-    any_of([parser1, parser2, ...parsers])
+  (...cs) => label(
+    `any_of<${Str.from(map(get('name'), cs), ', ')}>`,
+    or_else(map(parse_char, cs)))
   ]
 });
 
 let sep_by = fn({
   name: 'sep_by',
+  pre: args([is_fn, is_fn]),
   body: (separator, parser) =>
-    or_else(sep_by1(separator, parser), no_op)
+    label(
+      `sep_by<${get('name', separator)}, ${get('name', parser)}>`,
+      or_else(sep_by1(separator, parser), no_op))
 });
 
 let string = fn({
   name: 'string',
   pre: args([is_str]),
-  body: (s) => map_parser(
+  body: (s) => label(`parse<'${s}'>`, map_parser(
     flatten,
-    label(s, and_then(map(parse_char, [...s]))))
+    and_then(map(parse_char, [...s]))))
 });
 
 let char_in_range = fn({
@@ -268,9 +311,20 @@ let uppercase = satisfy('uppercase', char_in_range('A', 'Z'));
 
 let digit = satisfy('digit', char_in_range('0', '9'));
 
-let whitespace = satisfy('whitespace', any_of('\t', '\s'));
+let whitespace = label('whitespace', any_of('\t', ' '));
 
-let line_break = satisfy('line_break', any_of('\n', '\r'));
+let line_break = label('line_break', any_of('\n', '\r'));
+
+let print_result = fn({
+  name: 'print_result',
+  pre: args([is_fn, is_str]),
+  body: (parser, input) => {
+    let result = run(parser, input);
+    return when(get('ok', result))
+      ? Str.from(get('result', result))
+      : get('message', result);
+  }
+});
 
 export default ns({
   name: 'Parse',
@@ -280,6 +334,6 @@ export default ns({
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
     sep_by, string, char_in_range, uppercase, lowercase,
-    digit, whitespace, line_break
+    digit, whitespace, line_break, print_result
   }
 });
