@@ -215,6 +215,9 @@ let dict = defn({
   })
 });
 */
+
+NS.defmembers(Fn, {and, or, not});
+
 export default ns({
   name: 'Pred',
   members: {
