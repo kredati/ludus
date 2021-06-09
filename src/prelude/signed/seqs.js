@@ -20,7 +20,7 @@ import A from './arr.js';
 let {args} = S;
 let {fn, once, method, partial} = Fn;
 let {create, type} = T;
-let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str, is_sequence, is_int} = P;
+let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str, is_sequence, is_int, is_undef} = P;
 let {ns} = NS;
 let {conj_} = A;
 
@@ -74,7 +74,7 @@ let is_seq = fn({
   body: (x) => is(seq_t, x) 
 });
 
-let is_seqable = or(is_coll, is_str, is_seq);
+let is_seqable = or(is_coll, is_str, is_seq, is_undef);
 
 let count = fn({
   name: 'count',
@@ -280,7 +280,8 @@ let into = fn({
 let flatten = fn({
   name: 'flatten',
   doc: 'Takes any nested combination of sequences and returns their contents as a single, flat, lazy sequence.',
-  body: (seqs) => seq_((function*() {
+  body: [
+  (seqs) => seq_((function*() {
     while(!is_empty(seqs)) {
       let el = first(seqs);
       if (is_sequence(el)) {
@@ -290,7 +291,9 @@ let flatten = fn({
       }
       seqs = rest(seqs);
     }
-  })())
+  })()),
+  (xform, seqs) => seq(xform, flatten(seqs))
+  ]
 });
 
 export default ns({
