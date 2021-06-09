@@ -238,6 +238,18 @@ let thunk = fn({
   }
 });
 
+let id = fn({
+  name: 'id',
+  doc: 'Handy function that simply returns its argument unchanged.',
+  body: (x) => x
+});
+
+let just = fn({
+  name: 'just',
+  doc: 'Handy function that "thunkifies" its argument: it returns a nullary function that will simply return its argument.',
+  body: (x) => fn(`just(${show(x)})`, () => x)
+});
+
 let method_descriptor = Spec.record('method_descriptor', {
   name: is_str,
   not_found: maybe(is_fn),
@@ -261,8 +273,14 @@ let show = fn({
   body: (fn) => fn.name ? `[λ: ${fn.name}]` : '[λ]'
 });
 
+let rename = fn({
+  name: 'rename',
+  pre: args([is_str, is_fn]),
+  body: (name, fn) => Object.defineProperty(fn, 'name', {value: name})
+});
+
 export default ns(Fn, {
     defn: fn, fn, partial, loop, recur: Fn.recur,
     once, thread, thread_some, pipe, pipe_some, comp, comp_some, method, show,
-    call, apply, ap, thunk
+    call, apply, ap, thunk, id, just, rename
 });

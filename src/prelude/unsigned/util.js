@@ -13,7 +13,7 @@ let copy_attrs = (obj, attrs) => {
     Object.defineProperty(obj, key, {
       value: attrs[key],
       enumerable: false,
-      configurable: false
+      //configurable: false
     })
   }
   return obj;
