@@ -81,6 +81,7 @@ let count = fn({
   doc: 'Determines the size of a collection.',
   pre: args([is_seqable]),
   body: (x) => {
+    if (x == undefined) return 0;
     if (x.length != undefined) return x.length;
     if (x.size != undefined) return x.size;
     if (is_obj(x)) return Reflect.ownKeys(x).length;
