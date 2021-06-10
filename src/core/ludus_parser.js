@@ -6,11 +6,11 @@
 // [ ] destructuring assignment in `let`s
 // [ ] destructuring assignment in params
 // [ ] `as` aliases in imports and exports
-// [ ] comments
-// [ ] factor out lists, brackets
-// [ ] move forward references elsewhere (Fn? Parse?)
-// [ ] fix namespace export
-// [-] build AST from parsers
+// [*] comments
+// [?] factor out lists, brackets
+// [*] move forward references elsewhere (Fn? Parse? -> Ref)
+// [*] fix namespace export
+// [*] build AST from parsers
 // [ ] add template strings
 // [ ] add `js` to skip parsing
 // [ ] start working on good errors
@@ -18,25 +18,33 @@
 import '../prelude/prelude.js';
 import Parse from './parse.js';
 
-let {string, label, and_then, parse_char, opt, many, digit, run,map_parser, char_in_range, satisfy, many1, or_else, between, whitespace, line_break, sep_by, lowercase, uppercase, sep_by1, keep_first, keep_second} = Parse;
-
-// a handy helper for forward references
-// where to put this, and how to enforce it's got to be a fn
-let forward = (name) => {
-  let f = ref({name, value: () => {}});
-  let out = Fn.rename(name, (...args) => deref(f)(...args));
-  return [out, f];
-};
+let {string, label, and_then, parse_char, opt, many, digit, run, map_parser, char_in_range, satisfy, many1, or_else, between, whitespace, line_break, sep_by, lowercase, uppercase, sep_by1, keep_first, keep_second, eof} = Parse;
 
 // forward references for recursive parsers
-let [literal, lit_ref] = forward('literal');
+let [literal, set_literal] = forward('literal');
 
-let [expression, exp_ref] = forward('expression');
+let [expression, set_expression] = forward('expression');
 
-// two helpful whitespace parsers
-let ws = many(whitespace);
+////////// Comments
+let not_br = satisfy('not_br', not(or(eq('\n'), eq('\r'))));
 
-let wsl = many(or_else(whitespace, line_break));
+///// inline comments
+let inline_comment = between(
+  string('//'),
+  line_break,
+  many(not_br));
+
+let block_comment = between(
+  string('/*'),
+  string('*/'),
+  satisfy('any', is_any));
+
+///// whitespace parsers
+let single_ws = or_else([whitespace, inline_comment, block_comment]);
+
+let ws = many(single_ws);
+
+let wsl = many(or_else(single_ws, line_break));
 
 ////////// Atoms
 
@@ -127,19 +135,16 @@ let unescaped_single = satisfy(
 let single_q = between(
   parse_char("'"),
   parse_char("'"),
-  many(or_else(unescaped_single, escape_p)),
-);
+  many(or_else(unescaped_single, escape_p)));
 
 let unescaped_double = satisfy(
   'unescaped char: double quote',
-  not(or(eq('\"'), eq('\\'), eq('\n')))
-);
+  not(or(eq('\"'), eq('\\'), eq('\n'))));
 
 let double_q = between(
   parse_char('"'),
   parse_char('"'),
-  many(or_else(unescaped_double, escape_p))
-);
+  many(or_else(unescaped_double, escape_p)));
 
 let str_p = label('string', 
   map_parser(
@@ -160,7 +165,7 @@ let comma_separator = and_then([
 
 let spread = string('...');
 
-let trailing_comma = opt(and_then(ws, parse_char(',')))
+let trailing_comma = opt(and_then(ws, parse_char(',')));
 
 ///// Identifiers & namespaces
 
@@ -182,14 +187,12 @@ let identifier = label('identifier',
 // namespaces, meanwhile, begin with a capital letter
 let ns_name = and_then([
   uppercase,
-  many(id_rest)
-]);
+  many(id_rest)]);
 
 // and they allow dot-access
 let ns_dot_id = and_then([
   many1(and_then(ns_name, parse_char('.'))),
-  identifier
-]);
+  identifier]);
 
 ///// Arrays
 let arr_p = label('array', map_parser(
@@ -201,14 +204,12 @@ let arr_p = label('array', map_parser(
     and_then(wsl, parse_char(']')),
     keep_first(
       sep_by(comma_separator, expression),
-      trailing_comma)
-    )));
+      trailing_comma))));
 
 ////////// Objects
 // a few helpful constituents
 let colon_assignment = and_then([
-  wsl, parse_char(':'), wsl
-]);
+  wsl, parse_char(':'), wsl]);
 
 let key_value = label('key_value', map_parser(
   ([key, value]) => ({type: 'pair', value: [key, value]}),
@@ -216,8 +217,7 @@ let key_value = label('key_value', map_parser(
     keep_first(or_else(identifier, map_parser(
         (value) => ({type: 'atom', value}), str_p)), 
       colon_assignment), 
-    expression
-])));
+    expression])));
 
 let splat = label('splat', map_parser(
   (value) => ({type: 'splat', value}),
@@ -230,15 +230,13 @@ let obj_p = label('object', map_parser(
     and_then(opt(wsl), parse_char('}')),
     keep_first(
       sep_by(comma_separator, or_else([key_value, identifier, splat])),
-      trailing_comma)
-  )));
+      trailing_comma))));
 
 ////////// Finally, a literal parser
 // We talk about "function literals," but we defer them
 // to their own section
-swap(lit_ref, label('literal', or_else([
-  atom, arr_p, obj_p
-])));
+set_literal(label('literal', or_else([
+  atom, arr_p, obj_p])));
 
 ////////// Parens around expressions
 // We will need this for function invocation:
@@ -247,8 +245,7 @@ swap(lit_ref, label('literal', or_else([
 let paren_exp = between(
   and_then(parse_char('('), wsl),
   and_then(wsl, parse_char(')')),
-  expression
-);
+  expression);
 
 ////////// Functions
 
@@ -276,7 +273,7 @@ let fn_params = label('params', map_parser(
       trailing_comma))));
 
 // forward reference for a block, which requires statements
-let [block, block_ref] = forward('block');
+let [block, set_block] = forward('block');
 
 let fn_body = label('fn body', map_parser(
   (value) => ({type: 'fn_body', value}),
@@ -291,8 +288,7 @@ let fn_def = label('function definition',
 let callable = or_else([
   identifier,
   ns_dot_id,
-  paren_exp
-]);
+  paren_exp]);
 
 let when_undef = (x, default_value) => when(is_undef(x)) ? default_value : x;
 
@@ -326,16 +322,14 @@ let when_exp = label('when expression', map_parser(
       expression), // if true
     keep_second(
       and_then([wsl, parse_char(':'), wsl]), 
-      expression) // if false
-])));
+      expression)]))); // if false 
 
 let js;
 
-swap(exp_ref, label('expression', map_parser(
+set_expression(label('expression', map_parser(
   (value) => ({type: 'expression', value}),
   or_else([
-    paren_exp, literal, when_exp, fn_call, identifier, ns_dot_id, fn_def
-]))));
+    paren_exp, literal, when_exp, fn_call, identifier, ns_dot_id, fn_def]))));
 
 ////////// Statements
 
@@ -354,14 +348,13 @@ let expr_stm = label('expr stm', map_parser(
 let let_stm = label('let stm', map_parser(
   ([identifier, expression]) => 
     ({type: 'let', value: {identifier, expression}}),
-  and_then([
+  and_then(
     keep_second(
       and_then([wsl, string('let'), many1(whitespace)]),
       identifier),
     keep_second(
       and_then([ws, parse_char('='), wsl]),
-      keep_first(expression, sem))
-])));
+      keep_first(expression, sem)))));
 
 // return statement
 // return add(1, 2);
@@ -369,31 +362,27 @@ let return_stm = label('return', map_parser(
   (value) => ({type: 'return', value}),
   keep_second(
     and_then([wsl, string('return'), many1(whitespace)]),
-  keep_first(expression, sem))));
+    keep_first(expression, sem))));
 
 // now we have enough to describe a function block
 // zero or more let or expression statements,
 // followed by a single return statement
-swap(block_ref, label('function block', map_parser(
+set_block(label('function block', map_parser(
   (value) => ({type: 'block', value: [...flatten(value)]}),
   between(
     and_then(parse_char('{'), wsl),
     and_then(wsl, parse_char('}')),
     and_then( // enforce ordering of let/expression, then return, statements
       many(or_else(let_stm, expr_stm)),
-      opt(return_stm)
-    )))
-));
+      opt(return_stm))))));
 
 ////////// Imports and exports
-// TODO: finish cleaning these up
-// TODO: finish AST-ifying these
+
 let bare_import = label('bare import', map_parser(
   (imported) => ({type: 'bare_import', value: {imported}}),
   keep_second(
     and_then([wsl, string('import'), many1(whitespace)]),
-    keep_first(str_p, sem))
-));
+    keep_first(str_p, sem))));
 
 let ns_import = label('ns import', map_parser(
   ([ns_name, imported]) => 
@@ -409,61 +398,79 @@ let ns_import = label('ns import', map_parser(
       and_then([many1(whitespace), string('from'), many1(whitespace)]),
       keep_first(str_p, sem)))));
 
-let imports = and_then([
-  wsl, string('import'), many1(whitespace),
-  between(
-    and_then(parse_char('{'), wsl),
-    and_then(wsl, parse_char('}')),
-    sep_by1(comma_separator, identifier)
-  ),
-  many1(whitespace), string('from'), many1(whitespace),
-  str_p, sem
-]);
+let imports = label('imports', map_parser(
+  ([imports, imported]) => 
+    ({type: 'imports', value: {imports, imported}}),
+  and_then(
+    keep_second(
+      and_then([wsl, string('import'), many1(whitespace)]),
+      between(
+        and_then(parse_char('{'), wsl),
+        and_then(wsl, parse_char('}')),
+        sep_by1(comma_separator, identifier)
+      )),
+    keep_second(
+      and_then([many1(whitespace), string('from'), many1(whitespace)]),
+      keep_first(str_p, sem)))));
 
 let import_stm = or_else([
-  imports, bare_import, ns_import
-]);
+  imports, bare_import, ns_import]);
 
-let ns_export = and_then([
-  wsl,
-  string('export'),
-  many1(whitespace),
-  string('default'),
-  many1(whitespace),
-  string('ns'),
-  many(whitespace),
-  between(
-    and_then(parse_char('('), wsl),
-    and_then(wsl, parse_char(')')),
-    sep_by1(comma_separator, expression)
-  ),
-  ws,
-  sem
-]);
+let ns_export = label('ns_export', map_parser(
+  (_) => ({type: 'ns_export'}),
+  and_then([
+    wsl, string('export'),
+    many1(whitespace),
+    string('default'),
+    many1(whitespace),
+    string('ns'),
+    many(whitespace),
+    between(
+      and_then(parse_char('('), wsl),
+      and_then(wsl, parse_char(')')),
+      sep_by1(comma_separator, expression)),
+    sem])));
 
-let exports = and_then([
-  wsl,
-  string('export'),
-  many1(whitespace),
-  between(
-    and_then(parse_char('{'), wsl),
-    and_then(parse_char('}'), wsl),
-    sep_by1(comma_separator, identifier)
-  ),
-  ws,
-  sem
-]);
+let exports = label('exports', map_parser(
+  (result) => ({type: 'exports', value: {exported: result}}),
+  keep_second(
+    and_then([wsl, string('export'), many1(whitespace)]),
+    keep_first(between(
+      and_then(parse_char('{'), wsl),
+      and_then(parse_char('}'), wsl),
+      sep_by1(comma_separator, identifier)),
+    sem))));
 
 let export_stm = or_else(ns_export, exports);
 
-let ludus_file = and_then([
-  many(import_stm), // TODO: enforce a Ludus import at the beginning?
-  many(or_else(let_stm, expr_stm)),
-  opt(export_stm)
-]);
+let file_end = and_then(wsl, eof);
+
+let ludus_file = label('ludus file', map_parser(
+  (result) => ({type: 'ludus file', value: [...flatten(result)]}),
+  or_else([
+    and_then([
+      many(import_stm),
+      many1(or_else(let_stm, expr_stm)),
+      or_else(
+        keep_first(export_stm, file_end),
+        file_end)]),
+    file_end
+  ])));
 
 let repl_line = or_else([
   import_stm,
   let_stm,
-  expr_stm
-]);
+  expr_stm]);
+
+export default ns({
+  name: 'Ludus_Parser',
+  members: {
+    ludus_file, repl_line
+  }
+});
+
+run(export_stm, 'export'); //?
+
+run(ludus_file, `
+
+`); //?
