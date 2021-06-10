@@ -108,6 +108,8 @@ let parse_char = fn({
   body: (char) => satisfy(char, eq(char))
 });
 
+let eof = satisfy('eof', is_undef);
+
 let and_then = fn({
   name: 'and_then',
   pre: args(
@@ -307,16 +309,18 @@ let string = fn({
 
 let char_in_range = fn({
   name: 'char_in_range',
-  pre: args([is_char]),
+  pre: args([is_char, is_char], [is_char, is_char, Spec.maybe(is_char)]),
   body: [
   (start, end) => partial(char_in_range, start, end),
   (start, end, char) => {
     let start_code = Str.code_at(0, start);
     let end_code = Str.code_at(0, end);
-    let char_code = Str.code_at(0, char);
-    return and(
-      gte(char_code, start_code),
-      lte(char_code, end_code));
+    let char_code = when(char) ? Str.code_at(0, char) : undefined;
+    return when(char_code)
+      ? and(
+        gte(char_code, start_code),
+        lte(char_code, end_code))
+      : false;
   }
   ]
 });
@@ -350,6 +354,6 @@ export default ns({
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
     sep_by, string, char_in_range, uppercase, lowercase,
-    digit, whitespace, line_break, print_result
+    digit, whitespace, line_break, print_result, eof
   }
 });
