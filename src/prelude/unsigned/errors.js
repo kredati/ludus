@@ -45,7 +45,10 @@ let handle = (name, fn) => Object.defineProperty(
     try {
       return fn(...args);
     } catch (e) {
-      Ludus.report(`${e.name || e || 'unknown error'} while calling ${fn.name || 'anon. fn'} with args (${args.map(arg => Ludus.show(arg)).join(', ')})`);
+      Ludus.report(`${e.name || e || 'unknown error'} while calling ${fn.name || 'anon. fn'} with args (${args.map((arg) => {
+          try { return Ludus.show(arg); }
+          catch (_) { return arg; }
+        }).join(', ')})`);
       throw e;
     }
   },
