@@ -75,7 +75,7 @@ let ctx = {
     is_sequence: Preds.is_sequence, is_arr: Preds.is_arr, is_key: Preds.is_key,
     // from Ref
     swap: Ref.swap, watch: Ref.watch, unwatch: Ref.unwatch, future: Ref.future,
-    deref: Ref.deref,
+    deref: Ref.deref, forward: Ref.forward,
     // from Seq
     first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
     into: Seq.into, flatten: Seq.flatten,
