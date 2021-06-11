@@ -49,6 +49,27 @@ let next_state = fn({
   }
 });
 
+
+let parser_input = at('input', parser_state);
+
+let loc = and(at('line', is_int), at('col', is_int));
+
+let is_err = (error) => {
+  let label = get('label', error);
+  let err = get('error', error);
+  return when(and(err, label))
+    ? and(
+        is_str(label), 
+        or(is_str, is_err)(err))
+    : false;
+};
+
+let get_loc = fn({
+  name: 'get_loc',
+  pre: args([parser_state]),
+  body: ({line, col}) => ({line, col})
+});
+
 let ok = fn({
   name: 'ok', 
   pre: args([is_any, parser_state]),
@@ -57,11 +78,9 @@ let ok = fn({
 
 let fail = fn({
   name: 'fail',
-  pre: args([is_str, parser_state]),
-  body: (message, input) => ({ok: false, message, input})
+  pre: args([iter_of(is_str), parser_state]),
+  body: (errors, input) => ({ok: false, errors, input})
 });
-
-let parser_input = at('input', parser_state);
 
 let satisfy = fn({
   name: 'satisfy',
@@ -75,9 +94,7 @@ let satisfy = fn({
       : undefined;
     return when(success)
       ? success
-      : when(next)
-        ? fail(`Error parsing ${name}: unexpected ${next}`, xs)
-        : fail(`Error parsing ${name}: unexpected end of input`, xs);
+      : fail([`Error parsing ${name}`, `Unexpected ${or(next, 'eof')}`], xs);
   }
   ]
 });
@@ -91,7 +108,8 @@ let label = fn({
     let result = parser(input);
     return when(get('ok', result))
       ? result
-      : assoc(result, 'message', `Error parsing ${name}`);
+      : assoc(result, 'errors', 
+        [`Error parsing ${name}`, Arr.last(get('errors', result))]);
   }
   ]
 });
@@ -108,7 +126,7 @@ let parse_char = fn({
   body: (char) => satisfy(char, eq(char))
 });
 
-let eof = satisfy('eof', is_undef);
+let eof = satisfy('end of file', is_undef);
 
 let and_then = fn({
   name: 'and_then',
@@ -128,14 +146,22 @@ let and_then = fn({
     let result2 = when(get('ok', result1))
       ? parser2(result1)
       : undefined;
-    let failure_message = or(
-      get('message', result1),
-      get('message', result2));
+
     let remaining_input = or(get('input', result2), get('input', result1));
     let result_tuple = [get('result', result1), get('result', result2)];
+
+
+    let parser_errors = or(get('errors', result1), get('errors', result2), []);
+    let error_name = get('name', 
+      when(get('errors'), result1) ? parser1 : parser2);
+    let errors = [
+      `Error parsing and_then<${get('name', parser1)}, ${get('name', parser2)}>`, 
+      Arr.last(parser_errors),
+      `Expected ${error_name}`];
+
     return when(get('ok', result2))
       ? ok(result_tuple, remaining_input)
-      : fail(failure_message, remaining_input);
+      : fail(errors, remaining_input);
   }
   ]
 });
@@ -156,10 +182,6 @@ let or_else = fn({
   }
   ]
 });
-
-let tup_flat = [1, 2];
-let tup_left = [[[1, 2], 3], 4];
-let tup_right = [1, [2, [3, [4, []]]]];
 
 let is_tup = and(is_arr, pipe(
   count,
@@ -342,7 +364,7 @@ let print_result = fn({
     let result = run(parser, input);
     return when(get('ok', result))
       ? Str.from(get('result', result))
-      : get('message', result);
+      : get('err', result);
   }
 });
 
@@ -354,6 +376,7 @@ export default ns({
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
     sep_by, string, char_in_range, uppercase, lowercase,
-    digit, whitespace, line_break, print_result, eof
+    digit, whitespace, line_break, print_result, eof, get_loc
   }
 });
+
