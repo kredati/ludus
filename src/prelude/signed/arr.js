@@ -95,6 +95,13 @@ let unconj = fn({
   body: (arr) => A.from(arr).unconj()
 });
 
+let last = fn({
+  name: 'last',
+  doc: 'Returns the last element of an array.',
+  pre: args([is_arr]),
+  body: (arr) => arr[arr.length - 1]
+});
+
 let slice = fn({
   name: 'slice',
   doc: 'Takes an array, a starting index, and an optional stopping index. Returns a new array that contains the elements of the original array from the start index (inclusive) to the stop index (exclusive).',
@@ -197,5 +204,5 @@ let show = fn({
 export default ns(L.Arr, {
   arr: _arr, assoc, concat, conj, conj_, empty, empty_, from,
   index, index_of, is_index, last_index_of, reverse, reduce_right,
-  slice, sort, unconj, show
+  slice, sort, unconj, show, last
 });
