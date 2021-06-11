@@ -39,12 +39,14 @@ let block_comment = between(
   string('*/'),
   satisfy('any', is_any));
 
+let comment = label('comment', or_else(inline_comment, block_comment));
+
 ///// whitespace parsers
-let single_ws = or_else([whitespace, inline_comment, block_comment]);
+let single_ws = or_else(whitespace, comment);
 
-let ws = many(single_ws);
+let ws = label('whitespace', many(single_ws));
 
-let wsl = many(or_else(single_ws, line_break));
+let wsl = label('whitespace', many(or_else(single_ws, line_break)));
 
 ////////// Atoms
 
@@ -435,13 +437,14 @@ let exports = label('exports', map_parser(
   (result) => ({type: 'exports', value: {exported: result}}),
   keep_second(
     and_then([wsl, string('export'), many1(whitespace)]),
-    keep_first(between(
-      and_then(parse_char('{'), wsl),
-      and_then(parse_char('}'), wsl),
-      sep_by1(comma_separator, identifier)),
-    sem))));
+    label('export list', keep_first(
+      between(
+        and_then(parse_char('{'), wsl),
+        and_then(parse_char('}'), wsl),
+        sep_by1(comma_separator, identifier)),
+      sem)))));
 
-let export_stm = or_else(ns_export, exports);
+let export_stm = label('export', or_else(ns_export, exports));
 
 let file_end = and_then(wsl, eof);
 
@@ -469,8 +472,10 @@ export default ns({
   }
 });
 
-run(export_stm, 'export'); //?
+let export_err = run(export_stm, 'export'); //?
 
 run(ludus_file, `
+
+foo();
 
 `); //?
