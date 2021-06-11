@@ -336,7 +336,7 @@ set_expression(label('expression', map_parser(
 ////////// Statements
 
 // out statement terminator
-let sem = and_then(ws, parse_char(';'));
+let sem = label('end of statement', and_then(ws, parse_char(';')));
 
 ///// Expression statement
 // an expression, plus a semicolon: 'foo';
@@ -433,32 +433,32 @@ let ns_export = label('ns_export', map_parser(
       sep_by1(comma_separator, expression)),
     sem])));
 
-let exports = label('exports', map_parser(
+let exports = label('named exports', map_parser(
   (result) => ({type: 'exports', value: {exported: result}}),
   keep_second(
     and_then([wsl, string('export'), many1(whitespace)]),
     label('export list', keep_first(
-      between(
-        and_then(parse_char('{'), wsl),
-        and_then(parse_char('}'), wsl),
-        sep_by1(comma_separator, identifier)),
+      label('id list', between(
+        label('{', and_then(parse_char('{'), wsl)),
+        label('}', and_then(wsl, parse_char('}'))),
+        label('id list', sep_by1(comma_separator, identifier)))),
       sem)))));
 
-let export_stm = label('export', or_else(ns_export, exports));
+let export_stm = label('export statement', or_else(ns_export, exports));
 
-let file_end = and_then(wsl, eof);
+let file_end = label('eof', and_then(wsl, eof));
 
 let ludus_file = label('ludus file', map_parser(
   (result) => ({type: 'ludus file', value: [...flatten(result)]}),
-  or_else([
+  or_else(
+    file_end,
     and_then([
-      many(import_stm),
-      many1(or_else(let_stm, expr_stm)),
+      label('import statements', many(import_stm)),
+      label('statements', many1(or_else(let_stm, expr_stm))),
       or_else(
-        keep_first(export_stm, file_end),
-        file_end)]),
-    file_end
-  ])));
+        file_end,
+        label('exports', keep_first(export_stm, file_end)))])
+  )));
 
 let repl_line = or_else([
   import_stm,
@@ -472,10 +472,16 @@ export default ns({
   }
 });
 
-let export_err = run(export_stm, 'export'); //?
-
 run(ludus_file, `
 
 foo();
+
+import {foo, bar} from 'foobar';
+
+bar();
+
+baz();
+
+export {foo};
 
 `); //?
