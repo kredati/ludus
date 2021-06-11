@@ -29,10 +29,11 @@ let current_char = fn({
   pre: args([parser_state]),
   body: ({line, col, lines}) => {
   let current_line = get(line, lines);
+  let next_line = get(inc(line), lines);
   let current_char = get(col, current_line);
   return when(current_char) 
     ? current_char 
-    : when(current_line) 
+    : when(and(current_line, next_line)) 
       ? '\n'
       : undefined
   }
@@ -49,26 +50,7 @@ let next_state = fn({
   }
 });
 
-
 let parser_input = at('input', parser_state);
-
-let loc = and(at('line', is_int), at('col', is_int));
-
-let is_err = (error) => {
-  let label = get('label', error);
-  let err = get('error', error);
-  return when(and(err, label))
-    ? and(
-        is_str(label), 
-        or(is_str, is_err)(err))
-    : false;
-};
-
-let get_loc = fn({
-  name: 'get_loc',
-  pre: args([parser_state]),
-  body: ({line, col}) => ({line, col})
-});
 
 let ok = fn({
   name: 'ok', 
@@ -78,8 +60,8 @@ let ok = fn({
 
 let fail = fn({
   name: 'fail',
-  pre: args([iter_of(is_str), parser_state]),
-  body: (errors, input) => ({ok: false, errors, input})
+  pre: args([iter_of(or(iter_of(is_str), is_str)), parser_state, is_fn]),
+  body: (errors, input, from) => ({ok: false, errors, input, from})
 });
 
 let satisfy = fn({
@@ -94,7 +76,7 @@ let satisfy = fn({
       : undefined;
     return when(success)
       ? success
-      : fail([`Error parsing ${name}`, `Unexpected ${or(next, 'eof')}`], xs);
+      : fail([`Error parsing ${name}`, `Unexpected ${or(next, 'eof')}`], xs, satisfy);
   }
   ]
 });
@@ -109,10 +91,12 @@ let label = fn({
     return when(get('ok', result))
       ? result
       : assoc(result, 'errors', 
-        [`Error parsing ${name}`, Arr.last(get('errors', result))]);
+        [`Error parsing ${name}`, ...rest(get('errors', result))]);
   }
   ]
 });
+
+
 
 let run = fn({
   name: 'run',
@@ -136,10 +120,10 @@ let and_then = fn({
     [is_fn, is_fn, parser_input]),
   body: [
   (parsers) => Fn.rename(
-    `and_then<${Str.from(map(get('name'), parsers), ', ')}>`, 
+    Str.from(map(get('name'), parsers), ' then '), 
     reduce(and_then, parsers)),
   (parser1, parser2) => Fn.rename(
-    `and_then<${get('name', parser1)}, ${get('name', parser2)}>`, 
+    `${get('name', parser1)} then ${get('name', parser2)}`, 
     partial(and_then, parser1, parser2)),
   (parser1, parser2, input) => {
     let result1 = parser1(input);
@@ -153,15 +137,15 @@ let and_then = fn({
 
     let parser_errors = or(get('errors', result1), get('errors', result2), []);
     let error_name = get('name', 
-      when(get('errors'), result1) ? parser1 : parser2);
+      when(get('errors', result1)) ? parser1 : parser2);
     let errors = [
-      `Error parsing and_then<${get('name', parser1)}, ${get('name', parser2)}>`, 
-      Arr.last(parser_errors),
-      `Expected ${error_name}`];
+      `Error parsing ${get('name', parser1)} then ${get('name', parser2)}`, 
+      `Expected ${error_name}`,
+      ...rest(parser_errors)];
 
     return when(get('ok', result2))
       ? ok(result_tuple, remaining_input)
-      : fail(errors, remaining_input);
+      : fail(errors, remaining_input, and_then);
   }
   ]
 });
@@ -170,15 +154,14 @@ let or_else = fn({
   name: 'or_else',
   pre: args([iter_of(is_fn)], [is_fn, is_fn], [is_fn, is_fn, parser_input]),
   body: [
-  (parsers) => Fn.rename(
-    `or_else<${Str.from(map(get('name'), parsers), ', ')}>`, 
+  (parsers) => Fn.rename(Str.from(map(get('name'), parsers), '|'), 
     reduce(or_else, parsers)),
-  (parser1, parser2) => Fn.rename(`or_else<${get('name', parser1)}, ${get('name', parser2)}>`, partial(or_else, parser1, parser2)),
+  (parser1, parser2) => Fn.rename(`${get('name', parser1)}|${get('name', parser2)}`, partial(or_else, parser1, parser2)),
   (parser1, parser2, input) => {
     let result1 = parser1(input);
     return when(get('ok', result1))
       ? result1
-      : parser2(input)
+      : label(`${get('name', parser1)}|${get('name', parser2)}`, parser2)(input);
   }
   ]
 });
@@ -235,9 +218,9 @@ let many1 = fn({
   pre: args([is_fn], [is_fn, parser_input]),
   body: [
   (parser) => Fn.rename(
-    `many1<${get('name', parser)}>`, 
+    `at least one ${get('name', parser)}`, 
     partial(many1, parser)),
-  (parser, input) => and_then(parser, many(parser))(input)
+  (parser, input) => label(`at least one ${get('name', parser)}`, and_then(parser, many(parser)))(input)
   ]
 });
 
@@ -259,7 +242,7 @@ let keep_first = fn({
   name: 'keep_first',
   pre: args([is_fn, is_fn]),
   body: (fst, snd) => label(
-    `keep_first<${get('name', fst)}, ${get('name', snd)}>`,
+    `${get('name', fst)} then ${get('name', snd)}`,
     map_parser(first, and_then(fst, snd)))
 });
 
@@ -267,7 +250,7 @@ let keep_second = fn({
   name: 'keep_second',
   pre: args([is_fn, is_fn]),
   body: (fst, snd) => label(
-    `keep_second<${get('name', fst)}, ${get('name', snd)}>`,
+    `${get('name', fst)} then ${get('name', snd)}`,
     map_parser(second, and_then(fst, snd)))
 });
 
@@ -323,10 +306,26 @@ let sep_by = fn({
 let string = fn({
   name: 'string',
   pre: args([is_str]),
-  body: (s) => label(`string<'${s}'>`,
+  body: (s) => label(s,
     map_parser(
       pipe(unpack_left, Str.from), 
       and_then(map(parse_char, [...s]))))
+});
+
+let string_ = fn({
+  name: 'string',
+  pre: args([is_str]),
+  body: (s) => {
+    let parser = map_parser(
+      pipe(unpack_left, Str.from), 
+      and_then(map(parse_char, [...s])));
+    return fn(`'${s}'`, (input) => {
+      let result = parser(input);
+      return when(get('ok', result))
+        ? result
+        : fail([`Error parsing '${s}'`, `Expected '${s}'`, Arr.last(get('errors', result))], get('input', input), string_)
+    })
+  }
 });
 
 let char_in_range = fn({
@@ -375,8 +374,23 @@ export default ns({
     satisfy, label, run, parse_char, and_then,
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
-    sep_by, string, char_in_range, uppercase, lowercase,
-    digit, whitespace, line_break, print_result, eof, get_loc
+    sep_by, string: string_, char_in_range, uppercase, lowercase,
+    digit, whitespace, line_break, print_result, eof
   }
 });
+
+let input = `adx`;
+
+let get_errors = (parser) => get('errors', run(parser, input));
+
+get_errors(and_then(or_else([
+  string_('aa'),
+  string('ab'),
+  string('ac'),
+  string('ad')]),
+  or_else([
+    string('xx'),
+    string('xy'),
+    string('xz')
+  ]))); //?
 
