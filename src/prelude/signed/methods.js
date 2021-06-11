@@ -48,9 +48,13 @@ let concat = method({
     name: 'concat'
 });
 
+let maybe = method({
+    name: 'maybe'
+});
+
 export default ns({
     name: 'Mthd',
     members: {
-        assoc, conj, empty, index_of, slice, and, or, not, update, concat
+        assoc, conj, empty, index_of, slice, and, or, not, update, concat, maybe
     }
 });
