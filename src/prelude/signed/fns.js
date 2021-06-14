@@ -32,7 +32,7 @@ let fn_descriptor = record('fn_descriptor', {
 let fn = Fn.defn({
   name: 'fn',
   doc: 'Describes a Ludus function, which is an instrumented bare function. It dispatches on arity; has better and more informative error handling; does tail-call elimination; allows for `pre` and `post` testing of arguments and returns; etc. With one argument, it takes a function descriptor object with, minmally, `name` and `body` fields. `name` must be a string; body must be a function or a sequence of functions describing clauses of various arities. With two arguments, takes a string `name` and a function `body`.',
-  pre: args([fn_descriptor], [is_str, is_fn]),
+  pre: args([fn_descriptor], [is_str, or(is_fn, iter_of(is_fn))]),
   body: [
     (descriptor) => defn_(descriptor),
     (name, body) => fn_(name, body)
