@@ -466,7 +466,9 @@ let exports = label('named exports', map_parser(
 
 let export_stm = label('export statement', or_else(ns_export, exports));
 
-let file_end = label('eof', and_then(wsl, eof));
+let file_end = label('eof', map_parser(
+  (_) => ({type: 'eof'}), 
+  and_then(wsl, eof)));
 
 let ludus_file = label('ludus file', map_parser(
   (result) => ({type: 'ludus file', value: [...flatten(result)]}),
@@ -480,10 +482,11 @@ let ludus_file = label('ludus file', map_parser(
         label('exports', keep_first(export_stm, file_end)))])
   )));
 
-let repl_line = or_else([
+let repl_line = label('repl line', or_else([
   import_stm,
   let_stm,
-  expr_stm]);
+  expr_stm,
+  file_end]));
 
 export default ns({
   name: 'Ludus_Parser',
