@@ -17,7 +17,7 @@ import T from './type.js';
 import NS from './ns.js';
 import A from './arr.js';
 
-let {args} = S;
+let {args, iter_of} = S;
 let {fn, once, method, partial} = Fn;
 let {create, type} = T;
 let {has, is_iter, is_obj, bool, is_fn, is_coll, is_any, is, or, is_str, is_sequence, is_int, is_undef} = P;
@@ -281,6 +281,7 @@ let into = fn({
 let flatten = fn({
   name: 'flatten',
   doc: 'Takes any nested combination of sequences and returns their contents as a single, flat, lazy sequence.',
+  pre: args([iter_of(is_seqable)], [is_fn, iter_of(is_seqable)]),
   body: [
   (seqs) => seq_((function*() {
     while(!is_empty(seqs)) {
@@ -297,11 +298,28 @@ let flatten = fn({
   ]
 });
 
+let includes = fn({
+  name: 'includes',
+  doc: 'Takes a value and any sequence and returns true if the sequence includes that value. It will hang on infinite sequences that do not include the value.',
+  pre: args([is_any], [is_any, is_seqable]),
+  body: [
+  (value) => partial(includes, value),
+  (value, seqable) => {
+    let s = seq(seqable);
+    while (!is_empty(s)) {
+      if (eq(value, first(s))) return true;
+      s = rest(s);
+    }
+    return false;
+  }
+  ]
+});
+
 export default ns({
   type: seq_t,
   members: {
     concat, empty, first, is_empty, is_seq, is_seqable,
     iterate, rest, seq: seq_, show, count, flatten,
     reduce, transduce, into, complete, is_complete,
-    nth, second, third, fourth
+    nth, second, third, fourth, includes
   }});
