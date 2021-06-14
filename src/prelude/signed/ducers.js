@@ -39,6 +39,7 @@ import A from './arr.js';
 import Fn from './fns.js';
 import L from './lazy.js';
 import NS from './ns.js';
+import B from './bools.js';
 
 let {fn, method} = Fn;
 let {bool} = P;
