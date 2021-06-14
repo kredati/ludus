@@ -79,10 +79,13 @@ let sign = parse_char('-');
 
 // integers
 let int_p = label('int', 
-    and_then([
+    and_then(
       opt(sign), 
-      nonzero_digit, 
-      many(digit)]));
+      or_else(
+        zero,
+        and_then(
+          nonzero_digit, 
+          many(digit)))));
 
 // floating point
 let float_p = label('float',
