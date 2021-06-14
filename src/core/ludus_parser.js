@@ -13,7 +13,11 @@
 // [*] build AST from parsers
 // [ ] add template strings
 // [ ] add `js` to skip parsing
-// [ ] start working on good errors
+// [-] start working on good errors
+// [*] distinguish between effectful functions and non-effectful ones
+//     ^ you either get a return statement or one or more bare expressions
+//     ^ maybe? you can get around this very easily: let foo = swap...
+//     ^ that doesn't make it useless, though
 
 import '../prelude/prelude.js';
 import Parse from './parse.js';
@@ -326,12 +330,12 @@ let when_exp = label('when expression', map_parser(
       and_then([wsl, parse_char(':'), wsl]), 
       expression)]))); // if false 
 
-let js;
+let js = undefined; // TODO
 
 set_expression(label('expression', map_parser(
   (value) => ({type: 'expression', value}),
   or_else([
-    paren_exp, literal, when_exp, fn_call, identifier, ns_dot_id, fn_def]))));
+    literal, when_exp, fn_call, identifier, ns_dot_id, fn_def, paren_exp]))));
 
 ////////// Statements
 
@@ -366,20 +370,36 @@ let return_stm = label('return', map_parser(
     and_then([wsl, string('return'), many1(whitespace)]),
     keep_first(expression, sem))));
 
+////////// Blocks
 // now we have enough to describe a function block
+// we have two kinds of function blocks: pure and effect blocks
+
+// a pure block has zero or more lets and then a return
+// ordering is enforced
+// if you have a return, you may not have any bare expressions
+let pure_block = label('pure block',
+  between(
+    and_then(parse_char('{'), wsl),
+    and_then(wsl, parse_char('}')),
+    and_then(
+      many(let_stm),
+      return_stm)));
+
+// an effect block has side effects, presumably made in expression statements
+// it may not have a return statement
+let effect_block = label('effect block', 
+  between(
+    and_then(parse_char('{'), wsl),
+    and_then(wsl, parse_char('}')),
+    many(or_else(expr_stm, let_stm))));
+
 // zero or more let or expression statements,
 // followed by a single return statement
 set_block(label('function block', map_parser(
   (value) => ({type: 'block', value: [...flatten(value)]}),
-  between(
-    and_then(parse_char('{'), wsl),
-    and_then(wsl, parse_char('}')),
-    and_then( // enforce ordering of let/expression, then return, statements
-      many(or_else(let_stm, expr_stm)),
-      opt(return_stm))))));
+  label('block', or_else(pure_block, effect_block)))));
 
 ////////// Imports and exports
-
 let bare_import = label('bare import', map_parser(
   (imported) => ({type: 'bare_import', value: {imported}}),
   keep_second(
@@ -454,7 +474,7 @@ let ludus_file = label('ludus file', map_parser(
     file_end,
     and_then([
       label('import statements', many(import_stm)),
-      label('statements', many1(or_else(let_stm, expr_stm))),
+      label('statements', many1(or_else(expr_stm, let_stm))),
       or_else(
         file_end,
         label('exports', keep_first(export_stm, file_end)))])
@@ -470,18 +490,4 @@ export default ns({
   members: {
     ludus_file, repl_line
   }
-});
-
-run(ludus_file, `
-
-foo();
-
-import {foo, bar} from 'foobar';
-
-bar();
-
-baz();
-
-export {foo};
-
-`); //?
+});//?
