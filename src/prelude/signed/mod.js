@@ -80,12 +80,14 @@ let ctx = {
     first: Seq.first, is_empty: Seq.is_empty, is_seq: Seq.is_seq, rest: Seq.rest, count: Seq.count, reduce: Seq.reduce, transduce: Seq.transduce,
     into: Seq.into, flatten: Seq.flatten,
     nth: Seq.nth, second: Seq.second, third: Seq.third, fourth: Seq.fourth,
+    includes: Seq.includes,
     // from Spec
     is_spec: Spec.is_spec, is_valid: Spec.is_valid, tup: Spec.tup, 
     iter_of: Spec.iter_of, at: Spec.at, record: Spec.record,
     dict: Spec.dict, args: Spec.args, explain: Spec.explain,
     // from Str
-    capitalize: Str.capitalize, chars: Str.chars, is_char: Str.is_char, lowcase: Str.lowcase, split: Str.split, join: Str.from, trim: Str.trim,
+    capitalize: Str.capitalize, chars: Str.chars, is_char: Str.is_char, 
+    lowcase: Str.lowcase, split: Str.split, join: Str.from, trim: Str.trim,
     upcase: Str.upcase, words: Str.words,
     // from Type
     meta: Type.meta, type_of: Type.type_of, is: Type.is, create: Type.create
