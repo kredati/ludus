@@ -12,17 +12,23 @@
 // [*] fix namespace export
 // [*] build AST from parsers
 // [ ] add template strings
+// [ ] add `recur` special form for later tail-position checking
 // [ ] add `js` to skip parsing
+//     ^ Perhaps this uses magic comments instead of a function?
+//       This is hard to parse.
+//       The nice thing about having a function is that it can't affect
+//       the context outside. But perhaps that's just not plausible.
 // [-] start working on good errors
 // [*] distinguish between effectful functions and non-effectful ones
 //     ^ you either get a return statement or one or more bare expressions
 //     ^ maybe? you can get around this very easily: let foo = swap...
 //     ^ that doesn't make it useless, though
+//     ^ I think ultimately this is a bad idea.
 
 import '../prelude/prelude.js';
 import Parse from './parse.js';
 
-let {string, label, and_then, parse_char, opt, many, digit, run, map_parser, char_in_range, satisfy, many1, or_else, between, whitespace, line_break, sep_by, lowercase, uppercase, sep_by1, keep_first, keep_second, eof} = Parse;
+let {string, label, and_then, parse_char, opt, many, digit, run, map_parser, char_in_range, satisfy, many1, or_else, between, whitespace, line_break, sep_by, lowercase, uppercase, sep_by1, keep_first, keep_second, eof, add_loc} = Parse;
 
 // forward references for recursive parsers
 let [literal, set_literal] = forward('literal');
@@ -189,9 +195,9 @@ let id_init = or_else([lowercase, underscore, dollar]);
 let id_rest = or_else([lowercase, uppercase, underscore, dollar, digit]);
 
 let identifier = label('identifier', 
-  map_parser(
+  add_loc(map_parser(
     pipe(flatten, Str.from, (name) => ({type: 'identifier', value: name})), 
-    and_then(id_init, many(id_rest))));
+    and_then(id_init, many(id_rest)))));
 
 // namespaces, meanwhile, begin with a capital letter
 let ns_name = and_then([
