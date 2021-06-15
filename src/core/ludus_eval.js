@@ -3,11 +3,16 @@
 // at a time REPL interaction.
 
 // TODO:
-// [ ] Complete handlers for all node types
-// [ ] Add line numbers to ID nodes where we can get errors
+// [-] Complete handlers for all node types
+// [*] Add line numbers to ID nodes where we can get errors
+// [ ] Rewrite this with `ref`s instead of `conj_`s
+// [ ] Add a new algorithm for tail-position checking.
 // [ ] Devise transforms:
 //    [ ] Subsequent `let`s at REPL for same ID simply lose the `let`.
 //    [ ] `import`s become async functions
+//      [ ] import {foo, bar as baz} from 'foobar'; -> let {foo, bar: baz} = await import('foobar');
+//      [ ] import Foobar from 'foobar'; -> let {default: Foobar} = await import('foobar);
+//      [ ] import 'foobar'; -> await import('foobar');
 //    ^ because we only do one statement at a time in the REPL, we don't have to worry about line numbers or the parser forwarding the code in the statement.
 
 
@@ -20,13 +25,11 @@ let ctx = ['foo', 'bar'];
 
 let repl_ctx = {
   higher: ['foo', 'bar'], // globals
-  current: [],
+  current: ['bar'],
   toplevel: true
 };
 
-
-
-let input1 = `let quul = (foo) => {
+let input1 = `let bar = (foo) => {
   let bar = 12;
   let baz = 13;
   let forb = when(foo) ? bar : baz(foo);
@@ -35,7 +38,7 @@ let input1 = `let quul = (foo) => {
 
 let input2 = `let quul = quul(42);`;
 
-let parsed1 = Parse.run(LP.repl_line, input1);
+let parsed1 = Parse.run(LP.repl_line, input1); //?
 
 let parsed2 = Parse.run(LP.repl_line, input2);
 
@@ -66,11 +69,11 @@ let check_name = fn('check_name', [
   }
   ]);
 
-let handlers = {
+let name_handlers = {
   atom: (_) => true,
-  identifier: (ctx, value) => when(ctx_includes_id(ctx, value))
+  identifier: (ctx, value, {line, col}) => when(ctx_includes_id(ctx, value))
     ? true
-    : raise(`Unbound identifier ${value}.`),
+    : raise(`Unbound identifier ${value} at line: ${line}, col: ${col}.`),
   
   call: (ctx, {called, args}) => and(check_ids(ctx, called), every(check_ids(ctx), args)),
   
@@ -79,13 +82,14 @@ let handlers = {
     // when the expression defines a function, we need the function name
     // available within that function (for recursive calls), so we
     // create a new intermediate context
-    let new_ctx = when(eq('function', get_in(expression, ['value', 'type'])))
+    let next_type = get_in(expression, ['value', 'type']);
+    let new_ctx = when(eq(next_type, 'function'))
       ? {higher: [...get('higher', ctx), ...get('current', ctx)],
         current: [id_name]}
       : ctx;
     let is_expr_good = check_ids(new_ctx, expression);
     return when(is_expr_good)
-      ? when(check_name(ctx, id_name))
+      ? when(check_name(ctx, id_name)) // use the original context
         ? and(Arr.conj_(get('current', ctx), id_name), true)
         : false 
       : false;
@@ -128,13 +132,32 @@ let check_ids = fn(
   [
   (ctx) => partial(check_ids, ctx),
   (ctx, ast) => {
-    let {type, value} = ast;
+    let {type, value, loc} = ast;
     return when(value)
-      ? get(type, handlers, check_ids)(ctx, value)
+      ? get(type, name_handlers, check_ids)(ctx, value, loc)
       : 'whoops'; 
   }
   ]
-);  
+);
 
-check_ids(repl_ctx, ast1); //?
-check_ids(repl_ctx, ast2); //?
+//check_ids(repl_ctx, ast1); //?
+//check_ids(repl_ctx, ast2); //?
+
+let transform_handlers = {
+  let: (input, ctx, ast) => when(get('toplevel', ctx))
+    ? call(() => {
+      let id = get_in(ast, ['value', 'identifier', 'value']);
+      let id_start = get_in(ast, ['value', 'identifier', 'loc']);
+      return when(includes(id, get('current', ctx)))
+        ? 'do something'
+        : input
+    })
+    : input
+};
+
+let transform = (input, repl_ctx, ast) => {
+  let type = get('type', ast);
+  return get(type, transform_handlers, id)(input, repl_ctx, ast)
+};
+
+transform(input1, repl_ctx, ast1); //?
