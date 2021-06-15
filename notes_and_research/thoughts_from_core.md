@@ -24,4 +24,10 @@ What makes them awkward?
 ### Other additional thoughts
 * I find `get` cumbersome; I'm tempted to write `let get_result = get('result');`, which is fine, but feels like it's information. I'm avoiding that for now to see if the format for `get` might begin to feel more natural.
 * But when you can use it partially applied, it feels great. So.
+
+### Some more thoughts, while writing parsers and evaluators
+* One of the patterns I find myself writing is conditional assignment, which, on the one hand, feels like a code smell. On the other, it lets code be flatter, since you can write things as a series of `let` statements. That said, it also leads to a proliferation of `undefined`s, which also feels like a code smell.
+* Throwing errors is something like stateful, but in a function that returns a value, sometimes you want to throw. I think the distinction between effectful and non-effectful functions is actually a bad idea.
+* We can add `recur` as a special form, and easily test at parse-time whether it's in tail position. Amazingly, because of Ludus syntax, a call to `recur` is only in tail position if it's the `called` in an invocation immediately following a `return` statement, the first `called` in an expression block, or the thing immediately in an `if_true` or `if_false` expression in a `when` expression that's in either of those positions. This will speed things up considerably since I won't need all the proxy business around `recur` to ensure it's only in tail position at runtime.
+* In writing the name-checking algorithm, I have found it useful to have the stateful `conj_` to not have to use `ref`s all over the place. I should, however, try rewriting it using `ref`s to see how that feels.
 * 
