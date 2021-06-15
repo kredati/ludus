@@ -194,6 +194,23 @@ let map_parser = fn({
   ]
 });
 
+let add_loc = fn({
+  name: 'add_loc',
+  pre: args([is_fn], [is_fn, parser_input]),
+  body: [
+  (parser) => Fn.rename(get('name', parser), partial(add_loc, parser)),
+  (parser, input) => {
+    let result = parser(input);
+    let loc = get('input', input);
+    let inner_result = get('result', result);
+    let new_result = when(get('ok', result))
+      ? ok(assoc(inner_result, 'loc', loc), get('input', result))
+      : result;
+    return new_result;
+  }
+  ]
+});
+
 let many = fn({
   name: 'many',
   pre: args([is_fn], [is_fn, parser_input]),
@@ -375,7 +392,7 @@ export default ns({
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
     sep_by, string: string_, char_in_range, uppercase, lowercase,
-    digit, whitespace, line_break, print_result, eof
+    digit, whitespace, line_break, print_result, eof, add_loc
   }
 });
 
