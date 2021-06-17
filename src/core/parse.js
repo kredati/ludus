@@ -105,7 +105,7 @@ let raising = fn({
     let result = parser(input);
     return when(get('ok', result))
       ? result
-      : raise(get('errors', result))
+      : raise({message: Str.from(get('errors', result), ". "), result})
   }
   ]
 });
@@ -115,7 +115,7 @@ let handling = fn({
   pre: args([is_fn], [is_fn, parser_input]),
   body: [
   (parser) => Fn.rename(get('name', parser), partial(handling, parser)),
-  (parser, input) => bound(() => parser(input)) 
+  (parser, input) => bound(() => parser(input))() 
   ]
 });
 
@@ -420,9 +420,9 @@ export default ns({
 
 let input = `adx`;
 
-let get_errors = (parser) => get('errors', run(parser, input)); //?
+let get_errors = fn('get_errors', (parser) => get('errors', run(parser, input))); //?
 
-get_errors(and_then(or_else([
+let err = run(handling(and_then(or_else([
   string_('aa'),
   string('ab'),
   string('ac'),
@@ -431,5 +431,5 @@ get_errors(and_then(or_else([
     string('xx'),
     string('xy'),
     string('xz')
-  ])))); //?
+  ])))), input); //?
 
