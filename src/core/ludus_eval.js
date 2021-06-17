@@ -21,34 +21,37 @@ import Parse from './parse.js';
 
 let forbidden = ['quux', 'quuz', 'when'];
 
-let ctx = ['foo', 'bar'];
-
 let repl_ctx = {
   higher: ['foo', 'bar'], // globals
-  current: ['bar'],
+  current: ['baz'],
   toplevel: true
 };
 
 let input1 = `let bar = (foo) => {
-  let bar = 12;
-  let baz = 13;
-  let forb = when(foo) ? bar : baz(foo);
-  return forb;
+  let bar = 42;
+  let qux = bar();
+  return qux;
 };`;
 
-let input2 = `let quul = quul(42);`;
+let ast_s = record('ast', {type: is_str, value: is_some});
 
-let parsed1 = Parse.run(LP.repl_line, input1); //?
+let ctx_s = record('ctx', {higher: iter_of(is_str), current: iter_of(is_str), toplevel: maybe(is_bool)});
+
+let ast_traverse_s = record('ast_traverse', {ast: ast_s, ctx: ctx_s});
+
+let input2 = `[1, 2, foo];`;
+
+let parsed1 = Parse.run(LP.repl_line, input1);
 
 let parsed2 = Parse.run(LP.repl_line, input2);
 
-let ast1 = get('result', parsed1);//?
+let ast1 = get('result', parsed1);
 
-let errs1 = get('errors', parsed1); //?
+let errs1 = get('errors', parsed1);
 
-let ast2 = get('result', parsed2); //?
+//let ast2 = get('result', parsed2);
 
-let errs2 = get('errors', parsed2);
+//let errs2 = get('errors', parsed2);
 
 let ctx_includes_id = (ctx, id) => includes(id, concat(get('higher', ctx), get('current', ctx)));
 
@@ -56,21 +59,18 @@ let check_name = fn('check_name', [
   (ctx) => partial(check_name, ctx),
   (ctx, name) => {
     let {higher, current, toplevel} = ctx;
-    let forbidden_err = when(includes(name, forbidden))
-      ? raise(`Cannot use reserved word ${name} as identifier.`)
-      : undefined;
-    let shadow_warn = when(includes(name, higher))
-      ? warn(`Shadowed name ${name}.`)
-      : undefined;
-    let redefinition_err = when(and(not(toplevel), includes(name, current)))
-      ? raise(`Cannot redeclare identifier ${name}.`)
-      : undefined;
-    return name;
+    return when(includes(name, forbidden))
+        ? raise(`Cannot use reserved word ${name} as identifier.`)
+      : when(includes(name, higher))
+        ? or(warn(`Shadowed name ${name}.`), name)
+      : when(and(not(toplevel), includes(name, current)))
+        ? raise(`Cannot redeclare identifier ${name}.`)
+      : name;
   }
   ]);
 
 let name_handlers = {
-  atom: (_) => true,
+  atom: (_, __) => true,
   identifier: (ctx, value, {line, col}) => when(ctx_includes_id(ctx, value))
     ? true
     : raise(`Unbound identifier ${value} at line: ${line}, col: ${col}.`),
@@ -106,11 +106,14 @@ let name_handlers = {
   },
 
   params: (ctx, param_list) => {
-    let param_names = into([], map(pipe(get('value'), check_name(ctx))), param_list);
-    return reduce(Arr.conj_, get('current', ctx), param_names);
+    let param_names = map(pipe(get('value'), check_name(ctx)), param_list);
+    // TODO: add duplicate param checking
+    return when(is_empty(param_names)) ? [] : reduce(Arr.conj_, get('current', ctx), param_names);
   },
 
-  block: (ctx, block) => every(check_ids(ctx), block),
+  block: (ctx, block) => {
+    return every(check_ids(ctx), block);
+  },
 
   array: (ctx, array) => every(check_ids(ctx), array),
 
@@ -121,7 +124,7 @@ let name_handlers = {
   splat: (ctx, splat) => check_ids(ctx, splat),
 
   when: (ctx, when) => every(check_ids(ctx), values(when)),
-
+  
   ns_import: () => {},
 
   imports: () => {}
@@ -140,16 +143,60 @@ let check_ids = fn(
   ]
 );
 
-//check_ids(repl_ctx, ast1); //?
+let name_handlers_ = {
+  atom: (ast_traverse) => ast_traverse,
+  identifier: (ast_traverse) => {
+    let {ctx, value: {loc: {line, col}}} = ast_traverse;
+    let id_in_ctx = ctx_includes_id(ctx, value);
+    return when(id_in_ctx) 
+      ? ast_traverse
+      : raise(`Unbound identifier ${value} at line: ${line}, col: ${col}.`)
+    },
+  call: (ast_traverse) => {
+    let {ctx, value: {called, args}} = ast_traverse;
+    check_ids(ctx, called);
+    every(partial(check_ids, ctx), args);
+    return ast_traverse;
+  },
+  let: ({ctx, ast: {value: {identifier: {value: id_name}, expression}}}) => {
+    let next_type = get_in(expression, ['value', 'type']);
+    let {higher, current} = ctx;
+    let new_ctx = when(eq('function', next_type))
+      ? {higher: [...higher, ...current], current: []}
+      : ctx;
+    let is_expr_ok = check_ids(new_ctx, expression);
+    let is_name_ok = check_name(ctx, id_name);
+    return when(and(is_expr_ok, is_name_ok)) 
+      ? {ctx: {higher, current: conj(current, id_name)}, ast}
+      : raise(`Unknown error in let statement.`)
+  }
+};
+
+let check_ids_ = fn({
+  name: 'check_ids',
+  pre: args([ast_traverse_s]),
+  body: [
+    (traverse_state) => {
+    let ast = get('ast', traverse_state);
+    let {type, value} = ast;
+    return when(value) 
+      ? get(type, name_handlers_, check_ids)(traverse_state)
+      : raise('Unknown AST traversal error.');
+  },
+  (ctx, ast) => check_ids({ctx, ast})
+  ]
+});
+
+check_ids(repl_ctx, ast1); //?
 //check_ids(repl_ctx, ast2); //?
 
 let transform_handlers = {
   let: (input, ctx, ast) => when(get('toplevel', ctx))
     ? call(() => {
       let id = get_in(ast, ['value', 'identifier', 'value']);
-      let id_start = get_in(ast, ['value', 'identifier', 'loc']);
-      return when(includes(id, get('current', ctx)))
-        ? 'do something'
+      let is_reassignment = includes(id, get('current', ctx));
+      return when(is_reassignment)
+        ? Str.replace_first('let', '   ', input)
         : input
     })
     : input

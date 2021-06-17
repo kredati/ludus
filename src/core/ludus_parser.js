@@ -11,6 +11,7 @@
 // [*] move forward references elsewhere (Fn? Parse? -> Ref)
 // [*] fix namespace export
 // [*] build AST from parsers
+// [ ] allow function calls to be callable
 // [ ] add template strings
 // [ ] add `recur` special form for later tail-position checking
 // [ ] add `js` to skip parsing
@@ -300,22 +301,24 @@ let fn_def = label('function definition',
     and_then(keep_first(fn_params, arrow), fn_body)));
 
 ///// Function invocation
+let [fn_call, set_fn_call] = forward('fn_call');
+
 let callable = or_else([
   identifier,
   ns_dot_id,
-  paren_exp]);
+  paren_exp,
+  //fn_call,
+]);
 
-let when_undef = (x, default_value) => when(is_undef(x)) ? default_value : x;
-
-let fn_call = label('function call', map_parser(
+set_fn_call(label('function call', map_parser(
   ([called, args]) => ({type: 'call', 
-    value: {called, args: when_undef(args, [])}}),
+    value: {called, args: or(args, [])}}),
   and_then(
     keep_first(callable, ws),
     between(
       and_then(parse_char('('), wsl),
       and_then(wsl, parse_char(')')),
-      sep_by(comma_separator, expression)))));
+      sep_by(comma_separator, expression))))));
 
 ////////// Special forms
 
