@@ -29,7 +29,7 @@
 import '../prelude/prelude.js';
 import Parse from './parse.js';
 
-let {string, label, and_then, parse_char, opt, many, digit, run, map_parser, char_in_range, satisfy, many1, or_else, between, whitespace, line_break, sep_by, lowercase, uppercase, sep_by1, keep_first, keep_second, eof, add_loc} = Parse;
+let {string, label, and_then, parse_char, opt, many, digit, run, map_parser, char_in_range, satisfy, many1, or_else, between, whitespace, line_break, sep_by, lowercase, uppercase, sep_by1, keep_first, keep_second, eof, add_loc, raising, handling} = Parse;
 
 // forward references for recursive parsers
 let [literal, set_literal] = forward('literal');
@@ -261,7 +261,7 @@ set_literal(label('literal', or_else([
 let paren_exp = between(
   and_then(parse_char('('), wsl),
   and_then(wsl, parse_char(')')),
-  expression);
+  raising(expression));
 
 ////////// Functions
 
@@ -276,24 +276,36 @@ let arrow = and_then([ws, string('=>'), wsl]);
 // [ ] rest arguments 
 let arg_assignment = identifier;
 
+let null_params = map_parser((_) => undefined, and_then([
+  parse_char('('),
+  ws,
+  parse_char(')')]));
+
+let params1 = between(
+  parse_char('('),
+  parse_char(')'),
+  keep_first(
+    sep_by(comma_separator, arg_assignment),
+    trailing_comma));
+
 // function parameters
 let fn_params = label('params', map_parser(
   (value) => when(value) 
     ? {type: 'params', value}
     : {type: 'params', value: []},
-  between(
-    parse_char('('),
-    parse_char(')'),
-    keep_first(
-      sep_by(comma_separator, arg_assignment),
-      trailing_comma))));
+    between(
+      and_then(parse_char('('), wsl),
+      and_then(wsl, parse_char(')')),
+      keep_first(
+        sep_by(comma_separator, arg_assignment),
+        trailing_comma))));
 
 // forward reference for a block, which requires statements
 let [block, set_block] = forward('block');
 
 let fn_body = label('fn body', map_parser(
   (value) => ({type: 'fn_body', value}),
-  or_else(block, expression)));
+  or_else(expression, block)));
 
 let fn_def = label('function definition',
   map_parser(
@@ -301,24 +313,24 @@ let fn_def = label('function definition',
     and_then(keep_first(fn_params, arrow), fn_body)));
 
 ///// Function invocation
-let [fn_call, set_fn_call] = forward('fn_call');
 
 let callable = or_else([
   identifier,
   ns_dot_id,
-  paren_exp,
-  //fn_call,
+  paren_exp
 ]);
 
-set_fn_call(label('function call', map_parser(
+let fn_args = label('fn args', between(
+    and_then(parse_char('('), wsl),
+    and_then(wsl, parse_char(')')),
+    sep_by(comma_separator, expression)));
+
+let fn_call = label('function call', map_parser(
   ([called, args]) => ({type: 'call', 
     value: {called, args: or(args, [])}}),
   and_then(
     keep_first(callable, ws),
-    between(
-      and_then(parse_char('('), wsl),
-      and_then(wsl, parse_char(')')),
-      sep_by(comma_separator, expression))))));
+    fn_args)));
 
 ////////// Special forms
 
@@ -334,20 +346,20 @@ let when_exp = label('when expression', map_parser(
   and_then([
     keep_second(
       and_then(string('when'), ws), 
-      paren_exp), // condition expression
+      raising(paren_exp)), // condition expression
     keep_second(
-      and_then([wsl, parse_char('?'), wsl]), 
-      expression), // if true
+      and_then([wsl, raising(parse_char('?')), wsl]), 
+      raising(expression)), // if true
     keep_second(
-      and_then([wsl, parse_char(':'), wsl]), 
-      expression)]))); // if false 
+      and_then([wsl, raising(parse_char(':')), wsl]), 
+      raising(expression))]))); // if false 
 
 let js = undefined; // TODO
 
 set_expression(label('expression', map_parser(
   (value) => ({type: 'expression', value}),
   or_else([
-    literal, when_exp, fn_call, identifier, ns_dot_id, fn_def, paren_exp]))));
+    literal, when_exp, fn_def, fn_call, identifier, ns_dot_id, paren_exp]))));
 
 ////////// Statements
 
@@ -369,22 +381,24 @@ let let_stm = label('let stm', map_parser(
   and_then(
     keep_second(
       and_then([wsl, string('let'), many1(whitespace)]),
-      identifier),
+      raising(identifier)),
     keep_second(
-      and_then([ws, parse_char('='), wsl]),
-      keep_first(expression, sem)))));
+      raising(label('assignment', and_then([ws, parse_char('='), wsl]))),
+      keep_first(raising(expression), raising(sem))))));
 
 // return statement
 // return add(1, 2);
 let return_stm = label('return', map_parser(
   (value) => ({type: 'return', value}),
   keep_second(
-    and_then([wsl, string('return'), many1(whitespace)]),
-    keep_first(expression, sem))));
+    and_then([wsl, raising(string('return')), many1(whitespace)]),
+    keep_first(raising(expression), raising(sem)))));
 
 ////////// Blocks
 // now we have enough to describe a function block
-// we have two kinds of function blocks: pure and effect blocks
+/****
+ * We used to have
+// ~~we have~~ two kinds of function blocks: pure and effect blocks
 
 // a pure block has zero or more lets and then a return
 // ordering is enforced
@@ -405,11 +419,18 @@ let effect_block = label('effect block',
     and_then(wsl, parse_char('}')),
     many(or_else(expr_stm, let_stm))));
 
+The two different effect blocks make parsing harder, and also really don't play nice with several things we really want Ludus to have, I think.
+
+*/
 // zero or more let or expression statements,
 // followed by a single return statement
 set_block(label('function block', map_parser(
   (value) => ({type: 'block', value: [...flatten(value)]}),
-  label('block', or_else(pure_block, effect_block)))));
+  label('block', 
+  between(
+    label('{', and_then(parse_char('{'), wsl)),
+    label('}', and_then(wsl, parse_char('}'))),
+    and_then(label('statements', many(or_else(let_stm, expr_stm))), raising(return_stm)))))));
 
 ////////// Imports and exports
 let bare_import = label('bare import', map_parser(
@@ -495,14 +516,21 @@ let ludus_file = label('ludus file', map_parser(
   )));
 
 let repl_line = label('repl line', or_else([
+  file_end,
   import_stm,
   let_stm,
   expr_stm,
-  file_end]));
+]));
 
 export default ns({
   name: 'Ludus_Parser',
   members: {
     ludus_file, repl_line
   }
-});//?
+});
+run(fn_params, `()`); //?
+run(expression, ``); //?
+//run(fn_def, `() => bar(baz)`); //?
+
+let foo = bound(() => run(expression, '() => foo(42, bar(baz))'))(); //?
+get('result', foo); //?
