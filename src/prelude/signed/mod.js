@@ -50,7 +50,7 @@ let ctx = {
     take: Ducers.take, cat: Ducers.cat, mapcat: Ducers.mapcat, 
         // and others
     // from Err
-    handle: Err.handle,
+    handle: Err.handle, bound: Err.bound,
     // from Flow
     always: Flow.always,
     // from Fn
