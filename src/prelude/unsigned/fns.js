@@ -64,7 +64,7 @@ class ArgumentError extends Error {
 let n_ary = (name, ...clauses) => {
   let arity_map = clauses.reduce(
     (map, fn) => !(fn.length in map)
-      ? Object.assign(map, {[fn.length]: fn})
+      ? Object.assign(map, {[fn.length]: rename(`#${name}/${fn.length}`,fn)})
       : raise(`Functions may only have one clause of a given arity. You gave ${name} two clauses of arity ${fn.length}.`), 
     {});
   let max_arity = Math.max(...Object.keys(arity_map));
@@ -114,6 +114,8 @@ let recur_handler = { // not exported
 // This seems like too much indirection for now
 // The one place I tried to use this `recur`, it was an order of magnitude
 // slower than the loop-based version (in Seq.reduce)
+
+// Also: 
 let recur_slow = (...args) => new Proxy(Object.assign(() => {}, 
   // note that technically recur returns a proxy around a function;
   // this lets us use the `apply` proxy handler to throw when
@@ -187,6 +189,7 @@ let fn = n_ary('fn',
   (name, body) => {
     switch (typeof body) {
       case 'function':
+        rename(name, body);
         return rename(name,
           handle(name, loop(n_ary(name, body))));
       case 'object':
@@ -230,7 +233,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
   }
 
   return returns;
-  });
+});
 
 //////////////////// defn
 // finally
