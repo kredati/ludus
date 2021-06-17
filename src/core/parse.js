@@ -96,7 +96,28 @@ let label = fn({
   ]
 });
 
+let raising = fn({
+  name: 'raising',
+  pre: args([is_fn], [is_fn, parser_input]),
+  body: [
+  (parser) => Fn.rename(get('name', parser), partial(raising, parser)),
+  (parser, input) => {
+    let result = parser(input);
+    return when(get('ok', result))
+      ? result
+      : raise(get('errors', result))
+  }
+  ]
+});
 
+let handling = fn({
+  name: 'handling',
+  pre: args([is_fn], [is_fn, parser_input]),
+  body: [
+  (parser) => Fn.rename(get('name', parser), partial(handling, parser)),
+  (parser, input) => bound(() => parser(input)) 
+  ]
+});
 
 let run = fn({
   name: 'run',
@@ -392,22 +413,23 @@ export default ns({
     or_else, map_parser, many, many1, opt, keep_first,
     keep_second, between, sep_by1, no_op, any_of,
     sep_by, string: string_, char_in_range, uppercase, lowercase,
-    digit, whitespace, line_break, print_result, eof, add_loc
+    digit, whitespace, line_break, print_result, eof, add_loc,
+    raising, handling
   }
 });
 
 let input = `adx`;
 
-let get_errors = (parser) => get('errors', run(parser, input));
+let get_errors = (parser) => get('errors', run(parser, input)); //?
 
 get_errors(and_then(or_else([
   string_('aa'),
   string('ab'),
   string('ac'),
   string('ad')]),
-  or_else([
+  raising(or_else([
     string('xx'),
     string('xy'),
     string('xz')
-  ]))); //?
+  ])))); //?
 
