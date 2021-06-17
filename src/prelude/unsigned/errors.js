@@ -3,27 +3,32 @@
 
 import Ludus from './base.js';
 
+let {type, create} = Ludus.Type;
+
+let error_t = type({name: 'Error'});
+
+let error = (err) => {
+  if (typeof err === 'string') {
+    return create(error_t, {message: err});
+  }
+  let message = err?.message ?? 'unknown error';
+
+  return create(error_t, {...err, message});
+};
+
+class LudusError extends Error {
+  constructor(err) {
+    let s = super(err.message);
+    this.stack = s.stack;
+    this.error = err;
+    err.lerror = this;
+  }
+}
+
 // raise :: (Error, string, ...strings) -> undefined
 // functional error throwing
 // throws `err` with `msg`, but first, it reports `msgs` to the error console
-let raise = (err, ...msgs) => {
-  if (err === Error || Object.getPrototypeOf(err) === Error) {
-    if (msgs.length > 0) {
-      for (let i = 1; i < msgs.length; i++) 
-        Ludus.report(msgs[i]);
-    };
-    let thrown = new err(msgs[0]);
-    if (thrown.stack) {
-      let [msg, _, ...trace] = thrown.stack.split('\n');
-      thrown.stack = [msg, ...trace].join('\n');
-    }
-    throw new err(msgs[0]);
-  } 
-  else {
-    for (let msg of msgs) Ludus.report(msg);
-    throw Error(err);
-  };
-};
+let raise = (err) => { throw new LudusError(error(err)); };
 
 // bound :: fn -> fn
 // converts a function that throws to one that returns its error
@@ -32,7 +37,7 @@ let bound = (fn) => Object.defineProperty(
     try {
       return fn(...args);
     } catch (e) {
-      return e;
+      return e.error || e;
     }
   }, 'name', {value: fn.name || 'bounded'}
 );
@@ -45,10 +50,12 @@ let handle = (name, fn) => Object.defineProperty(
     try {
       return fn(...args);
     } catch (e) {
-      Ludus.report(`${e.name || e || 'unknown error'} while calling ${fn.name || 'anon. fn'} with args (${args.map((arg) => {
-          try { return Ludus.show(arg); }
-          catch (_) { return arg; }
-        }).join(', ')})`);
+      e.lstack = e.lstack ?? [];
+      let show_args = args.map((arg) => {
+        try { return Ludus.show(arg); }
+        catch (_) { return arg; }
+      });
+      e.lstack.push(`    ${name}(${show_args.join(', ')})`);
       throw e;
     }
   },
@@ -56,6 +63,6 @@ let handle = (name, fn) => Object.defineProperty(
   {value: name || fn.name || 'anon. fn'}
 );
 
-export default Ludus.NS.ns({name: 'Errors', members: {
+export default Ludus.NS.ns({type: error_t, members: {
   raise, bound, handle
 }});
