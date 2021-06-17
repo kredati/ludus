@@ -6,11 +6,13 @@ import Fn from './fns.js';
 import Spec from './spec.js';
 import NS from './ns.js';
 import Pred from './preds.js';
+import Type from './type.js';
 
 let {ns} = NS;
 let {defn} = Fn;
 let {args} = Spec;
 let {is_fn} = Pred;
+let {is} = Type;
 
 // We can't wrap `raise` in a `defn`, because it won't throw errors properly (they gety `handle`d)
 // Add `doc` metadata to raise.
@@ -26,7 +28,7 @@ let bound = defn({
       try {
         return fn(...args);
       } catch (e) {
-        return e;
+        return e.error || e;
       }
     }
   )
@@ -45,6 +47,15 @@ let handle = defn({
   }
 });
 
-export default ns({name: 'Error',
-  members: {raise: L.Err.raise, bound, handle}
+let show = defn({
+  name: 'show',
+  doc: 'Shows an error.',
+  pre: args([is(L.Err.t)]),
+  body: (err) => {
+    return err.message;
+  }
 });
+
+export default ns(L.Err,
+  {bound, handle, show}
+);
