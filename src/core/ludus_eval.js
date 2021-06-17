@@ -27,11 +27,7 @@ let repl_ctx = {
   toplevel: true
 };
 
-let input1 = `let bar = (foo) => {
-  let bar = 42;
-  let qux = bar();
-  return qux;
-};`;
+let input1 = `let bar = () => bar(baz);`;
 
 let ast_s = record('ast', {type: is_str, value: is_some});
 
@@ -41,13 +37,11 @@ let ast_traverse_s = record('ast_traverse', {ast: ast_s, ctx: ctx_s});
 
 let input2 = `[1, 2, foo];`;
 
-let parsed1 = Parse.run(LP.repl_line, input1);
+let parsed1 = bound(() => Parse.run(LP.repl_line, input1))();
 
 let parsed2 = Parse.run(LP.repl_line, input2);
 
-let ast1 = get('result', parsed1);
-
-let errs1 = get('errors', parsed1);
+let ast1 = get('result', parsed1); //?
 
 //let ast2 = get('result', parsed2);
 
