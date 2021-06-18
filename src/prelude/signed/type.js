@@ -39,7 +39,7 @@ let is = defn({
   doc: 'Tells if something is of a given type. With one argument, returns a predicate function. With two arguments, acts as a predicate function.',
   pre: args([is_(Type.t)], [is_(Type.t), is_any]),
   body: [
-    (type) => partial(is, type),
+    (type) => Fn.rename(`is<${type.name}>`, partial(is, type)),
     (type, x) => type_of(x) === type
   ]
 });
