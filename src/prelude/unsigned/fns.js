@@ -252,7 +252,7 @@ let pre_post = (pre, post, body) => rename(body.name, (...args) => {
 let defn = ({name, body, pre = [], post = [], ...attrs}) => {
   let clauses = is_fn(body) ? [body] : body;
   let out = pre_post(pre, post, fn(name, clauses));
-  return copy_attrs(out, {name, clauses, ...attrs});
+  return copy_attrs(out, {name, clauses, pre, ...attrs});
 };
 
 export default Ludus.NS.defmembers(Ludus.Fn,
