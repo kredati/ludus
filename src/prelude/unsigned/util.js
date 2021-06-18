@@ -19,4 +19,13 @@ let copy_attrs = (obj, attrs) => {
   return obj;
 };
 
+Number.prototype[Symbol.iterator] = function* () {
+  let self = Number(this);
+  let out = 0;
+  while (out < self) {
+    yield out;
+    out += 1;
+  }
+};
+
 export {copy_attrs};
