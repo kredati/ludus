@@ -11,7 +11,7 @@ let doc_ludus_fn = (fn) => {
   let docstring = get('doc', fn);
   let arities = map(get('length'), get('clauses', fn));
   let params = into({}, map(
-    (f) => [get('length', f), thread(f, str, split('=>'), first, trim)],
+    (f) => [get('length', f), thread(f, str, split('=>'), first, trim, (ps) => when(eq(get('length', f), 1)) ? parenthesize_single_param(ps) : ps)],
     get('clauses', fn)));
   let spec_raw = map(
     get('members'),
@@ -30,9 +30,13 @@ let doc_ludus_fn = (fn) => {
   return `${name}::function\n${arities_and_specs}\n${or(docstring, '')}`;
 };
 
+
+
+let parenthesize_single_param = (param) => when(eq('(', first(param))) ? param : `(${param})`;
+
 let doc_js_fn = (f) => {
   let name = get('name', f, 'anon. fn');
-  let params = thread(f, str, split('=>'), first, trim);
+  let params = thread(f, str, split('=>'), first, trim, (ps) => when(eq(get('length', f), 1)) ? parenthesize_single_param(ps) : ps);
   return `${name}::function\n${params}`;
 };
 
