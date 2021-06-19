@@ -1,4 +1,5 @@
 import '../prelude/prelude.js';
+import './doc.js';
 
 let typify = (name) => str(name, '_t');
 
@@ -35,7 +36,7 @@ let match = (value, ...clauses) => {
   assert(
     eq(type_branches, match_branches), 
     `match clauses must include all variants of a type, and only variants of a type.`);
-  return Ducers.some(([t, f]) => when(is(t, boxed_value)) ? f(boxed_value) : undefined, clauses);
+  return Ducers.some(([t, f]) => when(is(t, boxed_value)) ? f(get('value', boxed_value)) : undefined, clauses);
 };
 
 let fmatch = (t, ...clauses) => {
@@ -46,7 +47,9 @@ let fmatch = (t, ...clauses) => {
   assert(
     eq(type_branches, match_branches), 
     `match clauses must include all variants of a type, and only variants of a type.`);
-  return fn({name: 'fmatch_fn', pre: args([is(t)]), 
+  return fn({
+    name: `fmatch<${get('name', t)}>`, 
+    pre: args([is(t)]), 
     body: (value) => {
       let boxed_value = get('value', value);
       return Ducers.some(([t, f]) => when(is(t, boxed_value)) ? f(boxed_value) : undefined, clauses);
@@ -55,13 +58,29 @@ let fmatch = (t, ...clauses) => {
 };
 
 let show = (opt) => match(opt,
-  [some_t, ({value}) => `Some{${Ludus.show(value)}}`],
+  [some_t, (x) => `Some{${Ludus.show(x)}}`],
   [none_t, () => `None`]
 );
 
+let deref = (x) => get_in(x, ['value', 'value']);
+
+doc(reduce) //?
+
+let opt_eq = fn({name: 'eq', 
+  body: [
+  (opt) => partial(opt_eq, opt),
+  (fst, snd) => eq(deref(fst), deref(snd)),
+  (fst, snd, thrd, ...more) => reduce(opt_eq, fst, [snd, thrd, ...more])
+  ]});
+
 export default ns({type: option_t, members: {
-  show
+  show, eq: opt_eq
 }});
+
+let foo = fmatch(option_t, 
+  [some_t, just('some')],
+  [none_t, just('none')]); //?
+
 
 match(none(),
   [some_t, just('some!')],
@@ -72,6 +91,11 @@ match(none(),
 some('foo'); //?
 
 match(ok('fuck!'), 
-  [ok_t, ({value}) => value],
-  [err_t, ({value}) => raise(value)]
+  [ok_t, id],
+  [err_t, raise]
 ); //?
+
+import List from './list.js';
+let {list} = List;
+
+eq(some(3), some(3), some(3)) //?
