@@ -232,7 +232,13 @@ Special forms:
 [ ] `ns` + exports
 
 ### Milestone: Ludus Parser
-TBD
+[ ] Basic parser
+  [ ] core language
+  [ ] nice-to-haves
+    [ ] destructuring in all the places
+    [ ]
+[ ] IO
+  [ ] file load & save
 
 ### Milestone: node REPL
 [ ] Node-native REPL
