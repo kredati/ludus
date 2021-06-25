@@ -1,4 +1,4 @@
-require('./plugin');
+/* eslint-disable */
 
 module.exports = {
   "parserOptions": {
@@ -7,24 +7,24 @@ module.exports = {
   },
   "extends": ["./js_globals.cjs", "./node_globals.cjs", "./ludus_globals.cjs"],
   "plugins": [
-    "ludus", "import", "fp"
+    "@ludus", "import", "fp"
   ],
   "rules": {
-    "ludus/ensure-object-casing": "error",
-    "ludus/ensure-proper-dots": "error",
-    "ludus/ensure-proper-exports": "error",
-    "ludus/ensure-proper-imports": "error",
-    "ludus/no-capitalized-variables": "error",
-    "ludus/no-classes": "error",
-    "ludus/no-const": "error",
-    "ludus/no-empty-declarations": "error",
-    "ludus/no-getters-or-setters": "error",
-    "ludus/no-invalid-expressions": "error",
-    "ludus/no-invalid-literals": "error",
-    "ludus/no-invalid-statements": "error",
-    "ludus/no-operators": "error",
-    "ludus/only-arrow-functions": "error",
-    "ludus/when-expressions": "error",
+    "@ludus/ensure-object-casing": "error",
+    "@ludus/ensure-proper-dots": "error",
+    "@ludus/ensure-proper-exports": "error",
+    "@ludus/ensure-proper-imports": "error",
+    "@ludus/no-capitalized-variables": "error",
+    "@ludus/no-classes": "error",
+    "@ludus/no-const": "error",
+    "@ludus/no-empty-declarations": "error",
+    "@ludus/no-getters-or-setters": "error",
+    "@ludus/no-invalid-expressions": "error",
+    "@ludus/no-invalid-literals": "error",
+    "@ludus/no-invalid-statements": "error",
+    "@ludus/no-operators": "error",
+    "@ludus/only-arrow-functions": "error",
+    "@ludus/when-expressions": "error",
 
     "no-var": "error",
     "no-console": "error",
@@ -78,10 +78,5 @@ module.exports = {
     "fp/no-this": "error",
     "fp/no-throw": "error"
 
-  },
-  "globals": {
-    "foo": "readonly",
-    "bar": "readonly",
-    "Object": "off"
   }
 }

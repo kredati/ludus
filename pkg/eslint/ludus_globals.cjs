@@ -1,5 +1,5 @@
 /* eslint-disable */
-//const ludus = require('');
+//const ludus = require('@ludus/prelude');
 
 let globals = Object.fromEntries(
   Object.keys({foo: 42, bar: 23})

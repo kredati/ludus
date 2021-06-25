@@ -1,7 +1,5 @@
 const q = require('esquery');
 
-const test = new RuleTester({parserOptions: {ecmaVersion: 2021}});
-
 const node_includes = (node, selector) => (q(node, selector).length > 0)
 
 const recur_s = '[name="recur"]'

@@ -1,28 +1,29 @@
 {
-  "name": "ludus-eslint",
+  "name": "@ludus/eslint-config",
   "version": "0.1.0",
-  "description": "An eslint configuration for Ludus",
-  "main": "main.json",
+  "description": "An ESLint config file that serves as a Ludus parser.",
+  "main": "main.js",
   "type": "commonjs",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "files": ["main.js"],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kredati/ludus-eslint.git"
+    "url": "git+https://github.com/kredati/ludus.git"
   },
   "author": "Scott Richmond",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kredati/ludus-eslint/issues"
+    "url": "https://github.com/kredati/ludus/issues"
   },
-  "homepage": "https://github.com/kredati/ludus-eslint#readme",
+  "homepage": "https://github.com/kredati/ludus#readme",
   "dependencies": {
-    "create-eslint-index": "^1.0.0",
-    "eslint": "^7.29.0",
+    "@ludus/eslint-plugin": "^0.1.1",
     "eslint-plugin-fp": "^2.3.0",
-    "eslint-plugin-import": "^2.23.4",
-    "esquery": "^1.4.0",
-    "import-modules": "^2.1.0"
+    "eslint-plugin-import": "^2.23.4"
+  },
+  "peerDependencies": {
+    "eslint": "^7.29.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.29.0"
   }
 }
