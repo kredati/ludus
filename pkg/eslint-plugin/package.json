@@ -1,26 +1,23 @@
 {
-  "name": "eslint-plugin-ludus",
+  "name": "@ludus/eslint-plugin",
   "version": "0.1.0",
-  "description": "An ESLint-based Ludus parser",
+  "description": "An ESLint plugin for an ESLint-based Ludus parser (`@ludus/eslint`).",
   "main": "main.js",
   "type": "commonjs",
   "files": [
     "main.js",
     "rules"
   ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kredati/ludus-eslint.git"
+    "url": "git+https://github.com/kredati/ludus.git"
   },
   "author": "Scott Richmond",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kredati/ludus-eslint/issues"
+    "url": "https://github.com/kredati/ludus/issues"
   },
-  "homepage": "https://github.com/kredati/ludus-eslint#readme",
+  "homepage": "https://github.com/kredati/ludus#readme",
   "devDependencies": {
     "eslint": "^7.29.0"
   },
