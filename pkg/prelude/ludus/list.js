@@ -14,7 +14,7 @@
 
 // TODO: Rewrite this in Ludus.
 
-import '../prelude/prelude.js';
+import '../signed/mod.js';
 
 let list_t = type({name: 'List'});
 
@@ -111,30 +111,30 @@ let cdr = fn({
   body: (list) => get('rest', list, empty_list)
 });
 
-let show = fn({
+let show_ = fn({
   name: 'show',
   doc: 'Shows a list',
   pre: args([is_list]),
   body: (list) => when(is_empty(list))
     ? '()'
-    : `( ${Str.from(into([], map(Ludus.show), list), ', ')} )`
+    : `( ${Str.from(into([], map(show), list), ', ')} )`
 });
 
-let concat = fn({
+let concat_ = fn({
   name: 'concat',
   doc: 'Concatenates lists (or any iterable).',
   pre: args([], [is_iter]),
   body: [
     () => empty(),
     (xs) => from(xs),
-    (xs, ys, ...more) => from(Ludus.concat(seq(xs), ys, ...more))
+    (xs, ys, ...more) => from(concat(seq(xs), ys, ...more))
   ]
 });
 
 export default ns({
   type: list_t, 
   members: {
-    show, empty, iterate,
+    show: show_, empty, iterate,
     cons, car, cdr,
-    conj, first, rest, list, is_list, from, concat
+    conj, first, rest, list, is_list, from, concat: concat_
 }});
