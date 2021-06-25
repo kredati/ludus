@@ -14,8 +14,11 @@ The prelude: includes everything that's loaded in the global Ludus namespace. Th
 ### `@ludus/core`
 Things that are officialy "a part" of Ludus, but that aren't by default globalized. `import Core from '@ludus/core';` should bring the whole core in in a single namespace. Individual constituents of the core should be accessible: `import Parse from '@ludus/core/parse.js;` (or w/o the `.js` extension) should be possible.
 
-### `@ludus/eslint`
+### `@ludus/eslint-plugin`
 An ESLint plugin that parses Ludus code.
+
+### `@ludus/eslint`
+An ESLint-based parser for Ludus code, integrating rules from other plugins as well as `@ludus/eslint-plugin`.
 
 ### `@ludus/kredati`
 The core Kredati library, based on p5 and oriented towards 2D graphics. (A Kredati starter will be clonable on GitHub for early days.)
