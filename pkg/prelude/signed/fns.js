@@ -247,7 +247,7 @@ let id = fn({
 let just = fn({
   name: 'just',
   doc: 'Handy function that "thunkifies" its argument: it returns a nullary function that will simply return its argument.',
-  body: (x) => fn(`just(${show(x)})`, () => x)
+  body: (x) => fn(`just(${Ludus.show(x)})`, () => x)
 });
 
 let method_descriptor = Spec.record('method_descriptor', {

@@ -56,7 +56,7 @@ let ctx = {
     // from Fn
     partial: Fn.partial, thread: Fn.thread, pipe: Fn.pipe, comp: Fn.comp,
     apply: Fn.apply, call: Fn.call, ap: Fn.ap, thunk: Fn.thunk,
-    id: Fn.id, just: Fn.just,
+    id: Fn.id, just: Fn.just, method: Fn.method,
     // from Lazy
     cycle: Lazy.cycle, lazy: Lazy.lazy, range: Lazy.range,
     // from NS
