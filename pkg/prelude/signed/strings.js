@@ -289,10 +289,10 @@ let pad_right = fn({
 let slice = fn({
   name: 'slice',
   doc: 'Takes a "slice" of a string, returning the substring specified by `start`, and, optionally, `end`. Negative numbers wrap around, taking numbers from the end of the string. E.g., `slice(3, \'foobar\'); //=> \'bar\'`, and `slice(-2, \'foobar\'); //=> \'ar\'`.',
-  pre: args([is_num, is_str], [is_num, is_num, is_str]),
+  pre: args([is_str, is_num], [is_str, is_num, is_num]),
   body: [
-    (start, str) => str.slice(start),
-    (start, end, str) => str.slice(start, end)
+    (str, start) => str.slice(start),
+    (str, start, end) => str.slice(start, end)
   ]
 });
 
