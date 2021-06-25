@@ -1,5 +1,5 @@
 import '../prelude/prelude.js';
-import './doc.js';
+import '../prelude/ludus/doc.js';
 
 let typify = (name) => str(name, '_t');
 
@@ -95,7 +95,7 @@ match(ok('fuck!'),
   [err_t, raise]
 ); //?
 
-import List from './list.js';
+import List from '../prelude/ludus/list.js';
 let {list} = List;
 
 eq(some(3), some(3), some(3)) //?
