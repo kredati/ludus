@@ -72,7 +72,7 @@ let eq_iter = (xs, ys) => {
 // TODO: are there more clever optimizations?
 let eq_assoc = (x, y) => {
   let x_keys = Object.keys(x);
-  for (let key in x_keys) {
+  for (let key of x_keys) {
     if (!eq(x[key], y[key])) return false;
   }
   let y_keys = Object.keys(y);

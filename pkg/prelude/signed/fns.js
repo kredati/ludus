@@ -32,10 +32,10 @@ let fn_descriptor = record('fn_descriptor', {
 let fn = Fn.defn({
   name: 'fn',
   doc: 'Describes a Ludus function, which is an instrumented bare function. It dispatches on arity; has better and more informative error handling; does tail-call elimination; allows for `pre` and `post` testing of arguments and returns; etc. With one argument, it takes a function descriptor object with, minmally, `name` and `body` fields. `name` must be a string; body must be a function or a sequence of functions describing clauses of various arities. With two arguments, takes a string `name` and a function `body`.',
-  pre: args([fn_descriptor], [is_str, is_fn]),
+  pre: args([fn_descriptor], [is_str, or(is_fn, iter_of(is_fn))]),
   body: [
-    (descriptor) => defn_(descriptor),
-    (name, body) => fn_(name, body)
+    (descriptor) => Object.defineProperty(defn_({...descriptor}), 'type', {value: fn, writable: true}),
+    (name, body) => Object.defineProperty(fn_(name, body), 'type', {value: fn, writable: true})
   ]
 });
 
@@ -262,15 +262,20 @@ let method = fn({
   name: 'method',
   pre: args([method_descriptor]),
   body: ({name, not_found, ...attrs}) => {
-    return fn({name, not_found, ...attrs,
+    let out = fn({name, not_found, ...attrs,
       body: Ludus.method({name, not_found})});
+    return Object.defineProperty(out, 'type', {value: method});
   }
 });
 
 let show = fn({
   name: 'show',
   pre: args([is_fn]),
-  body: (fn) => fn.name ? `[λ: ${fn.name}]` : '[λ]'
+  body: (f) => f.type === method
+    ? `[μ: ${f.name}]`
+    : f.name 
+      ? `[λ: ${f.name}]` 
+      : '[λ]'
 });
 
 let rename = fn({
@@ -284,3 +289,5 @@ export default ns(Fn, {
     once, thread, thread_some, pipe, pipe_some, comp, comp_some, method, show,
     call, apply, ap, thunk, id, just, rename
 });
+
+Function.prototype[Ludus.custom] = function() { return Ludus.show(this); };

@@ -198,7 +198,7 @@ The absolute core constituents of Ludus that are depended on by (nearly) every p
 ### Milestone: Core
 Core is a relatively complete standard library whose constituents are the building blocks of a fuller environment. Also, each of these will be defined with `defn`, including documentation.
 
-[ ] parser combinators
+[*] parser combinators
 [ ] full set of transducers
   [ ] identify core transducers
 [*] value operations (NB: these are in `prelude`, since they require operatoirs)
@@ -217,8 +217,7 @@ Core is a relatively complete standard library whose constituents are the buildi
 [*] Seq elaboration
   [*] seq combinators
   [*] useful infinite seqs
-[ ] complete set of transducers
-[ ] `doc`
+[-] `doc`
 [ ] comprehensive testing of `core` functions
 [x] move `list` to `core` from `prelude`
 
@@ -228,8 +227,8 @@ See [./notes_and_research/language.md].
 Special forms:
 [*] `when` + ternary operator
 [x] `cond` + compilation
-[ ] `js` + no parsing
-[ ] `ns` + exports
+[?] `js` + no parsing
+[*] `ns` + exports
 
 ### Milestone: Ludus Parser
 [ ] Basic parser
@@ -261,6 +260,7 @@ Special forms:
   [ ] REPL plugin for VS Code
 [ ] Web server/HTTP
 [ ] Performance tuning
+  [ ] Improve `arr` functions to bypass arr_immutable.js's proxy
 [ ] Bugfinding & -fixing
 [ ] Language/environment feedback
 [ ] Identify more nice-to-haves

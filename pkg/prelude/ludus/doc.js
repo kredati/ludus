@@ -1,4 +1,4 @@
-import '../prelude/mod.js';
+import '../prelude/prelude.js';
 
 let doc_method = (method) => {
   let name = get('name', method);
@@ -53,5 +53,7 @@ let doc = fn({
     () => when(is_fn(x)) ? doc_fn(x) : get('doc', x, 'no doc'), 
     just('no doc!'))
 });
+
+Ludus.globalize('doc', doc);
 
 export {doc};

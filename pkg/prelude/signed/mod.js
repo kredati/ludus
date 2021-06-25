@@ -50,7 +50,7 @@ let ctx = {
     take: Ducers.take, cat: Ducers.cat, mapcat: Ducers.mapcat, 
         // and others
     // from Err
-    handle: Err.handle,
+    handle: Err.handle, assert: Err.assert,
     // from Flow
     always: Flow.always,
     // from Fn
@@ -86,7 +86,7 @@ let ctx = {
     dict: Spec.dict, args: Spec.args, explain: Spec.explain,
     // from Str
     capitalize: Str.capitalize, chars: Str.chars, is_char: Str.is_char, lowcase: Str.lowcase, split: Str.split, join: Str.from, trim: Str.trim,
-    upcase: Str.upcase, words: Str.words,
+    upcase: Str.upcase, words: Str.words, join_with: Str.join_with,
     // from Type
     meta: Type.meta, type_of: Type.type_of, is: Type.is, create: Type.create
 };

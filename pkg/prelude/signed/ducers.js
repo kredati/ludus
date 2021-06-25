@@ -39,6 +39,7 @@ import A from './arr.js';
 import Fn from './fns.js';
 import L from './lazy.js';
 import NS from './ns.js';
+import B from './bools.js';
 
 let {fn, method} = Fn;
 let {bool} = P;
@@ -103,7 +104,7 @@ let some = fn({
   name: 'some',
   doc: 'Determines if any element of a collection passes a conditional function. With two arguments, returns true if any element, with the conditional function applied, returns a truthy value---and false otherwise. With one argument, returns a transducer. E.g. `some(is_int, [2.1, "foo", {a: 1}, 12]); //=> true`.',
   body: [
-  (f) => (rf) => (_, x) => bool(f(x)) ? complete(true) : rf(false, false),
+  (f) => (rf) => (_, x) => bool(f(x)) ? complete(f(x)) : rf(false, false),
   (f, coll) => transduce(some(f), B.or, false, coll)
   ]
 });
@@ -184,5 +185,5 @@ export default ns({
   name: 'Ducers', 
   members: {
   every, filter, keep, map, none, some, zip, take,
-  cat, mapcat
+  cat, mapcat, chunk
 }});

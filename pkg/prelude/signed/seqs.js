@@ -74,7 +74,7 @@ let is_seq = fn({
   body: (x) => is(seq_t, x) 
 });
 
-let is_seqable = or(is_coll, is_str, is_seq, is_undef);
+let is_seqable = Fn.rename('is_seqable', or(is_coll, is_str, is_seq, is_undef));
 
 let count = fn({
   name: 'count',

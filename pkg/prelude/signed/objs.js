@@ -7,20 +7,22 @@ import Fn from './fns.js';
 import NS from './ns.js';
 import Spec from './spec.js';
 import Pred from './preds.js';
+import Arr from './arr.js';
 
 let {fn, partial} = Fn;
-let {is_any, is_key, is_obj, is_fn, is_js_obj} = Pred;
+let {is_any, is_key, is_obj, is_fn, is_js_obj, is_some} = Pred;
 let {args, dict, tup, iter_of} = Spec;
 let {ns} = NS;
 
 let get = fn({
   name: 'get',
   doc: `Gets the value stored at a particular key in an object. Returns \`undefined\` if value is not found. It returns \`undefined\` when looking for a property on anything that cannot have properties: e.g., \`undefined\`, booleans, and numbers. Given an indexed value (arrays, but also strings) it returns the value at the corresponding index. Returns only own properties. To get properties in the prototype chain, or at symbol keys, use \`get_\`.`,
-  pre: args([is_key], [is_key, is_any]),
+  pre: args([is_key], [is_key, is_any], [is_key, is_any, is_some]),
   body: [
     (key) => partial(get, key),
     (key, obj) => {
       if (obj == undefined) return undefined;
+      if (Arr.is_immutable(obj)) return obj[key];
       return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
     },
     (key, obj, not_found) => {
@@ -49,16 +51,22 @@ let get_in = fn({
   doc: 'Nested property access. Given a collection, take a path to a particular value represented by a sequence of keys. Returns `undefined` if there is nothing at that path. E.g. `get_in({a: [1, 2, 3]}, [\'a\', 1]); //=> 2`.',
   // TODO: partial application with one argument?
   // TODO: enforce a requirement that the path be non-empty?
-  pre: args([is_any, iter_of(is_key)]),
-  body: (obj, path) => {
-    if (obj == undefined) return undefined;
-    let result = obj;
-    for (let key of path) {
-      result = get(key, result);
-      if (result == undefined) return undefined;
-    }
-    return result;
-  } 
+  pre: args([is_any, iter_of(is_key)], [is_any, iter_of(is_key), is_some]),
+  body: [
+  (obj, path) => {
+  if (obj == undefined) return undefined;
+  let result = obj;
+  for (let key of path) {
+    result = get(key, result);
+    if (result == undefined) return undefined;
+  }
+  return result;
+  },
+  (obj, path, not_found) => {
+    let result = get_in(obj, path);
+    return result == undefined ? not_found : result;
+  }
+  ]
 });
 
 // TODO: get object update functions to work nicely on sequences

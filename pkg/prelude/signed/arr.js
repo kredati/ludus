@@ -198,11 +198,17 @@ let show = fn({
   pre: args([is_arr]),
   body: (arr) => arr.length === 0 
     ? '[]' 
-    : `[ ${arr.map((x) => L.show(x)).join(', ')} ]`
+    : `[ ${[...arr].map((x) => L.show(x)).join(', ')} ]`
+});
+
+let is_immutable = fn({
+  name: 'is_immutable',
+  doc: 'Tells if an array is immutable Ludus array.',
+  body: A.is_immutable_array
 });
 
 export default ns(L.Arr, {
   arr: _arr, assoc, concat, conj, conj_, empty, empty_, from,
   index, index_of, is_index, last_index_of, reverse, reduce_right,
-  slice, sort, unconj, show, last
+  slice, sort, unconj, show, last, is_immutable
 });

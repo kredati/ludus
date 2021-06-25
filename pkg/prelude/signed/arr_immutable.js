@@ -249,10 +249,16 @@ let Node = {
 };
 
 let list_handler = {
+/*   getOwnPropertyDescriptor (target, prop) {
+    let index = parseInt(prop, 10);
+    if (index >= 0 && index < target.size) {
+      return {configurable: true, enumerable: true};
+    }
+  }, */
   has (target, prop) {
     //if (prop in target) return true;
     let index = parseInt(prop, 10);
-    return index >= 0 || index < target.size;
+    return index >= 0 && index < target.size;
   },
   get (target, prop) {
     if (typeof prop === 'symbol' || prop in target) return target[prop];
@@ -385,7 +391,7 @@ let Arr = {
   },
   [Symbol.isConcatSpreadable]: true,
   [Symbol.for('nodejs.util.inspect.custom')] () {
-    return this.is_empty() ? [] : `[ ${[...this].join(', ')} ]`;
+    return this.is_empty() ? [] : `[ ${[...this].map((x) => L.show(x)).join(', ')} ]`;
   },
   get length () {
     return this.size;
