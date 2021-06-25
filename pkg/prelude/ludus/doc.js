@@ -1,4 +1,9 @@
-import '../prelude/prelude.js';
+//////////////////// `doc`
+// Shows documentation for Ludus functions
+// TODO: update this once I bring in changes from `optimize-fns`
+
+
+import '../signed/mod.js';
 
 let doc_method = (method) => {
   let name = get('name', method);
@@ -27,10 +32,12 @@ let doc_ludus_fn = (fn) => {
     let spec_str = get(arity, pretty_specs);
     return when(spec_str) ? str(param_str, '::', spec_str) : param_str;
   }, arities), '\n');
-  return `${name}::function\n${arities_and_specs}\n${or(docstring, '')}`;
+  let ns = get('in_ns', fn);
+  let ns_name = when(ns)
+    ? str(slice(show(ns), 4, sub(count(show(ns)), 1)), '.')
+    : '';
+  return `${ns_name}${name}::function\n${arities_and_specs}\n${or(docstring, '')}`;
 };
-
-
 
 let parenthesize_single_param = (param) => when(eq('(', first(param))) ? param : `(${param})`;
 
@@ -53,7 +60,5 @@ let doc = fn({
     () => when(is_fn(x)) ? doc_fn(x) : get('doc', x, 'no doc'), 
     just('no doc!'))
 });
-
-Ludus.globalize('doc', doc);
 
 export {doc};
