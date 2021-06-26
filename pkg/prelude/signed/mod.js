@@ -103,7 +103,7 @@ export default ns({
         // Ludus util functions
         print: Ludus.print, warn: Ludus.warn, report: Ludus.report, 
         show: Ludus.show, iterate: Ludus.iterate, globalize: Ludus.globalize,
-        context: Ludus.context,
+        context: Ludus.context, globalized: Ludus.globalized,
         // Ludus environment information
         runtime: Ludus.runtime,
         // and methods
