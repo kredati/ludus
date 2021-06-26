@@ -1,11 +1,10 @@
 /* eslint-disable */
-
 module.exports = {
   "parserOptions": {
     "ecmaVersion": 2021,
     "sourceType": "module"
   },
-  "extends": ["./js_globals.cjs", "./node_globals.cjs", "./ludus_globals.cjs"],
+  "extends": ["./js_globals.js", "./node_globals.js", "./ludus_globals.js"],
   "plugins": [
     "@ludus", "import", "fp"
   ],
@@ -66,7 +65,7 @@ module.exports = {
     "import/exports-last": "error",
     "import/no-namespace": "error",
     "import/extensions": ["error", "always"],
-    "import/no-unassigned-import": "warn",  
+    //"import/no-unassigned-import": "warn",  
     "import/no-named-default": "error",
 
     "fp/no-arguments": "error",

@@ -1,5 +1,5 @@
 /* eslint-disable */
 
-module.exports = {
+export default {
   //TODO: documented here: https://developer.mozilla.org/en-US/docs/Web/API
 };
