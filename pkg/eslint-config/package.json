@@ -1,6 +1,6 @@
 {
   "name": "@ludus/eslint-config",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "An ESLint config file that serves as a Ludus parser.",
   "main": "main.js",
   "type": "commonjs",
@@ -16,7 +16,7 @@
   "homepage": "https://github.com/kredati/ludus#readme",
   "dependencies": {
     "@ludus/eslint-plugin": "^0.1.1",
-    "@ludus/prelude": "^0.1.6",
+    "@ludus/prelude": "^0.1.9",
     "eslint-plugin-fp": "^2.3.0",
     "eslint-plugin-import": "^2.23.4"
   },
