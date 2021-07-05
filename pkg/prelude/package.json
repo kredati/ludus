@@ -1,6 +1,6 @@
 {
   "name": "@ludus/prelude",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "The Ludus Prelude",
   "main": "main.js",
   "type": "module",
