@@ -584,7 +584,7 @@ let rad_to_deg = defn({
 
 export default ns(L.Num, {
   abs, add, ceil, dec, div, div_by, floor, gt, gte, hypot, inc, is_between,
-  is_infinity,
+  is_infinity, is_in_range,
   is_natural, is_negative, is_nonzero, is_positive, is_positive_int, 
   is_even, is_odd, lt, lte, max, min, mod, mult, num: num_, pow, pow_by, precise, random, 
   random_int, round, sqrt, cbrt, sub, sub_by, sum_of_squares, trunc,
