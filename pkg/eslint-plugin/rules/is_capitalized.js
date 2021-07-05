@@ -1,0 +1,1 @@
+module.exports = (str) => typeof str === 'string' && !!str[0].match(/[A-Z]/);

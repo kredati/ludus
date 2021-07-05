@@ -1,0 +1,29 @@
+{
+  "name": "@ludus/eslint-config",
+  "version": "0.1.2",
+  "description": "An ESLint config file that serves as a Ludus parser.",
+  "main": "main.js",
+  "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kredati/ludus.git"
+  },
+  "author": "Scott Richmond",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kredati/ludus/issues"
+  },
+  "homepage": "https://github.com/kredati/ludus#readme",
+  "dependencies": {
+    "@ludus/eslint-plugin": "^0.1.1",
+    "@ludus/prelude": "^0.1.6",
+    "eslint-plugin-fp": "^2.3.0",
+    "eslint-plugin-import": "^2.23.4"
+  },
+  "peerDependencies": {
+    "eslint": "^7.29.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.29.0"
+  }
+}

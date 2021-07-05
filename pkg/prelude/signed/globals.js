@@ -10,12 +10,15 @@ import P from './preds.js';
 let {defn} = Fn;
 let {ns} = NS;
 
+let globalized = [];
+
 let globalize = defn({
     name: 'globalize',
     doc: 'Globalizes a value at a particular identifier.',
     pre: S.args([P.is_str, P.is_any]),
     body: (id, value) => {
         globalThis[id] = value;
+        globalized.push(id);
     }
 });
 
@@ -28,5 +31,5 @@ let context = defn({
 
 export default ns(
     Ludus,
-    {globalize, context}
+    {globalize, context, globalized}
 );
