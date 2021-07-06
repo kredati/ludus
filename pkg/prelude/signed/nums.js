@@ -1,7 +1,7 @@
 //////////////////// Numbers
 // All the mathematical functions
 // TODO: verify that NaN never shows up
-// TODO: add "nil punning" for undefined? [Why?]
+// TODO: add "nil punning" for undefined? [Why did I want to do this?]
 //        [ ] Change is_number to maybe(is_number) everywhere
 //        [ ] Figure out how to coerce undefined to 0 gracefully
 // TODO: add additional numeric functions
@@ -94,7 +94,7 @@ let sub_by = defn({
 let is_nonzero = defn({
   name: 'is_nonzero',
   doc: 'Tells if a number is not zero. Returns false given non-numbers.',
-  body: (x) => P.is_number(x) && x !== 0
+  body: (x) => P.is_num(x) && x !== 0
 });
 
 let div = defn({
