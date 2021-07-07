@@ -26,11 +26,6 @@ Jump to: [Namespaces](#Namespaces), [Functions](#Functions), [Values](#Values)
 #### [`type::ns`](type.md)
 ## Functions
 ***
-#### `Creates a `record`: a named collection of specs. Takes a string name and a "map," which contains specs in various fields. Validates all specs by applying them to the corresponding field on the validated value. Essentially, the `and` of each `at` in the map.::fn`
-**in namespace [`Creates a `record`: a named collection of specs`](Creates a `record`: a named collection of specs.md)**
-
-`(...args)`<br/>
-***
 #### `abs::fn`
 **in namespace [`Number`](Number.md)**
 
@@ -235,9 +230,6 @@ Creates a lazy, possibly infinite, sequence of values created by cycling through
 `(x)::(is_num)`<br/>
 Decrements a number by 1.
 
-***
-#### `defspec::fn`
-`(...args)`<br/>
 ***
 #### `deg_to_rad::fn`
 **in namespace [`Number`](Number.md)**
@@ -1004,6 +996,9 @@ Returns a random integer. Given one argument, returns a random integer between `
 Creates a sequence of numbers, in order. With one argument, it counts up from 0 to the maximum (exclusive) in steps of +1. With two arguments, it counts up from the start to the max in steps of +1. With three, it counts up to max from start, in steps of whatever you give it.
 
 ***
+#### `record::fn`
+`(...args)`<br/>
+***
 #### `recur::fn`
 `(...args)`<br/>
 ***
@@ -1078,6 +1073,9 @@ The sine of angle (in radians).
 `(f, coll)`<br/>
 Determines if any element of a collection passes a conditional function. With two arguments, returns true if any element, with the conditional function applied, returns a truthy value---and false otherwise. With one argument, returns a transducer. E.g. `some(is_int, [2.1, "foo", {a: 1}, 12]); //=> true`.
 
+***
+#### `spec::fn`
+`(...args)`<br/>
 ***
 #### `split::fn`
 **in namespace [`String`](String.md)**

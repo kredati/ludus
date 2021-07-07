@@ -5,8 +5,6 @@ Jump to: [Namespaces](#Namespaces), [Functions](#Functions), [Values](#Values)
 ## Namespaces
 
 ## Functions
-#### `Creates a `record`: a named collection of specs. Takes a string name and a "map," which contains specs in various fields. Validates all specs by applying them to the corresponding field on the validated value. Essentially, the `and` of each `at` in the map.::fn`
-`(...args)`<br/>
 #### `Renames a spec. Useful for giving descriptive names to otherwise complex specs.::fn`
 `(...args)`<br/>
 #### `and::fn`
@@ -14,8 +12,6 @@ Jump to: [Namespaces](#Namespaces), [Functions](#Functions), [Values](#Values)
 #### `args::fn`
 `(...args)`<br/>
 #### `at::fn`
-`(...args)`<br/>
-#### `defspec::fn`
 `(...args)`<br/>
 #### `dict::fn`
 `(...args)`<br/>
@@ -31,9 +27,13 @@ Jump to: [Namespaces](#Namespaces), [Functions](#Functions), [Values](#Values)
 `(...args)`<br/>
 #### `or::fn`
 `(...args)`<br/>
+#### `record::fn`
+`(...args)`<br/>
 #### `seq::fn`
 `(...args)`<br/>
 #### `show::fn`
+`(...args)`<br/>
+#### `spec::fn`
 `(...args)`<br/>
 #### `tup::fn`
 `(...args)`<br/>
