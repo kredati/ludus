@@ -1,7 +1,7 @@
 # Ludus
-## A Logoish, Lispish language for learning
-(Just [view the docs](doc/global.md).)
+[View the docs.](doc/global.md)
 
+## A Logoish, Lispish language for learning
 Ludus is an attempt to build a programming language and computational environment dedicated to learning, exploration, discovery, and creativity. In this, it hews as closely as possible to the spirit of Logo, developed at MIT from the 1960s through the 1980s, by Seymour Papert and his collaborators. _Ludus_ is Roger Caillois's term, in _Man, Play, and Games_, for structured, rule-bound play. (Its unstructured complement, _Kredati_, is the name for Ludus's graphical environment, not described here.)
 
 Ludus's design goals are simplicity, expressivity, and accessibility, understood as comprehensively as possible.
