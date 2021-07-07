@@ -1,0 +1,26 @@
+{
+  "name": "@ludus/docgen",
+  "version": "0.1.0",
+  "description": "Documentation generator for Ludus",
+  "main": "src/main.ld.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kredati/ludus.git"
+  },
+  "author": "Scott Richmond",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kredati/ludus/issues"
+  },
+  "homepage": "https://github.com/kredati/ludus#readme",
+  "dependencies": {
+    "@ludus/prelude": "^0.1.10"
+  },
+  "devDependencies": {
+    "@ludus/eslint-config": "^0.1.3",
+    "eslint": "^7.30.0"
+  }
+}
