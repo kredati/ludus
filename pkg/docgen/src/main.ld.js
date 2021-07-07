@@ -2,7 +2,7 @@
 // Documentation generator for Ludus
 
 import "@ludus/prelude";
-import fs from "fs/promises";
+import {writeFile} from "fs/promises";
 
 let pre_ify = (str) => `\`${str}\``;
 
@@ -46,7 +46,7 @@ let generate_ns_entry = (ns) => {
 let generate_ns_page = async (ns) => {
   let name = get_ns_name(ns);
   let entry = generate_ns_entry(ns);
-  fs.writeFile(`${name}.md`, entry);
+  writeFile(`${name}.md`, entry);
 };
 
 let generate_global_fn_entry = (fn) => {
@@ -86,7 +86,7 @@ let generate_global_page = () => {
   let globals = into({}, map(k => [k, get(k, globalThis)]), Ludus.globalized);
   let ns_members = filter(is_ns, values(globals));
   map(generate_ns_page, ns_members);
-  fs.writeFile("global.md", generate_global_entry());
+  writeFile("global.md", generate_global_entry());
 };
 
 generate_global_page();
