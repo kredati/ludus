@@ -18,7 +18,7 @@ let spec_descriptor = Spec.record('spec_descriptor', {
 });
 
 let spec = defn({
-  name: 'defspec',
+  name: 'spec',
   doc: 'Defines a spec. Takes a spec descriptor: a string name and a predicate, which is either a spec or a function that is treated as a predicate.',
   pre: Spec.args([spec_descriptor]),
   body: Spec.spec
@@ -90,7 +90,8 @@ let at = defn({
 });
 
 let record = defn({
-  name: 'Creates a `record`: a named collection of specs. Takes a string name and a "map," which contains specs in various fields. Validates all specs by applying them to the corresponding field on the validated value. Essentially, the `and` of each `at` in the map.',
+  name: "record",
+  doc: 'Creates a `record`: a named collection of specs. Takes a string name and a "map," which contains specs in various fields. Validates all specs by applying them to the corresponding field on the validated value. Essentially, the `and` of each `at` in the map.',
   pre: Spec.args([is_str, Spec.dict(spec_s)]),
   body: Spec.record
 });
