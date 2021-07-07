@@ -52,7 +52,7 @@ let generate_ns_page = async (ns) => {
 let generate_global_fn_entry = (fn) => {
   let fn_doc = doc(fn);
   let lines = split("\n", fn_doc); //?
-  let header = `#### \`${get("name", fn)}::${get_in(fn, ["type", "name"], "fn")}\``;
+  let header = `***\n#### \`${get("name", fn)}::${get_in(fn, ["type", "name"], "fn")}\``;
   let ns_name = first(split(".", first(lines)));
   let has_ns = eq(ns_name, capitalize(ns_name));
   let ns_link = `**in namespace [\`${ns_name}\`](${ns_name}.md)**\n`;
