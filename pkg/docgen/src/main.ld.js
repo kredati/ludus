@@ -25,7 +25,7 @@ let get_ns_name = (ns) => get("name", meta(ns));
 
 let format_ns_link = (ns) => {
   let name = get_ns_name(ns);
-  return `####[\`${name}::ns\`](${name}.md)`;
+  return `#### [\`${name}::ns\`](${name}.md)`;
 };
 
 let generate_ns_entry = (ns) => {
@@ -54,9 +54,14 @@ let generate_global_fn_entry = (fn) => {
   let lines = split("\n", fn_doc); //?
   let header = `#### \`${get("name", fn)}::${get_in(fn, ["type", "name"], "fn")}\``;
   let ns_name = first(split(".", first(lines)));
-  let ns_link = `##### in namespace [\`${ns_name}\`](${ns_name}.md)`;
+  let has_ns = eq(ns_name, capitalize(ns_name));
+  let ns_link = `**in namespace [\`${ns_name}\`](${ns_name}.md)**\n`;
   let body = rest(lines);
-  let entry = Str.from([header, ns_link, ...map(format, body)], "\n");
+  let entry = Str.from(
+    when(has_ns)
+      ? [header, ns_link, ...map(format, body)]
+      : [header, ...map(format, body)]
+  , "\n");
   return entry; 
 };
 
@@ -81,7 +86,7 @@ let generate_global_page = () => {
   let globals = into({}, map(k => [k, get(k, globalThis)]), Ludus.globalized);
   let ns_members = filter(is_ns, values(globals));
   map(generate_ns_page, ns_members);
-  fs.writeFile("readme.md", generate_global_entry());
+  fs.writeFile("global.md", generate_global_entry());
 };
 
 generate_global_page();

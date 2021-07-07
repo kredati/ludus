@@ -3,22 +3,22 @@ Jump to: [Namespaces](#Namespaces), [Functions](#Functions), [Values](#Values)
 
 
 ## Namespaces
-####[`Array::ns`](Array.md)<br/>
-####[`Boolean::ns`](Boolean.md)<br/>
-####[`Ducers::ns`](Ducers.md)<br/>
-####[`Error::ns`](Error.md)<br/>
-####[`Flow::ns`](Flow.md)<br/>
-####[`Function::ns`](Function.md)<br/>
-####[`Lazy::ns`](Lazy.md)<br/>
-####[`Number::ns`](Number.md)<br/>
-####[`Object::ns`](Object.md)<br/>
-####[`Pred::ns`](Pred.md)<br/>
-####[`Ref::ns`](Ref.md)<br/>
-####[`Seq::ns`](Seq.md)<br/>
-####[`Spec::ns`](Spec.md)<br/>
-####[`String::ns`](String.md)<br/>
-####[`namespace::ns`](namespace.md)<br/>
-####[`type::ns`](type.md)
+#### [`Array::ns`](Array.md)<br/>
+#### [`Boolean::ns`](Boolean.md)<br/>
+#### [`Ducers::ns`](Ducers.md)<br/>
+#### [`Error::ns`](Error.md)<br/>
+#### [`Flow::ns`](Flow.md)<br/>
+#### [`Function::ns`](Function.md)<br/>
+#### [`Lazy::ns`](Lazy.md)<br/>
+#### [`Number::ns`](Number.md)<br/>
+#### [`Object::ns`](Object.md)<br/>
+#### [`Pred::ns`](Pred.md)<br/>
+#### [`Ref::ns`](Ref.md)<br/>
+#### [`Seq::ns`](Seq.md)<br/>
+#### [`Spec::ns`](Spec.md)<br/>
+#### [`String::ns`](String.md)<br/>
+#### [`namespace::ns`](namespace.md)<br/>
+#### [`type::ns`](type.md)
 ## Functions
 #### `and::method`
 
