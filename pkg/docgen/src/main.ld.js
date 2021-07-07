@@ -15,7 +15,7 @@ let format = (line) => when(is_arity(line))
 let generate_fn_entry = (fn) => {
   let fn_doc = doc(fn);
   let lines = split("\n", fn_doc); //?
-  let header = `#### \`${get("name", fn)}::${get_in(fn, ["type", "name"], "fn")}\``; 
+  let header = `***\n#### \`${get("name", fn)}::${get_in(fn, ["type", "name"], "fn")}\``; 
   let body = rest(lines);
   let entry = Str.from([header, ...map(format, body)], "\n");
   return entry;
