@@ -17,12 +17,14 @@
 */
 
 ///// 1. Detecting our runtime
-
 let Ludus = {
   print: (...msgs) => { msgs.forEach(x => console.log(x)); },
   report: (...msgs) => { msgs.forEach(msg => console.error(msg)); },
-  warn: (...msgs) => { msgs.forEach(msg => console.warn(msg)); }
+  warn: (...msgs) => { msgs.forEach(msg => console.warn(msg)); },
+  check: globalThis["ludus/check"] === undefined ? true : globalThis["ludus/check"]
 };
+
+console.log(`Ludus typechecking is: ${Ludus.check ? "on" : "off"}`);
 
 // if we are running in Deno
 if (typeof Deno !== 'undefined') {

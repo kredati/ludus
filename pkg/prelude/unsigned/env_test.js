@@ -1,0 +1,1 @@
+globalThis["ludus/check"] = false;

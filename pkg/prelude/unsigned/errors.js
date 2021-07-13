@@ -40,7 +40,7 @@ let bound = (fn) => Object.defineProperty(
 // handle :: fn -> fn
 // wraps a function in a try/catch for more informative error handling
 // sends some information to console.error
-let handle = (name, fn) => Object.defineProperty(
+let handle = (name, fn) => !Ludus.check ? fn : Object.defineProperty(
   (...args) => {
     try {
       return fn(...args);

@@ -188,10 +188,10 @@ let fn = n_ary('fn',
     switch (typeof body) {
       case 'function':
         return rename(name,
-          handle(name, loop(n_ary(name, body))));
+          handle(name, n_ary(name, body)));
       case 'object':
         return body[Symbol.iterator]
-          ? rename(name, handle(name, loop(n_ary(name, ...body))))
+          ? rename(name, handle(name, n_ary(name, ...body)))
           : raise(`Body clauses must be contained in an iterable.`)
     }
   }
@@ -207,7 +207,10 @@ let fn = n_ary('fn',
 // It dispatches error message to `explain`, defined in './predicates.js'.
 // TODO: reconsider short-circuiting: accumulate all failures?
 // TODO: conditional instrumentation based on environment, as `fn`, above
-let pre_post = (pre, post, body) => rename(body.name, (...args) => {
+let pre_post = (pre, post, body) => !Ludus.check 
+  ? body 
+  : rename(body.name, (...args) => {
+  console.log(`Running ${body.name} with typechekcing on.`);
   if (!is_arr(pre)) pre = [pre];
   if (!is_arr(post)) post = [post];
   // TODO: move the above into a closure for caching
