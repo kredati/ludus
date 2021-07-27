@@ -206,3 +206,13 @@ fn forward -> Nothing (
 )
 
 ```
+
+---
+### After some time...
+One thing I'm thinking is that static typing really may be too much overhead for learners. The issue I'm thinking through is how to handle hashes/objects/maps. Row polymorphism is great, but I worry that (a) getting PureScript-style row polymorphism means implementing higher-kinded types and thus a really robust but also really complex type system (both to implement and, more importantly, to use), and (b) in PureScript is actually a way of dealing with JavaScript's objects, but inside of Purs, you'd just use a normal struct instead of throwing whatever at a hash and letting the type inference algorithm do the work.
+
+There are intermediate/fallback positions between row polymorphism and dynamic typechecking, but I think the first thing to do might be to see if we can make it fast enough to use dynamic typechecking. It occurs to me that one thing we might be able to do to speed up runtime typechecking is to represent types with integers and use a simple bitmasking operation to determine whether a thing is of a particular type. This could get hairy with lots of types, but if we discourage user-defined types Clojure-style by offering a few common data structures and functions that operate well and easily on them, then we might be able to get away with using a `u8` to represent a type. (A program wouldn't need more than 255 types, I reckon.)
+
+Thus the dynamic pattern-matching on types wouldn't introduce too much overhead (for some definition of "too much," tbd.).
+
+Also: now that I have written a parser from scratch, for language development I'm pretty sure we'll want to use Pest and a PEG to specify the syntax. Until we settle on a syntax, anyway. But I suspect that parsing will not be a bottlneck.
