@@ -12,8 +12,6 @@
 // protocol, and a special inspector that gives us a nice representation
 // at the repl.
 
-// TODO: Rewrite this in Ludus.
-
 import '../signed/mod.js';
 
 let list_t = type({name: 'List'});
@@ -44,7 +42,6 @@ let is_empty = fn({
   doc: 'Tells if a list is empty.',
   body: is_identical(empty_list)
 });
-
 
 let cons = fn({
   name: 'cons',
