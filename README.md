@@ -1,4 +1,6 @@
 # Ludus
+### THIS REPOSITORY IS FOR REFERENCE AND RESOURCE ONLY. IT IS NO LONGER UNDER ACTIVE DEVELOPMENT.
+
 [View the docs.](doc/global.md)
 
 ## A Logoish, Lispish language for learning
