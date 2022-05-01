@@ -98,55 +98,55 @@ foo <- 42
 bar <- "twenty three"
 
 // a type declaration
-type List(a) -> () | (a, List(a))
+type List(a) -> { () | (a, List(a)) }
 
 // note the return type specified here
 // any type variables here are in scope in the function
-fn cons -> List(a) (
+fn cons -> List(a) {
   /// Adds a value to the beginning of a list, value first.
   /// This is a docstring
   // This is a regular comment
   // note inline type declarations
   (x :: a) -> (x, ())
   (x :: a, xs :: List(a)) -> (x, xs)
-)
+}
 
-fn conj -> List(a) (
+fn conj -> List(a) {
   /// Adds a value to the beginning of the list, list first.
   (xs :: List(a), x :: a) -> (x, xs)
-)
+}
 
-fn fst -> a (
+fn fst -> a {
   /// Extracts the first element of a tuple.
   // The ... pattern matches the rest of the elements as a list.
   // The _ pattern matches and ignores anything.
   (x :: a, ..._) -> x
-)
+}
 
-fn snd -> a (
+fn snd -> a {
   /// Extracts the second element of a tuple.
   (_, x :: a, ..._) -> x
-)
+}
 
 // you may get nil back
 // but it's not a maybe
-fn head -> a? (
+fn head -> a? {
   () -> ()
   (xs :: List(a)) -> fst(xs)
-)
+}
 
-fn tail -> List(a) (
+fn tail -> List(a) {
   () -> ()
   (xs :: List(a)) -> snd(xs)
-)
+}
 
-fn list -> List(a) (
+fn list -> List(a) {
   (...xs :: List(a)) -> xs
-)
+}
 
 // a list literal is [1, 2, 3]
 
-fn fold -> a? (
+fn fold -> a? {
   // where clauses come at the beginning
   // they introduce types
   where folder :: (b, a) -> b; list :: List(a); accum :: b
@@ -154,26 +154,26 @@ fn fold -> a? (
   (folder, list) -> fold(f, head(list), tail(list))
   (folder, accum, ()) -> accum
   (folder, accum, list) -> fold(f(accum, head(list)), tail(list))
-)
+}
 
-fn map -> List(b) (
+fn map -> List(b) {
   where mapper :: (a) -> b; list :: List(a)
   (mapper, ()) -> ()
   (mapper, list) -> fold(
     f((xs, x) -> conj(xs, mapper(x))), // should infer lambda types
     (),
     list)
-)
+}
 
-fn add -> Number (
+fn add -> Number {
   where x :: Number; y :: Number; zs :: List(Number)
   () -> 0
   (x) -> x
   (x, y) -> <<native x + y>>
   (x, y, ...zs) -> fold(add, add(x, y), zs)
-)
+}
 
-fn div -> Number (
+fn div -> Number {
   where x :: Number, y :: Number
   (x, 0) -> raise "Division by zero!"
   (x, y) -> <<native x / y>>
@@ -181,7 +181,7 @@ fn div -> Number (
     let divisor <- fold(mult, y, zs)
     div(x, divisor) // in a block the last expression is the return
   }
-)
+}
 
 // placeholder for partial application
 map(add(1, _), [1, 2, 3]) //=> [2, 3, 4]
@@ -198,12 +198,12 @@ ref heading <- 0
 
 // note the last expression in forward is a statement
 // it will not return nil but Nothing
-fn forward -> Nothing (
+fn forward -> Nothing {
   (distance :: Number) -> {
     let movement <- scale(distance, from_angle(heading))
     swap position <- add_vec(position, movement)
   }
-)
+}
 
 ```
 
@@ -216,3 +216,101 @@ There are intermediate/fallback positions between row polymorphism and dynamic t
 Thus the dynamic pattern-matching on types wouldn't introduce too much overhead (for some definition of "too much," tbd.).
 
 Also: now that I have written a parser from scratch, for language development I'm pretty sure we'll want to use Pest and a PEG to specify the syntax. Until we settle on a syntax, anyway. But I suspect that parsing will not be a bottlneck.
+
+### Some notes on fonts
+Of all things. I have recently downloaded and started using a different, non-ligature font (IBM Plex Mono). It's very pretty in a delicious, mid-century way. Yay! I may even spend some time to (learn how to) develop ligatures for it. In a typically nerdy way, of course I think fonts matter. But not that much! But I have been coding in Fira Code for so long that I take its ligatures for granted. -> looks like an actual arrow in Fira Code. And it sure doesn't in IBM Plex. That's... well, it's fine. But it's possible that I won't have the control over, well, the _fonts_ that our users are using to code in Ludus. I mean, I do on StackBlitz, which is actually _awesome_. But relying on things like ligatures to make syntax readable or intuitive is probably foolish. Note that does not mean that I've decided against `<-` for assignment and `->` for patterns. But it does seem less immediately obvious these are right. (That said, it's also a shock coming from Fira to see those rendered as separate characters in Plex, but that doesn't mean it's not intuitive, actually. Just that it's a stark visual change.)
+
+### Dynamic types, runtime typechecking, and polymorphism
+Above, I suggest that runtime typechecking might be optimized by doing bitmasking on types: each type gets a tag and a mask, and doing a bitwise `&` or `|` operation gets you to 0 or 255. This can be made very fast. But it also limits the number of types. (I can imagine more complicated binary math that uses bitshifting and bitmasking on `u64`s to be more expressive without much overhead.)
+
+The difficult bit here is that, if we do runtime typechecking built into the language at the level of pattern-matching (with every stdlib function typechecked to be friendly to learners), does that mean that we cannot turn it off without losing core language functionality? Yes. Consider:
+
+```
+fn put_two_things_together {
+  (x as String, y as String) -> concat (x, y)
+  (x as Number, y as Number) -> add (x, y)
+}
+```
+This simple (and natural) example means that we can't turn off runtime typechecking for production, since it's built into the logic of the code (as opposed to clj's or Ludus v -3.0's Spec). That is fine, but that means it will need aggressive optimization.
+
+Meanwhile, the original thought I had was that performance would be improved substantially by limiting the number of types and using a bitmasking to do very fast typechecking. But it strikes me that with the model of polymorphism I have at hand—a module system where types get modules associated with them, and methods do (fast, optimized) dispatch on the type of the first argument, we need user-defined types. And that means the `as` (or whatever I end with) part of a pattern needs not only to access strings, hashes, lists, etc., but also user-defined types. It's possible to build in a bunch of types and then just not allow user-defined types, but I would like to have as much of the stdlib as possible written in Ludus, and that means allowing at least stdlib-defined types. And that means a fair bit of overhead.
+
+With a robust module-and-method system, the above polymorphic function might be better organized as:
+
+```
+module String {
+  //...
+  fn put_two_things_together {
+    (x, y) -> concat (x, y)
+  }
+  //...
+}
+
+module Number {
+  //...
+  fn put_two_things_together {
+    (x, y) -> add (x, y)
+  }
+  //...
+}
+
+method put_two_things_together
+```
+
+And yet, that means we have to modify the modules of the types we're working with to get the behavior we want. That either means strictly limiting the type of runtime polymorphism we allow (perhaps not a bad thing!), or allowing, instead of type-based pattern matching, allowing for ad-hoc (local?) module extension:
+
+```
+method put_two_things_together {
+  Number: (x, y) -> add (x, y)
+  String: (x, y) -> concat (x, y)
+}
+```
+
+The limit-case here is always whether we can write a linked list with reasonable efficiency and expressiveness, in ways that are dynamically typed and avoid the possibility of recursively checking every member of a list:
+
+```
+module List {
+  type List {
+    ()
+    (x, List)
+  }
+
+  fn new {
+    () -> List ()
+    (x) -> List (x, List ())
+    (x, ...xs) -> List (x, new(...xs))
+  }
+
+  fn head {
+    (List()) -> ()
+    (List(x, _)) -> x
+  }
+
+  fn tail {
+    (List ()) -> List ()
+    (List(_, xs)) -> xs
+  }
+
+  //...
+
+}
+```
+
+...this gets awkward, and is beginning to look much more like a statically typed language.
+
+[time passes]
+
+### Simplifying a type system
+Part of the problem here is that defined this way, the list isn't a list but rather a particular kind of tuple. It strikes me that ability to create user-defined types shifts the language in the direction of static typing. The lispish thing to do, of course, is not to create all kinds of new user types, but to lean into the basic types of the language: atoms, arrays/vectors/lists?, hashes, and that's it. No particular shapes of each as types, no structs, no enums, etc.
+
+It may also be worth thinking once again about first-class patterns, especially if the rule is that a pattern in an `as` clause doesn't bind any variable names. That means you could have:
+
+```
+pattern Vector/2 = (x as Number, y as Number)
+
+fn add_vect ((x1, y1) as Vector/2, (x2, y2) as Vector/2) -> (add(x1, x2), add(y1, y2))
+```
+
+List doesn't work quite as well, because you get the problem of a recursively defined type running across the whole list. `pattern List = (car, cdr as List)` may not even be legal Ludus (we don't want recursive patterns!, or do we?), but it's guaranteed to have O(n) complexity for matching.
+
+In any event, this certainly involves some weirdness (or even implausibility) around modules. To wit: without type tags (for the builtin types), there's no efficient way to do dispatch with this sort of pattern matching. Which means that you'd need `add` and `add_vect`, etc. Effectively, your polymorphism would be limited to dispatching to various builtins. That may well be enough! For our purposes at least.
